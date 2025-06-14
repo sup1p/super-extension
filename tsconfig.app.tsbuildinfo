@@ -1,0 +1,1 @@
+{"root":["./src/background.ts","./src/content-enhanced.ts","./src/main.tsx","./src/optionsLocal.tsx","./src/vite-env.d.ts","./src/chrome-extension/options/index.tsx","./src/chrome-extension/popup/index.tsx","./src/sidebar/Sidebar.tsx"],"version":"5.6.2"}

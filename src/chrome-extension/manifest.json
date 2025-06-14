@@ -1,0 +1,38 @@
+{
+  "manifest_version": 3,
+  "name": "Chrome Extension Starter",
+  "version": "1.0",
+  "description": "A starter template for Chrome extensions",
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "action": {
+    "default_title": "Open Side Panel"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "sidebar.html",
+        "public/32.png"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ]
+}
