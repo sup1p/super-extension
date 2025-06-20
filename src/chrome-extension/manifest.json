@@ -5,7 +5,8 @@
   "description": "A starter template for Chrome extensions",
   "permissions": [
     "activeTab",
-    "scripting"
+    "scripting",
+    "storage"
   ],
   "action": {
     "default_title": "Open Side Panel"
