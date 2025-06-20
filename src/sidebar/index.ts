@@ -30,52 +30,39 @@ export class Sidebar {
         // Create the floating button
         this.floatingButton = document.createElement('div');
         this.floatingButton.id = 'chrome-extension-floating-button';
+        const iconUrl = chrome.runtime.getURL('public/icon.png');
         this.floatingButton.innerHTML = `
-                <div class="floating-btn-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                        <path d="m2 17 10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                        <path d="m2 12 10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                    </svg>
-                </div>
-            `;
+            <img id="floating-btn-avatar-img" src="${iconUrl}" alt="icon" style="width:28px;height:28px;object-fit:cover;display:block;border-radius:50%;margin:auto;" />
+        `;
+
+
+
 
         // Apply styles to the floating button
         this.floatingButton.style.cssText = `
-                position: fixed;
-                bottom: 20px;
-                right: 20px;
-                width: 56px;
-                height: 56px;
-                background: #007bff;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                cursor: pointer;
-                box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
-                z-index: 2147483646;
-                transition: all 0.3s ease;
-                color: white;
-                user-select: none;
-                backdrop-filter: blur(10px);
-                border: 2px solid rgba(255, 255, 255, 0.1);
-            `;
-
-        // Add hover effects
-        this.floatingButton.addEventListener('mouseenter', () => {
-            if (this.floatingButton) {
-                this.floatingButton.style.transform = 'scale(1.1)';
-                this.floatingButton.style.boxShadow = '0 6px 20px rgba(0, 123, 255, 0.4)';
-            }
-        });
-
-        this.floatingButton.addEventListener('mouseleave', () => {
-            if (this.floatingButton) {
-                this.floatingButton.style.transform = 'scale(1)';
-                this.floatingButton.style.boxShadow = '0 4px 12px rgba(0, 123, 255, 0.3)';
-            }
-        });
+            position: fixed;
+            top: 50%;
+            right: 0;
+            transform: translateY(-50%) scale(1);
+            width: 44px;
+            height: 44px;
+            background: #151515;
+            border-radius: 22px 0 0 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: none;
+            z-index: 2147483648;
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            color: white;
+            user-select: none;
+            border: 2px solid rgba(255,255,255,0.08);
+            border-right: none;
+            padding: 0;
+            gap: 0;
+            pointer-events: auto;
+        `;
 
         // Add click handler
         this.floatingButton.addEventListener('click', (e) => {
@@ -85,9 +72,6 @@ export class Sidebar {
 
         // Add the button to the page
         document.body.appendChild(this.floatingButton);
-
-        // Update button state based on sidebar status
-        this.updateFloatingButtonState();
     }
 
     public cleanup(): void {
@@ -100,32 +84,7 @@ export class Sidebar {
     }
 
     private updateFloatingButtonState(): void {
-        if (!this.floatingButton) return;
-
-        if (this.sidebarOpen) {
-            this.floatingButton.style.background = '#28a745';
-            this.floatingButton.style.transform = 'rotate(45deg)';
-            this.floatingButton.innerHTML = `
-                    <div class="floating-btn-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                            <path d="M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                    </div>
-                `;
-        } else {
-            this.floatingButton.style.background = '#007bff';
-            this.floatingButton.style.transform = 'rotate(0deg)';
-            this.floatingButton.innerHTML = `
-                    <div class="floating-btn-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 2L2 7l10 5 10-5-10-5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                            <path d="m2 17 10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                            <path d="m2 12 10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                        </svg>
-                    </div>
-                `;
-        }
+        // Кнопка всегда выглядит одинаково
     }
 
     private createSidebar(): void {
@@ -376,7 +335,7 @@ export class Sidebar {
 
                         .dock{
                             position:fixed;                /* остаётся на экране при скролле */
-                            top:440px;                       /* вертикальный центр */
+                            top:435px;                       /* вертикальный центр */
                             right:0px;                    /* отступ от края страницы */
                             transform:translateY(-50%);
                             width:72px;
@@ -477,7 +436,7 @@ export class Sidebar {
                             display:flex;             
                             justify-content:flex-start; /* Changed from center to flex-start */
                             align-items:center;
-                            z-index:1000;
+                            z-index:2147483647;
                             backdrop-filter:blur(5px);
 
                             opacity:0;
@@ -541,12 +500,12 @@ export class Sidebar {
                             display: flex;
                             justify-content: space-between;
                             align-items: center;
-                            margin-bottom: 20px;
+                            margin-bottom: 10px;
                         }
 
                         .modal-title {
-                            font-size: 16px;
-                            font-weight: 600;
+                            font-size: 12px;
+                            font-weight: 300;
                         }
 
                         .tools-grid {
@@ -752,7 +711,7 @@ export class Sidebar {
                             margin-bottom: 2px;
                         }
                         .tool-label {
-                            font-size: 16px;
+                            font-size: 12px;
                             color: #fff;
                         }
                         .modal-title {
@@ -770,8 +729,99 @@ export class Sidebar {
                             border-radius: 10px;
                             transition: background 0.2s;
                         }   
+
+                        .screen.active#screen-voice {
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            justify-content: center;
+                        }
+
+                        #screen-voice {
+                            text-align: center;
+                            height: 100%;
+                            padding: 24px;
+                            box-sizing: border-box;
+                        }
+
+                        #voice-status-bubble {
+                            background: #2c2c2e;
+                            color: #a48fff;
+                            padding: 8px 16px;
+                            border-radius: 20px;
+                            margin-bottom: 40px;
+                            font-size: 14px;
+                            display: inline-block;
+                        }
+
+                        #voice-waveform-container {
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            height: 60px;
+                            gap: 3px;
+                            margin-bottom: 40px;
+                            width: 100%;
+                        }
+
+                        .waveform-bar {
+                            width: 4px;
+                            background-color: #6c757d;
+                            border-radius: 2px;
+                            transition: height 0.1s ease;
+                        }
+
+                        #voice-result {
+                            font-size: 16px;
+                            color: #fff;
+                            min-height: 24px;
+                            line-height: 1.5;
+                        }
+
+                        .icon-active { display: none; }
+                        .dock__btn.active .icon-default { display: none; }
+                        .dock__btn.active .icon-active { display: block; }
+                        .tools_button.active .icon-default { display: none; }
+                        .tools_button.active .icon-active { display: block; }
+
+                        .modal-content.tools-modal-content .modal-title {
+                            font-size: 15px !important;
+                        }
+                        .modal-content.tools-modal-content .tools-section-title {
+                            font-size: 13px !important;
+                        }
+
+                        /* .settings_dock теперь управляется через JS */
                     </style>
                 `;
+
+            // --- ICON URLS ---
+            const notesUrl = chrome.runtime.getURL('public/notes.png');
+            const chatUrl = chrome.runtime.getURL('public/chat.png');
+            const voiceUrl = chrome.runtime.getURL('public/voice.png');
+            const translateUrl = chrome.runtime.getURL('public/translate.png');
+            const toolsUrl = chrome.runtime.getURL('public/tools.png');
+            const settingsUrl = chrome.runtime.getURL('public/settings.png');
+
+            const notesActiveUrl = chrome.runtime.getURL('public/notes-active.png');
+            const chatActiveUrl = chrome.runtime.getURL('public/chat-active.png');
+            const voiceActiveUrl = chrome.runtime.getURL('public/voice-active.png');
+            const translateActiveUrl = chrome.runtime.getURL('public/translate-active.png');
+            const toolsActiveUrl = chrome.runtime.getURL('public/tools-active.png');
+            const settingsActiveUrl = chrome.runtime.getURL('public/settings-active.png');
+
+            const summarizerUrl = chrome.runtime.getURL('public/summarizer.png');
+            const simplifierUrl = chrome.runtime.getURL('public/simplifier.png');
+
+            const historyUrl = chrome.runtime.getURL('public/history.png');
+            const newChatUrl = chrome.runtime.getURL('public/new-chat.png');
+
+            const accountUrl = chrome.runtime.getURL('public/account.png');
+            const appereanceUrl = chrome.runtime.getURL('public/appereance.png');
+
+            const accountActiveUrl = chrome.runtime.getURL('public/account-active.png');
+            const appereanceActiveUrl = chrome.runtime.getURL('public/appereance-active.png');
+
 
             iframeDoc.body.innerHTML = `
                     <div class="sidebar">
@@ -840,9 +890,9 @@ export class Sidebar {
                             <h1 class="title">Chat</h1>
                             <div id="chat-container" style="flex: 1 1 0; display: flex; flex-direction: column; background: #000000; border-radius: 8px; overflow-y: auto; gap: 12px; margin-bottom: 16px; min-height: 0; max-height: 80vh; margin-right: 72px; margin-left: 4px;"></div>
                             <form id="chat-form" style="display: flex; flex-direction: column; gap: 0; align-items: stretch; margin-top: auto; width: 100%; position: relative;">
-                                <div class="chat-actions" style="display: flex; gap: 8px; margin-bottom: 4px;">
-                                    <button type="button" id="chat-new" style="background: #28a745; color: #fff; border: none; border-radius: 10px; padding: 0 14px; height: 40px; font-weight: 600; font-size: 15px; cursor: pointer;">Новый чат</button>
-                                    <button type="button" id="chat-history" style="background: #232323; color: #fff; border: 1px solid #444; border-radius: 10px; padding: 0 14px; height: 40px; font-weight: 600; font-size: 15px; cursor: pointer;">История</button>
+                                <div class="chat-actions" style="display: flex; justify-content: flex-end; gap: 4px; margin-bottom: 4px;">
+                                    <button type="button" id="chat-new" style="background: none; border: none; border-radius: 0; padding: 0; height: 40px; width: 40px; cursor: pointer; display: flex; align-items: center; justify-content: center;"><img src="${newChatUrl}" alt="New Chat" style="width:24px;height:24px;object-fit:contain;vertical-align:middle;" /></button>
+                                    <button type="button" id="chat-history" style="background: none; border: none; border-radius: 0; padding: 0; height: 40px; width: 40px; cursor: pointer; display: flex; align-items: center; justify-content: center;"><img src="${historyUrl}" alt="History" style="width:24px;height:24px;object-fit:contain;vertical-align:middle;" /></button>
                                 </div>
                                 <div style="position: relative; width: 100%; display: flex; align-items: flex-end; gap: 8px;">
                                     <textarea id="chat-input" placeholder="Ask whatever you want..." rows="1" style="width: 100%; min-width: 0; flex: 1; resize: none; border-radius: 12px; border: 1.5px solid #232323; background: #151515; color: #fff; padding: 12px 80px 12px 14px; font-size: 15px; transition: border 0.2s; height: 100px; min-height: 100px; margin: 0 0 0 16px;"></textarea>
@@ -887,13 +937,12 @@ export class Sidebar {
                         </div>
 
                         <div id="screen-voice" class="screen">
-                            <h1 class="title">🔊 Voice</h1>
-                            <p class="intro">Нажмите микрофон, надиктуйте фразу, получите ответ.</p>
-                            <button id="voice-rec-btn">🎙️ Start Listening</button>
-                            <p id="voice-result"></p>
-                            <div id="voice-bar">
-                                <div id="voice-level"></div>
+                            <h1 class="title">Let's talk!</h1>
+                            <p id="voice-status-bubble">I'm waiting to hear your pretty voice!</p>
+                            <div id="voice-waveform-container">
+                                <!-- Bars will be generated by JS -->
                             </div>
+                            <p id="voice-result"></p>
                         </div>
 
                         <div id="screen-translate" class="screen">
@@ -929,15 +978,15 @@ export class Sidebar {
                                     <div class="tools-section-title">Here is the all available tools</div>
                                     <div class="tools-icons-row">
                                         <div class="tool-icon-block">
-                                            <span class="tool-icon">🌐</span>
+                                            <span class="tool-icon"><img src="${translateUrl}" alt="Translate" style="width:32px;height:32px;object-fit:contain;display:block;" /></span>
                                             <div class="tool-label">Translate</div>
                                         </div>
                                         <div class="tool-icon-block">
-                                            <span class="tool-icon">📖</span>
+                                            <span class="tool-icon"><img src="${summarizerUrl}" alt="Summarize" style="width:32px;height:32px;object-fit:contain;display:block;" /></span>
                                             <div class="tool-label">Summarize</div>
                                         </div>
                                         <div class="tool-icon-block">
-                                            <span class="tool-icon">🗂️</span>
+                                            <span class="tool-icon"><img src="${simplifierUrl}" alt="Simplify" style="width:32px;height:32px;object-fit:contain;display:block;" /></span>
                                             <div class="tool-label">Simplify</div>
                                         </div>
                                     </div>
@@ -947,7 +996,7 @@ export class Sidebar {
                                     <div class="tools-section-title">Here is tools that is in your hotbar</div>
                                     <div class="tools-icons-row">
                                         <div class="tool-icon-block">
-                                            <span class="tool-icon">🗂️</span>
+                                            <span class="tool-icon"><img src="${simplifierUrl}" alt="Simplify" style="width:32px;height:32px;object-fit:contain;display:block;" /></span>
                                             <div class="tool-label">Simplify</div>
                                         </div>
                                     </div>
@@ -957,74 +1006,56 @@ export class Sidebar {
 
                         <div id="screen-settings" class="screen">
                             <h1 class="title">Settings</h1>
-                            <nav class="settings_dock">
-                                <button class="dock__btn" title="Account" data-screen="screen-account" style="position: relative; padding: 0; background: transparent;">
-                                <img id="user-avatar" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ffffff'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z'/%3E%3C/svg%3E">
-                                </button>
-                                <button class="settings__dock__btn" title="Chat" data-screen="screen-chat">
-                                    <svg viewBox="0 0 24 24"><path d="M12 3v10.55a4 4 0 1 0 2 0V3h-2z"/></svg>
-                                </button>
-                                <button class="settings__dock__btn" title="Voice" data-screen="screen-voice">
-                                    <svg viewBox="0 0 24 24"><path d="M12 20l4-9H8l4 9zm0-18l-4 9h8l-4-9z"/></svg>
-                                </button>
-                            </nav>
                         </div>
 
                         <div id="screen-account" class="screen">
-                            <h1 class="title">👤 Account</h1>
+                            <h1 class="title">Account</h1>
+                            <form id="login-form" class="auth-form">
+                                <div class="form-group">
+                                    <label for="email-input">Email</label>
+                                    <input type="email" id="email-input" required placeholder="Enter your email">
+                                </div>
+                                <div class="form-group">
+                                    <label for="password-input">Password</label>
+                                    <input type="password" id="password-input" required placeholder="Enter your password">
+                                </div>
+                                <div id="auth-error" class="error-message" style="display: none;"></div>
+                                <button type="submit" class="login-button" id="login-button">Log In</button>
+                                <button type="button" class="login-button" id="logout-button" style="display: none; margin-top: 8px;">Log out</button>
+                            </form>
                         </div>
 
-                        <div id="account-modal" class="account-modal-overlay">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <div class="modal-title">👤 Account</div>
-                                    <button class="modal-close" id="close-account-modal">×</button>
-                                </div>
-                                <div class="account-item" data-item="Login">
-                                    <button id="login-button" class="auth-button">Log in</button>
-                                    <button id="logout-button" class="auth-button" style="display: none;">Log out</button>
-                                </div>
-                            </div>
+                        <div id="screen-appereance" class="screen">
+                            <h1 class="title">Настройки</h1>
                         </div>
 
-                        <div id="auth-modal" class="auth-modal-overlay">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <div class="modal-title">🔐 Authentication Required</div>
-                                </div>
-                                <form id="login-form" class="auth-form">
-                                    <div class="form-group">
-                                        <label for="email-input">Email</label>
-                                        <input type="email" id="email-input" required placeholder="Enter your email">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="password-input">Password</label>
-                                        <input type="password" id="password-input" required placeholder="Enter your password">
-                                    </div>
-                                    <div id="auth-error" class="error-message" style="display: none;"></div>
-                                    <button type="submit" class="login-button">Log In</button>
-                                </form>
-                            </div>
-                        </div>
+                        <nav class="settings_dock">
+                            <button class="settings__dock__btn" title="Account" data-screen="screen-account" style="position: relative; padding: 0; background: transparent;">
+                                <img class="settings-dock-icon" src="${accountUrl}" alt="Account" style="width: 44px; height: 44px; object-fit: contain; border-radius: 50%;" />
+                            </button>
+                            <button class="settings__dock__btn" title="Appereance" data-screen="screen-appereance" style="position: relative; padding: 0; background: transparent;">
+                                <img class="settings-dock-icon" src="${appereanceUrl}" alt="Appereance" style="width: 44px; height: 44px; object-fit: contain; border-radius: 50%;" />
+                            </button>
+                        </nav>
 
                         <nav class="dock">
                             <button class="dock__btn" title="Notes" data-screen="screen-notes">
-                                <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z"/></svg>
+                                <img class="dock-icon" src="${notesUrl}" alt="Notes" style="width:28px;height:28px;object-fit:contain;display:block;" />
                             </button>
                             <button class="dock__btn" title="Chat" data-screen="screen-chat">
-                                <svg viewBox="0 0 24 24"><path d="M12 3v10.55a4 4 0 1 0 2 0V3h-2z"/></svg>
+                                <img class="dock-icon" src="${chatUrl}" alt="Chat" style="width:28px;height:28px;object-fit:contain;display:block;" />
                             </button>
                             <button class="dock__btn" title="Voice" data-screen="screen-voice">
-                                <svg viewBox="0 0 24 24"><path d="M12 20l4-9H8l4 9zm0-18l-4 9h8l-4-9z"/></svg>
+                                <img class="dock-icon" src="${voiceUrl}" alt="Voice" style="width:28px;height:28px;object-fit:contain;display:block;" />
                             </button>
                             <button class="dock__btn" title="Translate" data-screen="screen-translate">
-                                <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z"/></svg>
+                                <img class="dock-icon" src="${translateUrl}" alt="Translate" style="width:28px;height:28px;object-fit:contain;display:block;" />
                             </button>
                             <button class="tools_button" title="Tools">
-                                <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z"/></svg>
+                                <img class="dock-icon" src="${toolsUrl}" alt="Tools" style="width:28px;height:28px;object-fit:contain;display:block;" />
                             </button>
                             <button class="dock__btn" title="Settings" data-screen="screen-settings">
-                                <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z"/></svg>
+                                <img class="dock-icon" src="${settingsUrl}" alt="Settings" style="width:28px;height:28px;object-fit:contain;display:block;" />
                             </button>
                         </nav>
                     </div>
@@ -1134,6 +1165,79 @@ export class Sidebar {
                     });
                 }
             }
+
+            // --- Смена иконок при активации вкладки ---
+            const dockButtons = iframeDoc.querySelectorAll('.dock__btn, .tools_button, .settings__dock__btn');
+            const settingsDock = iframeDoc.querySelector('.settings_dock') as HTMLElement | null;
+            function updateSettingsDockVisibility() {
+                if (!iframeDoc) return;
+                const screens = ['screen-settings', 'screen-account', 'screen-appereance'];
+                const isVisible = screens.some(id => {
+                    const el = iframeDoc.getElementById(id);
+                    return el && el.classList.contains('active');
+                });
+                if (settingsDock) settingsDock.style.display = isVisible ? 'flex' : 'none';
+            }
+            // Вызываем при старте
+            updateSettingsDockVisibility();
+            // И при каждом клике на dock-кнопки
+            dockButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    dockButtons.forEach(b => {
+                        b.classList.remove('active');
+                        // dock
+                        const img = b.querySelector('.dock-icon') as HTMLImageElement | null;
+                        if (img) {
+                            switch (b.getAttribute('data-screen') || (b.classList.contains('tools_button') ? 'tools' : '')) {
+                                case 'screen-notes': img.src = notesUrl; break;
+                                case 'screen-chat': img.src = chatUrl; break;
+                                case 'screen-voice': img.src = voiceUrl; break;
+                                case 'screen-translate': img.src = translateUrl; break;
+                                case 'screen-settings': img.src = settingsUrl; break;
+                                case 'tools': img.src = toolsUrl; break;
+                            }
+                        }
+                        // settings dock
+                        const sImg = b.querySelector('.settings-dock-icon') as HTMLImageElement | null;
+                        if (sImg) {
+                            switch (b.getAttribute('data-screen')) {
+                                case 'screen-account': sImg.src = accountUrl; break;
+                                case 'screen-appereance': sImg.src = appereanceUrl; break;
+                            }
+                        }
+                    });
+                    btn.classList.add('active');
+                    // dock
+                    const img = btn.querySelector('.dock-icon') as HTMLImageElement | null;
+                    if (img) {
+                        switch (btn.getAttribute('data-screen') || (btn.classList.contains('tools_button') ? 'tools' : '')) {
+                            case 'screen-notes': img.src = notesActiveUrl; break;
+                            case 'screen-chat': img.src = chatActiveUrl; break;
+                            case 'screen-voice': img.src = voiceActiveUrl; break;
+                            case 'screen-translate': img.src = translateActiveUrl; break;
+                            case 'screen-settings': img.src = settingsActiveUrl; break;
+                            case 'tools': img.src = toolsActiveUrl; break;
+                        }
+                    }
+                    // settings dock
+                    const sImg = btn.querySelector('.settings-dock-icon') as HTMLImageElement | null;
+                    if (sImg) {
+                        switch (btn.getAttribute('data-screen')) {
+                            case 'screen-account': sImg.src = accountActiveUrl; break;
+                            case 'screen-appereance': sImg.src = appereanceActiveUrl; break;
+                        }
+                    }
+                    updateSettingsDockVisibility();
+                });
+            });
+            // Следим за изменением классов у .screen (например, при программном переключении)
+            const screensToWatch = ['screen-settings', 'screen-account', 'screen-appereance'];
+            screensToWatch.forEach(id => {
+                const el = iframeDoc.getElementById(id);
+                if (el) {
+                    new MutationObserver(updateSettingsDockVisibility).observe(el, { attributes: true, attributeFilter: ['class'] });
+                }
+            });
         };
 
         // Устанавливаем src для загрузки iframe
@@ -1158,6 +1262,11 @@ export class Sidebar {
             (this.sidebar as HTMLElement).style.right = '0';
 
             this.sidebarOpen = true;
+
+            // Сдвигаем floating button к левой части сайдбара
+            if (this.floatingButton) {
+                this.floatingButton.style.right = '25vw';
+            }
 
             // Update floating button state
             this.updateFloatingButtonState();
@@ -1184,6 +1293,11 @@ export class Sidebar {
             this.removeSidebarStyles();
 
             this.sidebarOpen = false;
+
+            // Возвращаем floating button к правому краю
+            if (this.floatingButton) {
+                this.floatingButton.style.right = '0';
+            }
 
             // Update floating button state
             this.updateFloatingButtonState();
@@ -1293,8 +1407,9 @@ export class Sidebar {
         this.restoreOriginalStyles();
         this.originalStyles.clear();
 
+        // Возвращаем floating button к правому краю
         if (this.floatingButton) {
-            this.floatingButton.style.right = '25px';
+            this.floatingButton.style.right = '0';
         }
     }
 }

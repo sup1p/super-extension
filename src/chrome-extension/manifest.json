@@ -29,7 +29,28 @@
     {
       "resources": [
         "sidebar.html",
-        "public/32.png"
+        "public/32.png",
+        "/public/icon.png",
+        "/public/chat.png",
+        "/public/notes.png",
+        "/public/settings.png",
+        "/public/tools.png",
+        "/public/translate.png",
+        "/public/voice.png",
+        "/public/chat-active.png",
+        "/public/notes-active.png",
+        "/public/settings-active.png",
+        "/public/tools-active.png",
+        "/public/translate-active.png",
+        "/public/voice-active.png",
+        "/public/summarizer.png",
+        "/public/simplifier.png",
+        "/public/new-chat.png",
+        "/public/history.png",
+        "/public/account.png",
+        "/public/appereance.png",
+        "/public/account-active.png",
+        "/public/appereance-active.png"
       ],
       "matches": [
         "<all_urls>"

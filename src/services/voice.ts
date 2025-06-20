@@ -1,8 +1,22 @@
 export class VoiceService {
     static initVoice(doc: Document): void {
-        const button = doc.getElementById("voice-rec-btn") as HTMLButtonElement;
+        const voiceScreen = doc.getElementById('screen-voice');
+        if (!voiceScreen) return;
+
+        const statusBubble = doc.getElementById("voice-status-bubble") as HTMLParagraphElement;
         const output = doc.getElementById("voice-result") as HTMLParagraphElement;
-        const bar = doc.getElementById("voice-level") as HTMLDivElement;
+        const waveformContainer = doc.getElementById("voice-waveform-container") as HTMLDivElement;
+
+        const NUM_BARS = 32;
+        const bars: HTMLElement[] = [];
+        for (let i = 0; i < NUM_BARS; i++) {
+            const bar = doc.createElement('div');
+            bar.className = 'waveform-bar';
+            bar.style.height = '2px';
+            waveformContainer.appendChild(bar);
+            bars.push(bar);
+        }
+
         let manualClose = false;
 
         const WV_URL = 'ws://localhost:8000/websocket-voice';
@@ -21,8 +35,10 @@ export class VoiceService {
         let dataArray: Uint8Array | null = null;
         let lastSoundTime = 0;
         let silenceCheckInterval: NodeJS.Timeout | null = null;
+        let animationFrameId: number;
 
-        const SILENCE_THRESHOLD = 120;
+
+        const SILENCE_THRESHOLD = 20; // Lowered threshold for more sensitivity
         const SILENCE_DURATION = 2000;
         const CHECK_INTERVAL = 100;
         const MIN_AUDIO_DURATION = 500;
@@ -30,32 +46,40 @@ export class VoiceService {
         let recordingStartTime = 0;
 
         const connectWS = () => {
+            if (wv && wv.readyState === WebSocket.OPEN) {
+                return;
+            }
             wv = new WebSocket(WV_URL);
 
             wv.onopen = () => {
                 console.log('WebSocket подключен');
-                button.disabled = false;
-                button.textContent = '🎙️ Start Listening';
-                output.textContent = 'Готов к работе';
+                statusBubble.textContent = 'Ready to listen!';
             };
 
             wv.onmessage = (e) => {
                 const { text, audio_base64 } = JSON.parse(e.data);
                 output.textContent = text;
+                statusBubble.textContent = 'Playing response...';
 
                 if (audio_base64) {
                     playResponse(audio_base64);
+                } else {
+                    statusBubble.textContent = 'I have something to say';
                 }
             };
 
             wv.onclose = () => {
                 console.log('WebSocket закрыт');
                 wv = null;
-                if (!manualClose) {
-                    console.log("Переподключние");
+                if (!manualClose && isListening) {
+                    console.log("Переподключение");
                     setTimeout(connectWS, 1000);
                 }
             };
+
+            wv.onerror = () => {
+                statusBubble.textContent = 'Connection error.';
+            }
         };
 
         const setupMicrophone = async () => {
@@ -77,14 +101,8 @@ export class VoiceService {
                 const source = audioContext.createMediaStreamSource(stream);
                 source.connect(analyser);
 
-                const filter = audioContext.createBiquadFilter();
-                filter.type = 'highpass';
-                filter.frequency.value = 300;
-                source.connect(filter);
-                filter.connect(analyser);
-
-                analyser.fftSize = 1024;
-                analyser.smoothingTimeConstant = 0.8;
+                analyser.fftSize = 512;
+                analyser.smoothingTimeConstant = 0.5;
                 const bufferLength = analyser.frequencyBinCount;
                 dataArray = new Uint8Array(bufferLength);
 
@@ -110,7 +128,6 @@ export class VoiceService {
 
                     if (recordingDuration > MAX_AUDIO_DURATION) {
                         console.log('Запись слишком длинная, обрезаем');
-                        chunks = chunks.slice(-1);
                     }
 
                     console.log('Запись остановлена, длительность:', recordingDuration, 'мс');
@@ -119,6 +136,7 @@ export class VoiceService {
                         const blob = new Blob(chunks, { type: 'audio/webm' });
                         if (blob.size > 1000) {
                             sendAudio(blob);
+                            statusBubble.textContent = 'Thinking...';
                         } else {
                             console.log('Аудио слишком маленькое, игнорируем');
                         }
@@ -139,6 +157,7 @@ export class VoiceService {
                 return true;
             } catch (error) {
                 console.error('Ошибка доступа к микрофону:', error);
+                statusBubble.textContent = 'Microphone access denied.';
                 return false;
             }
         };
@@ -173,6 +192,7 @@ export class VoiceService {
                 console.log('Воспроизведение завершено');
                 isPlaying = false;
                 currentAudio = null;
+                statusBubble.textContent = 'Listening...';
 
                 if (isListening && rec) {
                     setTimeout(() => {
@@ -189,6 +209,7 @@ export class VoiceService {
                 console.error('Ошибка воспроизведения');
                 isPlaying = false;
                 currentAudio = null;
+                statusBubble.textContent = 'Error playing response.';
 
                 if (isListening && rec) {
                     rec.start();
@@ -196,47 +217,62 @@ export class VoiceService {
                 }
             };
 
-            currentAudio.play().catch(console.error);
+            currentAudio.play().catch(e => {
+                console.error("Playback error:", e);
+                statusBubble.textContent = 'Could not play audio.';
+                isPlaying = false;
+            });
         };
 
-        const getAudioLevel = (): number => {
+        const getAverageAudioLevel = (): number => {
             if (!analyser || !dataArray) return 0;
+            analyser.getByteFrequencyData(dataArray);
+            let sum = 0;
+            for (let i = 0; i < dataArray.length; i++) {
+                sum += dataArray[i];
+            }
+            return sum / dataArray.length;
+        };
+
+        const updateWaveform = () => {
+            if (!isListening || isPlaying || !analyser || !dataArray) {
+                bars.forEach(bar => bar.style.height = '2px');
+                return;
+            }
 
             analyser.getByteFrequencyData(dataArray);
 
-            let sum = 0;
-            let count = 0;
+            const halfBarCount = Math.ceil(NUM_BARS / 2);
+            const bufferLength = analyser.frequencyBinCount;
+            const step = Math.floor(bufferLength / halfBarCount);
 
-            const startFreq = Math.floor(dataArray.length * 0.1);
-            const endFreq = Math.floor(dataArray.length * 0.5);
-
-            for (let i = startFreq; i < endFreq; i++) {
-                if (dataArray[i] > 0) {
-                    sum += dataArray[i] * dataArray[i];
-                    count++;
+            for (let i = 0; i < halfBarCount; i++) {
+                let sum = 0;
+                for (let j = 0; j < step; j++) {
+                    sum += dataArray[i * step + j];
                 }
-            }
+                const avg = sum / step;
+                const height = Math.max(2, Math.min(60, (avg / 255) * 60));
 
-            return count > 0 ? Math.sqrt(sum / count) : 0;
+                const bar1 = bars[halfBarCount - 1 - i];
+                const bar2 = bars[halfBarCount + i];
+
+                if (bar1) bar1.style.height = `${height}px`;
+                if (bar2) bar2.style.height = `${height}px`;
+            }
         };
+
+        const visualize = () => {
+            updateWaveform();
+            animationFrameId = requestAnimationFrame(visualize);
+        };
+
 
         const checkSilence = () => {
             if (!isListening || isPlaying) return;
 
-            const audioLevel = getAudioLevel();
+            const audioLevel = getAverageAudioLevel();
             const currentTime = Date.now();
-
-            if (bar) {
-                const percent = Math.min(100, (audioLevel / 256) * 100);
-                bar.style.width = percent + "%";
-                if (percent < 30) {
-                    bar.style.background = '#ff4444';
-                } else if (percent < 70) {
-                    bar.style.background = '#ffbb33';
-                } else {
-                    bar.style.background = '#00C851';
-                }
-            }
 
             if (audioLevel > SILENCE_THRESHOLD) {
                 lastSoundTime = currentTime;
@@ -301,8 +337,11 @@ export class VoiceService {
         };
 
         const startListening = async () => {
+            if (isListening) {
+                return;
+            }
             console.log('Начало прослушивания');
-
+            output.textContent = '';
             manualClose = false;
 
             if (!wv || wv.readyState !== WebSocket.OPEN) {
@@ -310,19 +349,19 @@ export class VoiceService {
             }
 
             if (!stream && !(await setupMicrophone())) {
-                output.textContent = 'Ошибка доступа к микрофону';
+                statusBubble.textContent = 'Could not access microphone.';
                 return;
             }
 
             isListening = true;
-            button.textContent = '🔴 Stop Listening';
-            output.textContent = 'Слушаю...';
+            statusBubble.textContent = 'Listening...';
 
             if (rec) {
                 chunks = [];
                 recordingStartTime = Date.now();
                 rec.start();
                 startSilenceDetection();
+                visualize();
             }
         };
 
@@ -330,9 +369,10 @@ export class VoiceService {
             console.log('Остановка прослушивания');
 
             isListening = false;
-            button.textContent = '🎙️ Start Listening';
-            output.textContent = 'Остановлено';
+            statusBubble.textContent = 'I\'m waiting to hear your pretty voice!';
 
+            cancelAnimationFrame(animationFrameId);
+            bars.forEach(bar => bar.style.height = '2px');
             stopSilenceDetection();
 
             if (rec && rec.state === 'recording') {
@@ -353,29 +393,24 @@ export class VoiceService {
             }
         };
 
-        button.onclick = () => {
-            if (isListening) {
-                stopListening();
-            } else {
-                startListening();
-            }
-        };
-
-        document.addEventListener('keydown', (e) => {
-            if (e.code === 'Space' && isPlaying) {
-                if (currentAudio) {
-                    currentAudio.pause();
-                    currentAudio = null;
-                    isPlaying = false;
-
-                    if (isListening && rec) {
-                        rec.start();
-                        startSilenceDetection();
+        const observer = new MutationObserver((mutationsList) => {
+            for (const mutation of mutationsList) {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                    const isActive = (mutation.target as HTMLElement).classList.contains('active');
+                    if (isActive) {
+                        startListening();
+                    } else {
+                        stopListening();
                     }
                 }
             }
         });
 
-        connectWS();
+        observer.observe(voiceScreen, { attributes: true });
+
+        // Initial check in case it's already active
+        if (voiceScreen.classList.contains('active')) {
+            startListening();
+        }
     }
 } 

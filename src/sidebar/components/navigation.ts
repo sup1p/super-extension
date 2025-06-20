@@ -34,6 +34,11 @@ export class NavigationComponent {
                 const target = e.target as HTMLElement;
                 const button = target.closest('.settings__dock__btn');
                 if (button) {
+                    // Remove active class from all settings dock buttons
+                    doc.querySelectorAll('.settings__dock__btn').forEach(btn => btn.classList.remove('active'));
+                    // Add active class to clicked button
+                    button.classList.add('active');
+
                     const screenId = button.getAttribute('data-screen');
                     if (screenId) {
                         showScreen(screenId);

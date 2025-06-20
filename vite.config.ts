@@ -14,6 +14,34 @@ export default defineConfig({
         { src: "src/chrome-extension/public/32.png", dest: "./public" },
         { src: "src/chrome-extension/public/48.png", dest: "./public" },
         { src: "src/chrome-extension/public/192.png", dest: "./public" },
+
+        { src: "src/chrome-extension/public/icon.png", dest: "./public" },
+
+        { src: "src/chrome-extension/public/notes.png", dest: "./public" },
+        { src: "src/chrome-extension/public/chat.png", dest: "./public" },
+        { src: "src/chrome-extension/public/voice.png", dest: "./public" },
+        { src: "src/chrome-extension/public/translate.png", dest: "./public" },
+        { src: "src/chrome-extension/public/tools.png", dest: "./public" },
+        { src: "src/chrome-extension/public/settings.png", dest: "./public" },
+
+        { src: "src/chrome-extension/public/notes-active.png", dest: "./public" },
+        { src: "src/chrome-extension/public/chat-active.png", dest: "./public" },
+        { src: "src/chrome-extension/public/voice-active.png", dest: "./public" },
+        { src: "src/chrome-extension/public/translate-active.png", dest: "./public" },
+        { src: "src/chrome-extension/public/tools-active.png", dest: "./public" },
+        { src: "src/chrome-extension/public/settings-active.png", dest: "./public" },
+
+        { src: "src/chrome-extension/public/summarizer.png", dest: "./public" },
+        { src: "src/chrome-extension/public/simplifier.png", dest: "./public" },
+
+        { src: "src/chrome-extension/public/new-chat.png", dest: "./public" },
+        { src: "src/chrome-extension/public/history.png", dest: "./public" },
+
+        { src: "src/chrome-extension/public/account.png", dest: "./public" },
+        { src: "src/chrome-extension/public/appereance.png", dest: "./public" },
+
+        { src: "src/chrome-extension/public/account-active.png", dest: "./public" },
+        { src: "src/chrome-extension/public/appereance-active.png", dest: "./public" }
       ],
     }),
   ],

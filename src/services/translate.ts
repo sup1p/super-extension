@@ -61,6 +61,7 @@ export class TranslateService {
         });
 
         swapBtn?.addEventListener('click', () => {
+            if (srcSel.value === 'auto') return;
             [srcSel.value, tgtSel.value] = [tgtSel.value, srcSel.value];
         });
     }
