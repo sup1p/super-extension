@@ -30,9 +30,6 @@ export class AuthService {
             await chrome.storage.local.set({ [this.TOKEN_KEY]: data.access_token });
             this.cachedToken = data.access_token;
 
-            // Verify token was stored
-            const stored = await chrome.storage.local.get(this.TOKEN_KEY);
-            console.log('Stored token:', stored[this.TOKEN_KEY]);
 
             return true;
         } catch (error) {

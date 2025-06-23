@@ -13,9 +13,7 @@ export class ChatComponent {
 
         // Получаем токен через AuthService
         AuthService.getToken().then(token => {
-            console.log('[ChatComponent] Используемый токен для WebSocket:', token);
             if (!token) {
-                alert('Требуется авторизация для чата!');
                 return;
             }
             // Подключаем WebSocket
@@ -29,7 +27,7 @@ export class ChatComponent {
                     ChatComponent.appendMessage(chatContainer, event.text, 'ai');
                     chatContainer.scrollTop = chatContainer.scrollHeight;
                 } else if ('error' in event) {
-                    alert('Ошибка чата: ' + event.error);
+                    console.log('Ошибка чата: ' + event.error);
                 }
             });
         });
@@ -89,7 +87,6 @@ export class ChatComponent {
                 // Получаем токен и чаты
                 const token = await AuthService.getToken();
                 if (!token) {
-                    alert('Требуется авторизация для истории чатов!');
                     return;
                 }
                 let sessions: ChatSession[] = [];

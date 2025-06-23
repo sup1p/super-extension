@@ -5,6 +5,9 @@ export class NavigationComponent {
         const showScreen = (id: string) => {
             screens.forEach(s => s.classList.remove('active'));
             doc.getElementById(id)?.classList.add('active');
+            if (id === 'screen-account' && typeof (window as any).loadUserData === 'function') {
+                (window as any).loadUserData(doc);
+            }
         };
 
         // Use event delegation for the dock buttons

@@ -1,5 +1,6 @@
 import { NotesService, Note } from '../../services/notes';
 import { AuthService } from '../../services/auth';
+import { showAuthModal } from './auth';
 
 export class NotesComponent {
     static async initNotes(doc: Document): Promise<void> {
@@ -29,7 +30,7 @@ export class NotesComponent {
         // Получить токен
         token = await AuthService.getToken();
         if (!token) {
-            alert('Требуется авторизация для заметок!');
+            showAuthModal(doc);
             return;
         }
 
@@ -80,10 +81,12 @@ export class NotesComponent {
             const content = inputArea.value.trim();
             if (!content) return;
             try {
-                const newNote = await NotesService.createNote('', content, token!);
+                const newNote = await NotesService.createNote('', content, token!, doc);
                 inputArea.value = '';
                 await loadNotes();
-                openDetail(newNote.id);
+                if (newNote) {
+                    openDetail(newNote.id);
+                }
             } catch (e) {
                 alert('Ошибка создания заметки');
             }
@@ -108,7 +111,6 @@ export class NotesComponent {
         const screens = doc.querySelectorAll<HTMLElement>('.screen');
         let token: string | null = await AuthService.getToken();
         if (!token) {
-            alert('Требуется авторизация для заметок!');
             return;
         }
         // Показать только экран заметки
@@ -118,7 +120,7 @@ export class NotesComponent {
         // Загрузить заметку
         let note: Note | null = null;
         try {
-            note = await NotesService.getNote(noteId, token);
+            note = await NotesService.getNote(noteId, token, doc);
         } catch (e) {
             alert('Ошибка загрузки заметки');
             return;
@@ -131,7 +133,7 @@ export class NotesComponent {
         // Сохранить изменения
         updateBtn.onclick = async () => {
             try {
-                await NotesService.updateNote(noteId, titleInp.value.trim(), bodyArea.value, token!);
+                await NotesService.updateNote(noteId, titleInp.value.trim(), bodyArea.value, token!, doc);
                 (doc as any).renderNotes();
                 showScreen('screen-notes');
             } catch (e) {
@@ -146,7 +148,7 @@ export class NotesComponent {
         deleteBtn.onclick = async () => {
             if (!confirm('Удалить заметку?')) return;
             try {
-                await NotesService.deleteNote(noteId, token!);
+                await NotesService.deleteNote(noteId, token!, doc);
                 (doc as any).renderNotes();
                 showScreen('screen-notes');
             } catch (e) {

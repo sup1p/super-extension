@@ -1,4 +1,8 @@
 export class VoiceService {
+    private static _startListening: (() => Promise<void>) | null = null;
+    private static _stopListening: (() => void) | null = null;
+    private static _isListening: (() => boolean) | null = null;
+
     static initVoice(doc: Document): void {
         const voiceScreen = doc.getElementById('screen-voice');
         if (!voiceScreen) return;
@@ -412,5 +416,22 @@ export class VoiceService {
         if (voiceScreen.classList.contains('active')) {
             startListening();
         }
+
+        // expose for external use
+        VoiceService._startListening = startListening;
+        VoiceService._stopListening = stopListening;
+        VoiceService._isListening = () => isListening;
+    }
+
+    static async startListening() {
+        if (VoiceService._startListening) await VoiceService._startListening();
+    }
+
+    static stopListening() {
+        if (VoiceService._stopListening) VoiceService._stopListening();
+    }
+
+    static isListening() {
+        return VoiceService._isListening ? VoiceService._isListening() : false;
     }
 } 
