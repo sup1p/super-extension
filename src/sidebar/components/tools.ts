@@ -1,3 +1,6 @@
+import { NotesService } from '../../services/notes';
+import { NotesComponent } from './notes';
+
 export class ToolsComponent {
     static initTools(doc: Document): void {
         const overlay = doc.getElementById('tools-modal') as HTMLElement;
@@ -85,10 +88,9 @@ export class ToolsComponent {
                     if ((window as any).AuthService) {
                         token = await (window as any).AuthService.getToken();
                     }
-                    // Запрос на бэкенд
                     let summary = '';
                     try {
-                        const res = await fetch('http://localhost:8000/summarize-page', {
+                        const res = await fetch('http://localhost:8000/tool/summarize', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -97,39 +99,26 @@ export class ToolsComponent {
                             },
                             body: JSON.stringify({ text: fullText })
                         });
-                        const data = await res.json();
-                        summary = data.summary || data.summarized_text || data.result || '';
+                        summary = await res.text();
+                        summary = summary.replace(/\n/g, "\\n");
+
                     } catch (e) {
                         summary = 'Error: ' + (e instanceof Error ? e.message : e);
                     }
                     if (loader) loader.style.display = 'none';
-                    // Показываем результат в модалке
-                    let modal = document.getElementById('summarize-modal');
-                    if (!modal) {
-                        modal = document.createElement('div');
-                        modal.id = 'summarize-modal';
-                        modal.className = 'tools-modal-overlay active';
-                        modal.innerHTML = `
-                          <div class="modal-content" style="max-width:420px;">
-                            <div class="modal-header">
-                              <div class="modal-title">Summary</div>
-                              <button class="modal-close" id="close-summarize-modal">×</button>
-                            </div>
-                            <div style="white-space:pre-line; color:#fff; font-size:16px;">${summary}</div>
-                          </div>
-                        `;
-                        document.body.appendChild(modal);
-                    } else {
-                        modal.classList.add('active');
-                        modal.querySelector('.modal-title')!.textContent = 'Summary';
-                        (modal.querySelector('div[style]') as HTMLElement).textContent = summary;
-                    }
-                    // Закрытие модалки
-                    const closeBtn = modal.querySelector('#close-summarize-modal');
-                    if (closeBtn) {
-                        closeBtn.addEventListener('click', () => {
-                            modal!.classList.remove('active');
-                        });
+                    // Создаём заметку и открываем детали
+                    try {
+                        const noteTitle = window.location.hostname;
+                        const newNote = await NotesService.createNote(noteTitle, summary, token, doc);
+                        if (newNote) {
+                            const docAny = doc as any;
+                            if (typeof docAny.renderNotes === 'function') {
+                                await docAny.renderNotes();
+                            }
+                            await NotesComponent.initNoteDetail(doc, newNote.id);
+                        }
+                    } catch (e) {
+                        alert('Ошибка создания заметки: ' + (e instanceof Error ? e.message : e));
                     }
                 }
             }),

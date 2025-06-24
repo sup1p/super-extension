@@ -1171,19 +1171,17 @@ export class Sidebar {
                     confirmBtn.addEventListener('click', async () => {
                         const select = iframeDoc.getElementById('page-translate-lang-select') as HTMLSelectElement;
                         const lang = select.value;
-                        const loaderOverlay = iframeDoc.getElementById('global-page-translate-loader');
-                        // Показываем глобальный лоадер поверх всего
-                        if (loaderOverlay) loaderOverlay.style.display = 'flex';
-                        (confirmBtn as HTMLButtonElement).disabled = true;
-                        // Получаем токен и только потом вызываем перевод
+
                         const token = await AuthService.getToken();
-                        console.log("TRANSLATE PAGE!!!" + token)
-                        await PageTranslateService.translatePage(lang, token || undefined);
-                        // Скрываем лоадер и активируем кнопку
-                        if (loaderOverlay) loaderOverlay.style.display = 'none';
-                        (confirmBtn as HTMLButtonElement).disabled = false;
-                        // Скрываем модалку выбора языка только после завершения перевода
-                        langModal.classList.remove('active');
+                        console.log("START TRANSLATE PAGE!!!" + token);
+
+                        // Запускаем режим перевода
+                        PageTranslateService.startTranslation(lang, token || undefined);
+
+                        // Скрываем модалку выбора языка
+                        if (langModal) {
+                            langModal.classList.remove('active');
+                        }
                     });
                 }
             }
