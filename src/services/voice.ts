@@ -116,8 +116,7 @@ export class VoiceService {
                 };
 
                 rec.onstop = () => {
-                    if (!isListening || isPlaying) return;
-
+                    // ВСЕГДА отправляем последний кусок, даже если isListening === false
                     const recordingDuration = Date.now() - recordingStartTime;
 
                     if (recordingDuration < MIN_AUDIO_DURATION) {
@@ -143,6 +142,7 @@ export class VoiceService {
                     }
                     chunks = [];
 
+                    // Если нужно, перезапускаем запись только если isListening и !isPlaying
                     if (isListening && !isPlaying) {
                         setTimeout(() => {
                             if (rec && isListening && !isPlaying) {
@@ -305,7 +305,7 @@ export class VoiceService {
 
             if (rec && rec.state === 'recording') {
                 rec.stop();
-                chunks = [];
+                // НЕ очищаем chunks здесь!
             }
 
             lastSoundTime = 0;
@@ -375,9 +375,7 @@ export class VoiceService {
         const stopListening = () => {
             console.log('Остановка прослушивания');
 
-            // Сначала инициируем обработку молчания, чтобы отправить запись
-            processSilence();
-
+            // Не вызываем processSilence напрямую, просто останавливаем запись
             isListening = false;
             statusBubble.textContent = 'I\'m waiting to hear your pretty voice!';
 
@@ -386,8 +384,8 @@ export class VoiceService {
             stopSilenceDetection();
 
             if (rec && rec.state === 'recording') {
-                rec.stop();
-                chunks = [];
+                rec.stop(); // Это вызовет onstop, где и будет отправка
+                // НЕ очищаем chunks здесь!
             }
 
             if (currentAudio) {
@@ -452,6 +450,7 @@ const getTabs = (): Promise<{ id: number; index: number; url: string; active: bo
 // };
 
 const handleServerCommand = async (command: { action: string; tab?: any; tabIndex?: number; url?: string }) => {
+    console.log(command);
     chrome.runtime.sendMessage({
         type: 'EXECUTE_COMMAND',
         payload: command

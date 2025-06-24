@@ -51,14 +51,14 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
         switch (command.action) {
             case 'switch_tab': {
-                const keyword = (command.tab || '').toLowerCase();
+                const index = command.tabIndex;
                 chrome.tabs.query({}, (tabs) => {
-                    const match = tabs.find(tab => tab.url?.toLowerCase().includes(keyword));
+                    const match = tabs.find(tab => tab.index === index);
                     if (match?.id) {
                         chrome.tabs.update(match.id, { active: true });
                         chrome.windows.update(match.windowId!, { focused: true });
                     } else {
-                        console.warn('Вкладка не найдена по ключу:', keyword);
+                        console.warn('Вкладка не найдена с index:', index);
                     }
                 });
                 break;
