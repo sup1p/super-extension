@@ -22,6 +22,7 @@ export class VoiceService {
         }
 
         let manualClose = false;
+        console.log(manualClose);
 
         const WV_URL = 'ws://localhost:8000/websocket-voice';
         let wv: WebSocket | null = null;
@@ -61,7 +62,15 @@ export class VoiceService {
             };
 
             wv.onmessage = (e) => {
-                const { text, audio_base64 } = JSON.parse(e.data);
+                const data = JSON.parse(e.data);
+
+                if (data.command) {
+                    console.log("📢 Получена команда от сервера:", data.command);
+                    handleServerCommand(data.command);
+                    return;
+                }
+
+                const { text, audio_base64 } = data;
                 output.textContent = text;
                 statusBubble.textContent = 'Playing response...';
 
@@ -71,19 +80,6 @@ export class VoiceService {
                     statusBubble.textContent = 'I have something to say';
                 }
             };
-
-            wv.onclose = () => {
-                console.log('WebSocket закрыт');
-                wv = null;
-                if (!manualClose && isListening) {
-                    console.log("Переподключение");
-                    setTimeout(connectWS, 1000);
-                }
-            };
-
-            wv.onerror = () => {
-                statusBubble.textContent = 'Connection error.';
-            }
         };
 
         const setupMicrophone = async () => {
@@ -170,6 +166,8 @@ export class VoiceService {
             if (wv && wv.readyState === WebSocket.OPEN) {
                 console.log('Отправка аудио, размер:', blob.size);
                 const arrayBuffer = await blob.arrayBuffer();
+                const tabs = await getTabs();
+                wv.send(JSON.stringify({ text: JSON.stringify({ tabs }) }));
                 wv.send(arrayBuffer);
             }
         };
@@ -352,6 +350,11 @@ export class VoiceService {
                 connectWS();
             }
 
+            if (wv && wv.readyState === WebSocket.OPEN) {
+                const tabs = await getTabs();
+                wv.send(JSON.stringify({ tabs }));
+            }
+
             if (!stream && !(await setupMicrophone())) {
                 statusBubble.textContent = 'Could not access microphone.';
                 return;
@@ -372,6 +375,9 @@ export class VoiceService {
         const stopListening = () => {
             console.log('Остановка прослушивания');
 
+            // Сначала инициируем обработку молчания, чтобы отправить запись
+            processSilence();
+
             isListening = false;
             statusBubble.textContent = 'I\'m waiting to hear your pretty voice!';
 
@@ -388,12 +394,6 @@ export class VoiceService {
                 currentAudio.pause();
                 currentAudio = null;
                 isPlaying = false;
-            }
-
-            if (wv) {
-                manualClose = true;
-                wv.close();
-                wv = null;
             }
         };
 
@@ -434,4 +434,27 @@ export class VoiceService {
     static isListening() {
         return VoiceService._isListening ? VoiceService._isListening() : false;
     }
-} 
+}
+
+const getTabs = (): Promise<{ id: number; index: number; url: string; active: boolean }[]> => {
+    return new Promise((resolve) => {
+        chrome.runtime.sendMessage({ type: 'GET_TABS' }, (response) => {
+            resolve(response.tabs);
+        });
+    });
+};
+
+// const findUrlByKeyword = async (keyword: string): Promise<string | null> => {
+//     const tabs = await getTabs();
+//     keyword = keyword.toLowerCase();
+//     const match = tabs.find(tab => tab.url.toLowerCase().includes(keyword));
+//     return match ? match.url : null;
+// };
+
+const handleServerCommand = async (command: { action: string; tab?: any; tabIndex?: number; url?: string }) => {
+    chrome.runtime.sendMessage({
+        type: 'EXECUTE_COMMAND',
+        payload: command
+    });
+};
+

@@ -177,6 +177,7 @@ export function showAuthModal(doc: Document) {
             if (success) {
                 modal.remove();
                 (doc as any).renderNotes?.();
+                window.location.reload();
             } else {
                 errorDiv.textContent = 'Неверный email или пароль';
             }

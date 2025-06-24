@@ -8,14 +8,15 @@ export type Note = {
 };
 
 export class NotesService {
-    static async getAllNotes(token: string): Promise<Note[]> {
-        console.log('Token used for notes:', token);
+    static async getAllNotes(token: string, doc: Document): Promise<Note[]> {
         const res = await fetch('http://localhost:8000/notes/get/all', {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         if (!res.ok) {
+            if (res.status === 401) {
+                showAuthModal(doc);
+            }
             console.log(res);
-            return [];
         }
         return await res.json();
     }

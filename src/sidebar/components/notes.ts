@@ -37,11 +37,11 @@ export class NotesComponent {
         // Получить все заметки
         async function loadNotes() {
             try {
-                notes = await NotesService.getAllNotes(token!);
+                notes = await NotesService.getAllNotes(token!, doc);
                 filteredNotes = notes;
                 render();
             } catch (e) {
-                alert('Ошибка загрузки заметок');
+                showAuthModal(doc);
             }
         }
 

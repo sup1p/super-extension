@@ -1075,6 +1075,7 @@ export class Sidebar {
                 `;
 
             // Инициализируем компоненты
+            AuthComponent.initAuth(iframeDoc);
             NavigationComponent.initNavigation(iframeDoc);
             NotesComponent.initNotes(iframeDoc);
             // NotesComponent.initNoteDetail(iframeDoc);
@@ -1082,7 +1083,6 @@ export class Sidebar {
             VoiceService.initVoice(iframeDoc);
             ToolsComponent.initTools(iframeDoc);
             AccountComponent.initAuth(iframeDoc);
-            AuthComponent.initAuth(iframeDoc);
             ChatComponent.initChat(iframeDoc);
 
             // Добавляем обработчик для кнопки закрытия
