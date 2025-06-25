@@ -8,34 +8,46 @@ export class ChatComponent {
         const chatInput = doc.getElementById('chat-input') as HTMLTextAreaElement;
         const chatNewBtn = doc.getElementById('chat-new') as HTMLButtonElement;
         const chatHistoryBtn = doc.getElementById('chat-history') as HTMLButtonElement;
+        let isConnected = false;
 
         if (!chatContainer || !chatForm || !chatInput) return;
 
         // Получаем токен через AuthService
-        AuthService.getToken().then(token => {
-            if (!token) {
-                return;
-            }
-            // Подключаем WebSocket
-            ChatService.connect(token, (event: ChatEvent) => {
-                if ('text' in event) {
-                    // Удалить последний 'ai' с текстом '...'
-                    const lastMsg = chatContainer.querySelector('.chat-message.ai:last-child');
-                    if (lastMsg && lastMsg.textContent === '...') {
-                        lastMsg.remove();
-                    }
-                    ChatComponent.appendMessage(chatContainer, event.text, 'ai');
-                    chatContainer.scrollTop = chatContainer.scrollHeight;
-                } else if ('error' in event) {
-                    console.log('Ошибка чата: ' + event.error);
+        const connectWebSocket = async () => {
+            try {
+                const token = await AuthService.getToken();
+                if (!token) {
+                    console.log("No token, can't connect chat.");
+                    isConnected = false;
+                    return;
                 }
-            });
-        });
+                await ChatService.connect(token, (event: ChatEvent) => {
+                    if ('text' in event) {
+                        const lastMsg = chatContainer.querySelector('.chat-message.ai:last-child');
+                        if (lastMsg && lastMsg.textContent === '...') {
+                            lastMsg.remove();
+                        }
+                        ChatComponent.appendMessage(chatContainer, event.text, 'ai');
+                        chatContainer.scrollTop = chatContainer.scrollHeight;
+                    } else if ('error' in event) {
+                        console.log('Ошибка чата: ' + event.error);
+                        isConnected = false; // Сбросить флаг при ошибке
+                    }
+                });
+                isConnected = true;
+            } catch (error) {
+                console.error("Failed to connect WebSocket:", error);
+                isConnected = false;
+            }
+        };
+
+        connectWebSocket();
 
         if (chatNewBtn) {
             chatNewBtn.addEventListener('click', () => {
                 chatContainer.innerHTML = '';
                 ChatService.resetSession();
+                connectWebSocket(); // Переподключаемся для новой сессии
             });
         }
         if (chatHistoryBtn) {
@@ -143,7 +155,10 @@ export class ChatComponent {
         chatForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const userMessage = chatInput.value.trim();
-            if (!userMessage) return;
+            if (!userMessage || !isConnected) {
+                if (!isConnected) console.log("Can't send message, not connected.");
+                return;
+            }
 
             // Add user message to chat
             ChatComponent.appendMessage(chatContainer, userMessage, 'user');

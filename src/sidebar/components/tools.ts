@@ -75,39 +75,38 @@ export class ToolsComponent {
                     }
                 }
                 if (label === 'summarize') {
-                    // Собираем текст
-                    const texts = (window as any).PageTranslateService
-                        ? (window as any).PageTranslateService.getAllVisibleText()
-                        : [];
-                    const fullText = texts.join('\n');
-                    // Показываем лоадер
-                    let loader = document.getElementById('global-page-translate-loader');
-                    if (loader) loader.style.display = 'flex';
-                    // Получаем токен
-                    let token = '';
-                    if ((window as any).AuthService) {
-                        token = await (window as any).AuthService.getToken();
-                    }
-                    let summary = '';
+                    const loader = doc.getElementById('global-page-translate-loader');
                     try {
-                        const res = await fetch('http://localhost:8000/tool/summarize', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'accept': 'application/json',
-                                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-                            },
-                            body: JSON.stringify({ text: fullText })
-                        });
-                        summary = await res.text();
-                        summary = summary.replace(/\n/g, "\\n");
+                        // Собираем текст
+                        const texts = (window as any).PageTranslateService
+                            ? (window as any).PageTranslateService.getAllVisibleText()
+                            : [];
+                        const fullText = texts.join('\n');
+                        // Показываем лоадер
+                        if (loader) loader.style.display = 'flex';
+                        // Получаем токен
+                        let token = '';
+                        if ((window as any).AuthService) {
+                            token = await (window as any).AuthService.getToken();
+                        }
+                        let summary = '';
+                        try {
+                            const res = await fetch('http://localhost:8000/tool/summarize', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'accept': 'application/json',
+                                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                                },
+                                body: JSON.stringify({ text: fullText })
+                            });
+                            summary = await res.text();
+                            summary = summary.replace(/\n/g, "\\n");
 
-                    } catch (e) {
-                        summary = 'Error: ' + (e instanceof Error ? e.message : e);
-                    }
-                    if (loader) loader.style.display = 'none';
-                    // Создаём заметку и открываем детали
-                    try {
+                        } catch (e) {
+                            summary = 'Error: ' + (e instanceof Error ? e.message : e);
+                        }
+                        // Создаём заметку и открываем детали
                         const noteTitle = window.location.hostname;
                         const newNote = await NotesService.createNote(noteTitle, summary, token, doc);
                         if (newNote) {
@@ -119,6 +118,8 @@ export class ToolsComponent {
                         }
                     } catch (e) {
                         alert('Ошибка создания заметки: ' + (e instanceof Error ? e.message : e));
+                    } finally {
+                        if (loader) loader.style.display = 'none';
                     }
                 }
             }),

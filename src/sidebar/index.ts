@@ -16,6 +16,7 @@ export class Sidebar {
     private floatingButton: HTMLElement | null = null;
     private originalStyles: Map<Element, string> = new Map();
     private sidebarOpen = false;
+    private sidebarWidth = '480px';
 
     constructor() {
         this.initializeFloatingButton();
@@ -98,8 +99,8 @@ export class Sidebar {
         iframe.style.cssText = `
                 position: fixed;
                 top: 0;
-                right: -25vw;
-                width: 25vw;
+                right: -${this.sidebarWidth};
+                width: ${this.sidebarWidth};
                 height: 100vh;
                 border: none;
                 z-index: 2147483647;
@@ -731,6 +732,13 @@ export class Sidebar {
                             transition: background 0.2s;
                         }   
 
+                        .tool-icon-block.disabled-tool {
+                            cursor: not-allowed;
+                        }
+                        .tool-icon-block.disabled-tool:hover {
+                            background: none !important;
+                        }
+
                         .screen.active#screen-voice {
                             display: flex;
                             flex-direction: column;
@@ -989,9 +997,14 @@ export class Sidebar {
                                             <span class="tool-icon"><img src="${summarizerUrl}" alt="Summarize" style="width:32px;height:32px;object-fit:contain;display:block;" /></span>
                                             <div class="tool-label">Summarize</div>
                                         </div>
-                                        <div class="tool-icon-block">
-                                            <span class="tool-icon"><img src="${simplifierUrl}" alt="Simplify" style="width:32px;height:32px;object-fit:contain;display:block;" /></span>
-                                            <div class="tool-label">Simplify</div>
+                                        <div class="tool-icon-block disabled-tool">
+                                            <span class="tool-icon" style="position: relative; display: flex; align-items: center; justify-content: center;">
+                                                <img src="${simplifierUrl}" alt="Simplify" style="width:32px;height:32px;object-fit:contain;display:block;opacity:0.4;" />
+                                                <svg width="32" height="32" style="position:absolute;top:0;left:0;pointer-events:none;" xmlns="http://www.w3.org/2000/svg">
+                                                    <line x1="4" y1="28" x2="28" y2="4" stroke="#ff4444" stroke-width="2.5" stroke-linecap="round" />
+                                                </svg>
+                                            </span>
+                                            <div class="tool-label" style="color: #888;">Soon</div>
                                         </div>
                                     </div>
                                 </div>
@@ -999,9 +1012,14 @@ export class Sidebar {
                                     <div class="modal-title" style="font-size:20px;">Hotbar tools</div>
                                     <div class="tools-section-title">Here is tools that is in your hotbar</div>
                                     <div class="tools-icons-row">
-                                        <div class="tool-icon-block">
-                                            <span class="tool-icon"><img src="${simplifierUrl}" alt="Simplify" style="width:32px;height:32px;object-fit:contain;display:block;" /></span>
-                                            <div class="tool-label">Simplify</div>
+                                        <div class="tool-icon-block disabled-tool">
+                                             <span class="tool-icon" style="position: relative; display: flex; align-items: center; justify-content: center;">
+                                                <img src="${simplifierUrl}" alt="Simplify" style="width:32px;height:32px;object-fit:contain;display:block;opacity:0.4;" />
+                                                <svg width="32" height="32" style="position:absolute;top:0;left:0;pointer-events:none;" xmlns="http://www.w3.org/2000/svg">
+                                                    <line x1="4" y1="28" x2="28" y2="4" stroke="#ff4444" stroke-width="2.5" stroke-linecap="round" />
+                                                </svg>
+                                            </span>
+                                            <div class="tool-label" style="color: #888;">Soon</div>
                                         </div>
                                     </div>
                                 </div>
@@ -1325,7 +1343,7 @@ export class Sidebar {
 
             // Сдвигаем floating button к левой части сайдбара
             if (this.floatingButton) {
-                this.floatingButton.style.right = '25vw';
+                this.floatingButton.style.right = this.sidebarWidth;
             }
 
             // Update floating button state
@@ -1347,7 +1365,7 @@ export class Sidebar {
         if (this.sidebar) {
             // Скрываем сайдбар
             this.sidebar.classList.remove('open');
-            (this.sidebar as HTMLElement).style.right = '-25vw';
+            (this.sidebar as HTMLElement).style.right = `-${this.sidebarWidth}`;
 
             // Восстанавливаем оригинальные стили
             this.removeSidebarStyles();
@@ -1404,7 +1422,7 @@ export class Sidebar {
     }
 
     public applySidebarStyles(): void {
-        const contentWidth = '75vw';
+        const contentWidth = `calc(100vw - ${this.sidebarWidth})`;
 
         // Стили для HTML и body
         const htmlStyle = `

@@ -8,32 +8,41 @@ export class ChatService {
     private static onMessageCallback: ((event: ChatEvent) => void) | null = null;
     private static wsUrl = (token: string) => `${process.env.BACKEND_WS_URL || "ws://localhost:8000"}/chat/websocket?token=${token}`;
 
-    static connect(token: string, onMessage: (event: ChatEvent) => void) {
-        this.disconnect();
-        this.token = token;
-        this.onMessageCallback = onMessage;
-        this.ws = new WebSocket(this.wsUrl(token));
-        this.ws.onopen = () => {
-            // соединение установлено
-        };
-        this.ws.onmessage = (event) => {
-            try {
-                const data = JSON.parse(event.data);
-                if (data.error) {
-                    onMessage({ error: data.error });
-                } else if (data.text) {
-                    onMessage({ text: data.text });
+    static connect(token: string, onMessage: (event: ChatEvent) => void): Promise<void> {
+        return new Promise((resolve, reject) => {
+            this.disconnect();
+            this.token = token;
+            this.onMessageCallback = onMessage;
+            this.ws = new WebSocket(this.wsUrl(token));
+
+            this.ws.onopen = () => {
+                console.log("WebSocket connection established");
+                resolve();
+            };
+
+            this.ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.error) {
+                        onMessage({ error: data.error });
+                    } else if (data.text) {
+                        onMessage({ text: data.text });
+                    }
+                } catch (e) {
+                    onMessage({ error: "Invalid message format" });
                 }
-            } catch (e) {
-                onMessage({ error: "Invalid message format" });
-            }
-        };
-        this.ws.onclose = () => {
-            // соединение закрыто
-        };
-        this.ws.onerror = () => {
-            onMessage({ error: "WebSocket error" });
-        };
+            };
+
+            this.ws.onclose = () => {
+                console.log("WebSocket connection closed");
+            };
+
+            this.ws.onerror = (event) => {
+                console.error("WebSocket error:", event);
+                onMessage({ error: "WebSocket error" });
+                reject(new Error("WebSocket error"));
+            };
+        });
     }
 
     static sendMessage(message: string) {

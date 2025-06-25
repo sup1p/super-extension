@@ -269,6 +269,12 @@ export class PageTranslateService {
     static isTranslateModeEnabled(): boolean {
         return translateMode;
     }
+
+    // Статический метод для получения всего видимого текста
+    static getAllVisibleText(): string[] {
+        const service = new PageTranslateService('en'); // Временный экземпляр для доступа к collectTextNodes
+        return service.collectTextNodes().map(n => n.nodeValue || '');
+    }
 }
 
 // Стили для перевода, лоадера и ошибок
