@@ -21,9 +21,9 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
     if (request.type === 'GET_TABS') {
         chrome.tabs.query({}, (tabs) => {
             const result = tabs.map(tab => ({
-                id: tab.id!,
                 index: tab.index,
                 url: tab.url || '',
+                active: !!tab.active
             }));
             (sendResponse as any)({ tabs: result });
         });
@@ -35,7 +35,6 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (message.type === 'GET_TABS') {
         chrome.tabs.query({}, (tabs) => {
             const simplified = tabs.map(tab => ({
-                id: tab.id!,
                 index: tab.index!,
                 url: tab.url || '',
                 active: !!tab.active
@@ -92,15 +91,35 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
             }
 
             case 'close_tab': {
-                const index = command.tabIndex;
-                chrome.tabs.query({}, (tabs) => {
-                    const match = tabs.find(tab => tab.index === index);
-                    if (match?.id) {
-                        chrome.tabs.remove(match.id);
-                    } else {
-                        console.warn('Не найдена вкладка с index:', index);
-                    }
-                });
+                if (Array.isArray(command.tabIndices)) {
+                    // Обработка закрытия нескольких вкладок
+                    const indicesToClose = command.tabIndices;
+                    chrome.tabs.query({}, (tabs) => {
+                        const idsToClose = tabs
+                            .filter(tab => indicesToClose.includes(tab.index))
+                            .map(tab => tab.id)
+                            .filter((id): id is number => !!id);
+
+                        if (idsToClose.length > 0) {
+                            chrome.tabs.remove(idsToClose);
+                        } else {
+                            console.warn('Не найдены вкладки с индексами:', indicesToClose);
+                        }
+                    });
+                } else if (typeof command.tabIndex === 'number') {
+                    // Обработка закрытия одной вкладки (старая логика)
+                    const index = command.tabIndex;
+                    chrome.tabs.query({}, (tabs) => {
+                        const match = tabs.find(tab => tab.index === index);
+                        if (match && typeof match.id === 'number') {
+                            chrome.tabs.remove(match.id);
+                        } else {
+                            console.warn('Не найдена вкладка с index:', index);
+                        }
+                    });
+                } else {
+                    console.warn('Для команды close_tab не указаны tabIndex или tabIndices', command);
+                }
                 break;
             }
 
