@@ -51,7 +51,6 @@ export class NotesComponent {
             (searchInput ? filteredNotes : notes).forEach(n => {
                 const row = document.createElement('div');
                 row.className = 'note-row';
-                row.style.cssText = 'margin-bottom:12px;padding:14px 16px;background:#181818;border-radius:12px;cursor:pointer;box-shadow:0 2px 8px #0002;display:flex;flex-direction:column;gap:2px;';
                 row.onclick = () => openDetail(n.id);
                 const title = document.createElement('div');
                 title.textContent = n.title || 'Без названия';

@@ -17,12 +17,48 @@ export class Sidebar {
     private originalStyles: Map<Element, string> = new Map();
     private sidebarOpen = false;
     private sidebarWidth = '480px';
+    private sidebarPosition: 'left' | 'right' = 'right';
+    private floatingButtonPosition: 'Bottom' | 'Top' = 'Bottom';
+    private hideIconOn: string[] = [];
+    private theme: 'system' | 'light' | 'dark' = 'system';
 
     constructor() {
-        this.initializeFloatingButton();
+        chrome.storage.local.get(['sidebarPosition', 'floatingButtonPosition', 'hideIconOn', 'sidebarTheme'], (result) => {
+            if (result.sidebarPosition === 'left') {
+                this.sidebarPosition = 'left';
+            }
+            if (result.floatingButtonPosition === 'Top') {
+                this.floatingButtonPosition = 'Top';
+            }
+            if (Array.isArray(result.hideIconOn)) {
+                this.hideIconOn = result.hideIconOn;
+            }
+            // Добавляем example.com по умолчанию, если его нет
+            if (!this.hideIconOn.includes('example.com')) {
+                this.hideIconOn.push('example.com');
+                chrome.storage.local.set({ hideIconOn: this.hideIconOn });
+            }
+            if (result.sidebarTheme === 'light' || result.sidebarTheme === 'dark') {
+                this.theme = result.sidebarTheme;
+            } else {
+                this.theme = 'system';
+            }
+            this.initializeFloatingButton();
+        });
     }
 
     public initializeFloatingButton(): void {
+        // Check if floating button should be hidden on this site
+        const currentHost = window.location.hostname.replace(/^www\./, '');
+        // Проверяем точное совпадение домена или поддомена
+        if (this.hideIconOn.some(domain => {
+            const d = domain.replace(/^www\./, '');
+            return currentHost === d || currentHost.endsWith('.' + d);
+        })) {
+            if (this.floatingButton) this.floatingButton.remove();
+            this.floatingButton = null;
+            return;
+        }
         // Remove existing button if it exists
         if (this.floatingButton) {
             this.floatingButton.remove();
@@ -36,19 +72,14 @@ export class Sidebar {
             <img id="floating-btn-avatar-img" src="${iconUrl}" alt="icon" style="width:28px;height:28px;object-fit:cover;display:block;border-radius:50%;margin:auto;" />
         `;
 
-
-
-
-        // Apply styles to the floating button
-        this.floatingButton.style.cssText = `
+        const topValue = this.floatingButtonPosition === 'Top' ? '25%' : '75%';
+        const commonStyles = `
             position: fixed;
-            top: 50%;
-            right: 0;
+            top: ${topValue};
             transform: translateY(-50%) scale(1);
             width: 44px;
             height: 44px;
             background: #151515;
-            border-radius: 22px 0 0 22px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -59,11 +90,24 @@ export class Sidebar {
             color: white;
             user-select: none;
             border: 2px solid rgba(255,255,255,0.08);
-            border-right: none;
             padding: 0;
             gap: 0;
             pointer-events: auto;
         `;
+
+        if (this.sidebarPosition === 'left') {
+            this.floatingButton.style.cssText = commonStyles + `
+                left: 0;
+                border-radius: 0 22px 22px 0;
+                border-left: none;
+            `;
+        } else {
+            this.floatingButton.style.cssText = commonStyles + `
+                right: 0;
+                border-radius: 22px 0 0 22px;
+                border-right: none;
+            `;
+        }
 
         // Add click handler
         this.floatingButton.addEventListener('click', (e) => {
@@ -78,9 +122,12 @@ export class Sidebar {
     public cleanup(): void {
         if (this.floatingButton) {
             this.floatingButton.remove();
+            this.floatingButton = null;
         }
         if (this.sidebarContainer) {
             this.sidebarContainer.remove();
+            this.sidebarContainer = null;
+            this.sidebar = null;
         }
     }
 
@@ -96,18 +143,29 @@ export class Sidebar {
         // Создаем iframe для изоляции стилей
         const iframe = document.createElement('iframe');
         iframe.id = 'chrome-extension-sidebar-iframe';
-        iframe.style.cssText = `
-                position: fixed;
-                top: 0;
+
+        const iframeBaseStyles = `
+            position: fixed;
+            top: 0;
+            width: ${this.sidebarWidth};
+            height: 100vh;
+            border: none;
+            z-index: 2147483647;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+            background: white;
+        `;
+
+        if (this.sidebarPosition === 'left') {
+            iframe.style.cssText = iframeBaseStyles + `
+                left: -${this.sidebarWidth};
+                transition: left 0.3s ease;
+             `;
+        } else {
+            iframe.style.cssText = iframeBaseStyles + `
                 right: -${this.sidebarWidth};
-                width: ${this.sidebarWidth};
-                height: 100vh;
-                border: none;
-                z-index: 2147483647;
                 transition: right 0.3s ease;
-                box-shadow: -2px 0 10px rgba(0,0,0,0.1);
-                background: white;
-            `;
+             `;
+        }
 
         this.sidebarContainer.appendChild(iframe);
         document.body.appendChild(this.sidebarContainer);
@@ -123,6 +181,28 @@ export class Sidebar {
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
                     <title>Extension Sidebar</title>
                     <style>
+                        :root {
+                            --color-bg: #000;
+                            --color-container: #232323;
+                            --color-active: #715CFF;
+                            --color-border: #1F1D1D;
+                            --color-text: #fff;
+                        }
+                        body.theme-light {
+                            --color-bg: #FAFAFA;
+                            --color-container: #F5F5F5;
+                            --color-active: #AA97FF;
+                            --color-border: #E9E9E9;
+                            --color-text: #232323;
+                        }
+                        body.theme-dark {
+                            --color-bg: #000;
+                            --color-container: #232323;
+                            --color-active: #715CFF;
+                            --color-border: #1F1D1D;
+                            --color-text: #fff;
+                        }
+
                         * {
                             margin: 0;
                             padding: 0;
@@ -131,10 +211,11 @@ export class Sidebar {
                         
                         body {
                             font-family: 'Inter', sans-serif;
-                            background: #000;
-                            color: #fff;
+                            background: var(--color-bg);
+                            color: var(--color-text);
                             height: 100vh;
                             overflow: hidden;
+                            transition: background 0.2s, color 0.2s;
                         }
                         
                         .sidebar {
@@ -142,6 +223,7 @@ export class Sidebar {
                             width: 100%;
                             height: 100%;
                             padding: 32px 24px 24px;
+                            background: var(--color-bg);
                         }
                         
                         .title {
@@ -149,6 +231,7 @@ export class Sidebar {
                             font-weight: 600;
                             margin-bottom: 16px;
                             text-align: center;
+                            color: var(--color-text);
                         }
 
                         label {
@@ -164,55 +247,46 @@ export class Sidebar {
                             font-size: 14px;
                             margin-top: 4px;
                             border-radius: 8px;
-                            border: 1px solid #ccc;
+                            border: 1px solid var(--color-border);
                             resize: none;
                             box-sizing: border-box;
-                            background-color: #151515;
-                            color: #ffffff;
-                            border: 1px solid #1F1D1D;
+                            background-color: var(--color-container);
+                            color: var(--color-text);
                         }
                         
                         textarea:focus {
-                            border:1px solid #A48FFF;
+                            border:1px solid var(--color-active);
                             outline: none;
                             width: 100%;
                             height: 100px;
                         }
 
                         textarea[readonly] {
-                            background-color: #151515;
-                            color: #ffffff;
+                            background-color: var(--color-container);
+                            color: var(--color-text);
                         }
 
                         select option {
-                            background-color: #151515;
-                            color: #ffffff;
-                            border: 1px solid #1F1D1D;
+                            background-color: var(--color-container);
+                            color: var(--color-text);
+                            border: 1px solid var(--color-border);
                         }
 
                         select {
-                            background-color: #151515;
-                            color: #ffffff;
-                            border: 1px solid #1F1D1D;
+                            background-color: var(--color-container);
+                            color: var(--color-text);
+                            border: 1px solid var(--color-border);
                         }
 
-                        .translate-controls {
-                            display: flex;
-                            align-items: center;
-                            gap: 8px;
-                            margin-top: 16px;
-                            flex-wrap: wrap;
-                            background-color: #151515
-                        }
 
                             .language-select {
                             flex: 1;
                             padding: 6px 8px;
                             border-radius: 8px;
-                            border: 1px solid #ccc;
+                            border: 1px solid var(--color-border);
                             font-size: 14px;
-                            background-color: #151515;
-                            border: 1px solid #1F1D1D;
+                            background-color: var(--color-container);
+                            color: var(--color-text);
                         }
 
                             #swapLangs {
@@ -227,8 +301,8 @@ export class Sidebar {
                             padding: 8px 12px;
                             font-size: 14px;
                             font-weight: 600;
-                            background-color: #6F58D5;
-                            color: white;
+                            background-color: var(--color-active);
+                            color: #fff;
                             border: none;
                             border-radius: 8px;
                             cursor: pointer;
@@ -326,8 +400,8 @@ export class Sidebar {
                         }
 
                         .settings__dock__btn.active {
-                            background: #715CFF;
-                            box-shadow: 0 0 8px var(--btn-active);
+                            background: var(--color-active);
+                            box-shadow: 0 0 8px var(--color-active);
                         }
 
                         .settings__dock__btn.active svg {
@@ -376,8 +450,8 @@ export class Sidebar {
 
                         /* активный инструмент — фиолетовый круг + лёгкое свечение */
                         .dock__btn.active{
-                            background:#715CFF;
-                            box-shadow:0 0 8px var(--btn-active);
+                            background: var(--color-active);
+                            box-shadow: 0 0 8px var(--color-active);
                         }
                         .dock__btn.active svg{stroke:#fff;}
 
@@ -404,7 +478,7 @@ export class Sidebar {
                             fill: none;
                         }
                         .tools_button.active {
-                            background: rgba(255,255,255,.04);
+                            background: var(--color-active);
                             box-shadow: none;
                         }
                         .tools_button.active svg {
@@ -487,15 +561,16 @@ export class Sidebar {
 
                         .modal-content {
                             font-size: 12px;
-                            background: #151515;
+                            background: var(--color-container);
                             border-radius: 12px;
                             padding: 24px;
                             width: 70%;
                             max-width: 350px;
                             left: 35px;
                             position: absolute;
-                            border: 1px solid #1F1D1D;
-                            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+                            border: 1px solid var(--color-border);
+                            box-shadow: 0 8px 32px rgba(0,0,0,0.10);
+                            color: var(--color-text);
                         }
 
                         .modal-header {
@@ -506,8 +581,10 @@ export class Sidebar {
                         }
 
                         .modal-title {
-                            font-size: 12px;
-                            font-weight: 300;
+                            font-size: 22px;
+                            font-weight: 600;
+                            margin-bottom: 8px;
+                            color: var(--color-text);
                         }
 
                         .tools-grid {
@@ -629,12 +706,13 @@ export class Sidebar {
                             padding: 0 10px;
                             overflow: hidden;
                             transition: height .25s ease, opacity .25s ease, padding .25s ease;
+                            border: 1px solid var(--color-border);
                         }
                         #translatedText.expanded {
                             height: 100px;          /* конечная высота */
                             opacity: 1;
                             padding: 10px;
-                            border: 1px solid #1F1D1D;
+                            border: 1px solid var(--color-border);
                             margin-top: 20px;
                         }
 
@@ -656,15 +734,27 @@ export class Sidebar {
                             justify-content: space-between;
                             align-items: center;
                             margin-top: 16px;
+                            border-radius: 8px;
+                            padding: 4px 0;
                         }
                         .page-translate-btn {
                             flex: 0 0 auto;
-                            width: calc(50% - 8px);      /* столько же, сколько селект языка */
+                            width: calc(50% - 8px);
+                            background: var(--color-container);
+                            color: var(--color-active);
+                            border: 1px solid var(--color-border);
+                            border-radius: 8px;
+                            font-weight: 600;
+                            transition: background 0.2s, color 0.2s;
+                        }
+                        .page-translate-btn:hover {
+                            background: var(--color-active);
+                            color: #fff;
                         }
 
                         #back-to-notes {
-                            background: #000000;
-                            color: #C5C5C5;
+                            background: var(--color-container);
+                            color: var(--color-text);
                             border: none;
                             cursor: pointer;
                         }
@@ -681,10 +771,10 @@ export class Sidebar {
                         }
 
                         .tools-modal-content {
-                            background: #181818 !important;
-                            color: #fff !important;
+                            background: var(--color-container) !important;
+                            color: var(--color-text) !important;
                             border-radius: 18px !important;
-                            box-shadow: 0 8px 32px rgba(0,0,0,0.45);
+                            box-shadow: 0 8px 32px rgba(0,0,0,0.10);
                             padding: 32px 32px 24px 32px !important;
                             max-width: 420px !important;
                             width: 90vw;
@@ -696,6 +786,8 @@ export class Sidebar {
                             color: #b0b0b0;
                             font-size: 15px;
                             margin-bottom: 18px;
+                            color: var(--color-text);
+                            opacity: 0.7;
                         }
                         .tools-icons-row {
                             display: flex;
@@ -707,36 +799,44 @@ export class Sidebar {
                             flex-direction: column;
                             align-items: center;
                             gap: 8px;
+                            background: var(--color-container);
+                            border-radius: 10px;
+                            transition: background 0.2s, border 0.2s;
                         }
                         .tool-icon {
                             font-size: 32px;
                             margin-bottom: 2px;
+                            color: var(--color-active);
                         }
                         .tool-label {
                             font-size: 12px;
-                            color: #fff;
+                            color: var(--color-text);
                         }
                         .modal-title {
                             font-size: 22px;
                             font-weight: 600;
                             margin-bottom: 8px;
-                            color: #fff;
+                            color: var(--color-text);
                         }
 
                         .tool-icon-block {
                             cursor: pointer;
                         }
                         .tool-icon-block:hover {
-                            background: #232323;
-                            border-radius: 10px;
-                            transition: background 0.2s;
-                        }   
+                            background: var(--color-border);
+                            color: #fff;
+                        }
 
                         .tool-icon-block.disabled-tool {
                             cursor: not-allowed;
+                            opacity: 0.5;
                         }
                         .tool-icon-block.disabled-tool:hover {
-                            background: none !important;
+                            background: var(--color-container) !important;
+                            border: 1px solid var(--color-border) !important;
+                        }
+                        .tool-icon-block.disabled-tool .tool-label {
+                            color: #bbb !important;
                         }
 
                         .screen.active#screen-voice {
@@ -751,16 +851,18 @@ export class Sidebar {
                             height: 100%;
                             padding: 24px;
                             box-sizing: border-box;
+                            background: var(--color-bg);
                         }
 
                         #voice-status-bubble {
-                            background: #2c2c2e;
-                            color: #a48fff;
+                            background: var(--color-container);
+                            color: var(--color-active);
                             padding: 8px 16px;
                             border-radius: 20px;
                             margin-bottom: 40px;
                             font-size: 14px;
                             display: inline-block;
+                            border: 1px solid var(--color-border);
                         }
 
                         #voice-waveform-container {
@@ -771,18 +873,21 @@ export class Sidebar {
                             gap: 3px;
                             margin-bottom: 40px;
                             width: 100%;
+                            background: var(--color-container);
+                            border-radius: 12px;
+                            border: 1px solid var(--color-border);
                         }
 
                         .waveform-bar {
                             width: 4px;
-                            background-color: #6c757d;
+                            background-color: var(--color-active);
                             border-radius: 2px;
                             transition: height 0.1s ease;
                         }
 
                         #voice-result {
                             font-size: 16px;
-                            color: #fff;
+                            color: var(--color-text);
                             min-height: 24px;
                             line-height: 1.5;
                         }
@@ -801,6 +906,493 @@ export class Sidebar {
                         }
 
                         /* .settings_dock теперь управляется через JS */
+
+                        /* Settings Page Styles */
+                        .settings-section {
+                            margin-bottom: 24px;
+                            padding: 0 8px;
+                        }
+                        .section-title {
+                            font-size: 14px;
+                            font-weight: 500;
+                            color: #a0a0a0;
+                            margin-bottom: 12px;
+                            text-transform: uppercase;
+                        }
+                        .settings-group {
+                            background: var(--color-container);
+                            border-radius: 12px;
+                            overflow: hidden;
+                            border: 1px solid var(--color-border);
+                        }
+                        .setting-item {
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                            padding: 14px 16px;
+                            border-bottom: 1px solid var(--color-border);
+                            font-size: 14px;
+                        }
+                        .setting-item:last-child {
+                            border-bottom: none;
+                        }
+                        .setting-item span {
+                            color: var(--color-text);
+                        }
+                        .setting-item select {
+                            background: transparent;
+                            border: none;
+                            color: #a0a0a0;
+                            -webkit-appearance: none;
+                            -moz-appearance: none;
+                            appearance: none;
+                            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%23a0a0a0" viewBox="0 0 16 16"><path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/></svg>');
+                            background-repeat: no-repeat;
+                            background-position: right 4px top 50%;
+                            background-size: .7em auto;
+                            padding-right: 20px;
+                            font-size: 14px;
+                            text-align: right;
+                        }
+                        .setting-item select:focus {
+                            outline: none;
+                        }
+                        .section-title-container {
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                        }
+
+                        .switch {
+                          position: relative;
+                          display: inline-block;
+                          width: 40px;
+                          height: 24px;
+                          margin-bottom: 24px;
+                        }
+
+                        .switch input {
+                          opacity: 0;
+                          width: 0;
+                          height: 0;
+                        }
+
+                        .slider {
+                          position: absolute;
+                          cursor: pointer;
+                          top: 0;
+                          left: 0;
+                          right: 0;
+                          bottom: 0;
+                          background-color: #333;
+                          -webkit-transition: .4s;
+                          transition: .4s;
+                        }
+
+                        .slider:before {
+                          position: absolute;
+                          content: "";
+                          height: 18px;
+                          width: 18px;
+                          left: 3px;
+                          bottom: 3px;
+                          background-color: white;
+                          -webkit-transition: .4s;
+                          transition: .4s;
+                        }
+
+                        input:checked + .slider {
+                          background-color: #715CFF;
+                        }
+
+                        input:focus + .slider {
+                          box-shadow: 0 0 1px #715CFF;
+                        }
+
+                        input:checked + .slider:before {
+                          -webkit-transform: translateX(16px);
+                          -ms-transform: translateX(16px);
+                          transform: translateX(16px);
+                        }
+
+                        .slider.round {
+                          border-radius: 24px;
+                        }
+
+                        .slider.round:before {
+                          border-radius: 50%;
+                        }
+
+                        .chip {
+                            display: inline-flex;
+                            align-items: center;
+                            background: var(--color-container);
+                            border-radius: 16px;
+                            padding: 6px 12px;
+                            font-size: 14px;
+                            border: 1px solid var(--color-border);
+                        }
+                        .chip img {
+                            width: 16px;
+                            height: 16px;
+                            margin-right: 8px;
+                            border-radius: 4px;
+                        }
+                        .chip .close-chip {
+                            margin-left: 8px;
+                            background: none;
+                            border: none;
+                            color: #a0a0a0;
+                            cursor: pointer;
+                            font-size: 16px;
+                        }
+
+                        .notes-input-row {
+                            border-radius: 12px;
+                        }
+                        .notes-textarea {
+                            flex: 1;
+                            padding: 12px 60px 12px 14px;
+                            border-radius: 8px;
+                            border: 1px solid var(--color-border);
+                            background: var(--color-bg);
+                            color: var(--color-text);
+                            font-size: 15px;
+                            resize: none;
+                            transition: border 0.2s;
+                        }
+                        .notes-textarea:focus {
+                            border: 1.5px solid var(--color-active);
+                            outline: none;
+                        }
+                        .notes-save-btn {
+                            position: absolute;
+                            right: 12px;
+                            bottom: 12px;
+                            height: 32px;
+                            padding: 0 16px;
+                            border-radius: 8px;
+                            background: var(--color-active);
+                            color: #fff;
+                            border: none;
+                            cursor: pointer;
+                            z-index: 2;
+                            font-weight: 600;
+                            font-size: 15px;
+                        }
+                        .notes-save-btn:hover {
+                            background: #8B78E0;
+                        }
+                        .notes-search-input {
+                            width: 100%;
+                            margin-bottom: 12px;
+                            padding: 10px 14px;
+                            border-radius: 8px;
+                            border: 1px solid var(--color-border);
+                            background: var(--color-bg);
+                            color: var(--color-text);
+                            font-size: 15px;
+                        }
+                        .notes-search-input:focus {
+                            border: 1.5px solid var(--color-active);
+                            outline: none;
+                        }
+                        #notes-list {
+                            border-radius: 12px;
+                            color: var(--color-text);
+                        }
+
+                        .notes-detail-header {
+                            display: flex;
+                            align-items: center;
+                            margin-bottom: 18px;
+                        }
+                        .notes-detail-back {
+                            background: none;
+                            color: #aaa;
+                            border: none;
+                            font-size: 15px;
+                            border-radius: 8px;
+                            padding: 4px 10px;
+                            cursor: pointer;
+                        }
+                        .notes-detail-btns {
+                            margin-left: auto;
+                            display: flex;
+                            gap: 8px;
+                        }
+                        .notes-detail-btn {
+                            background: var(--color-active);
+                            color: #fff;
+                            border: none;
+                            border-radius: 8px;
+                            padding: 0 18px;
+                            height: 38px;
+                            font-size: 15px;
+                            font-weight: 600;
+                            cursor: pointer;
+                            transition: background 0.2s;
+                        }
+                        .notes-detail-btn:hover {
+                            background: #8B78E0;
+                        }
+                        .notes-detail-btn-delete {
+                            background: var(--color-container);
+                            color: #ff4444;
+                            border: 1px solid var(--color-border);
+                        }
+                        .notes-detail-btn-delete:hover {
+                            background: #ffeaea;
+                        }
+                        .notes-detail-container {
+                            background: var(--color-container);
+                            border-radius: 14px;
+                            box-shadow: 0 2px 12px #0002;
+                            margin-bottom: 18px;
+                            margin-top: 18px;
+                            padding: 0;
+                            border: 1px solid var(--color-border);
+                        }
+                        .notes-detail-title {
+                            width: 100%;
+                            background: var(--color-bg);
+                            color: var(--color-text);
+                            border: 1px solid var(--color-border);
+                            border-radius: 8px;
+                            padding: 10px 12px;
+                            font-size: 19px;
+                            margin-bottom: 0;
+                        }
+                        .notes-detail-title:focus {
+                            border: 1.5px solid var(--color-active);
+                            outline: none;
+                        }
+                        .notes-detail-body {
+                            width: 100%;
+                            min-height: 120px;
+                            background: var(--color-bg);
+                            color: var(--color-text);
+                            border: 1px solid var(--color-border);
+                            border-radius: 8px;
+                            padding: 12px;
+                            font-size: 15px;
+                            resize: vertical;
+                        }
+                        .notes-detail-body:focus {
+                            border: 1.5px solid var(--color-active);
+                            outline: none;
+                        }
+
+                        .note-row {
+                            margin-bottom: 12px;
+                            padding: 14px 16px;
+                            background: var(--color-bg);
+                            border: 1px solid var(--color-border) !important;
+                            border-radius: 12px;
+                            cursor: pointer;
+                            box-shadow: 0 2px 8px #0002;
+                            display: flex;
+                            flex-direction: column;
+                            gap: 2px;
+                            color: var(--color-text);
+                            transition: background 0.2s;
+                        }
+                        .note-row:hover {
+                            background: var(--color-active);
+                            color: #fff;
+                        }
+
+                        .translate-lang-row {
+                            display: flex;
+                            gap: 8px;
+                            width: 100%;
+                            margin-top: 16px;
+                        }
+                        .language-select {
+                            flex: 1 1 0;
+                            min-width: 0;
+                        }
+                        #swapLangs {
+                            flex: 0 0 40px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-size: 22px;
+                            cursor: pointer;
+                            user-select: none;
+                        }
+
+                        .account-section {
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            gap: 24px;
+                            margin: 0 auto;
+                            max-width: 340px;
+                        }
+                        .account-card {
+                            background: var(--color-bg);
+                            border-radius: 18px;
+                            padding: 0 0 24px 0;
+                            width: 100%;
+                        }
+                        .account-card-title {
+                            font-size: 18px;
+                            font-weight: 500;
+                            padding: 20px 0 12px 32px;
+                            text-align: left;
+                            color: var(--color-text);
+                        }
+                        .account-card-content {
+                            background: var(--color-container);
+                            box-shadow: 0 2px 12px #0001;
+                            border-radius: 18px;
+                            border: 1px solid var(--color-border);
+                            padding: 20px 24px;
+                            display: flex;
+                            align-items: center;
+                            gap: 18px;
+                            width: 100%;
+                            justify-content: center;
+                        }
+                        .account-avatar {
+                            width: 56px;
+                            height: 56px;
+                            border-radius: 50%;
+                            object-fit: cover;
+                            background: #fff;
+                            border: 1px solid var(--color-border);
+                        }
+                        .account-info {
+                            display: flex;
+                            flex-direction: column;
+                            width: 100%;
+                        }
+                        .account-name {
+                            font-size: 15px;
+                            font-weight: 600;
+                            margin-bottom: 2px;
+                            color: var(--color-text);
+                        }
+                        .account-email {
+                            font-size: 12px;
+                            color: #b0b0b0;
+                        }
+                        .account-pro {
+                            flex-direction: column;
+                            align-items: center;
+                            gap: 10px;
+                        }
+                        .account-pro-text {
+                            font-size: 15px;
+                            color: #b0b0b0;
+                            margin-bottom: 10px;
+                        }
+                        .account-btn {
+                            display: inline-block;
+                            background: var(--color-active);
+                            color: #fff;
+                            border: none;
+                            border-radius: 8px;
+                            padding: 12px 0;
+                            font-size: 16px;
+                            font-weight: 600;
+                            cursor: pointer;
+                            width: 100%;
+                            max-width: 280px;
+                            margin: 0 auto;
+                            text-align: center;
+                            text-decoration: none;
+                            transition: background 0.2s;
+                        }
+                        .account-btn-pro {
+                            background: var(--color-active);
+                            color: #fff;
+                            text-decoration: underline;
+                            font-size: 15px;
+                            padding: 8px 0;
+                        }
+                        .account-btn-logout {
+                            background: #ff4444;
+                            color: #fff;
+                            margin: 24px auto 24px auto;
+                        }
+                        .account-btn-logout:hover {
+                            background: #d32f2f;
+                        }
+
+                        .add-hide-icon-btn {
+                            background: #232323;
+                            color: #A48FFF;
+                            border: none;
+                            border-radius: 50%;
+                            width: 28px;
+                            height: 28px;
+                            font-size: 22px;
+                            cursor: pointer;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            transition: background 0.2s, color 0.2s;
+                        }
+                        body.theme-light .add-hide-icon-btn {
+                            background: #F5F5F5;
+                            color: #715CFF;
+                            border: 1px solid #E9E9E9;
+                        }
+                        body.theme-dark .add-hide-icon-btn {
+                            background: #232323;
+                            color: #A48FFF;
+                            border: none;
+                        }
+                        .add-hide-icon-btn:hover {
+                            background: #333;
+                            color: #fff;
+                        }
+                        body.theme-light .add-hide-icon-btn:hover {
+                            background: #E9E9E9;
+                            color: #715CFF;
+                        }
+
+                        .hide-icon-input {
+                            width: 180px;
+                            padding: 6px 12px;
+                            border-radius: 8px;
+                            border: 1px solid var(--color-border);
+                            background: var(--color-container);
+                            color: var(--color-text);
+                            font-size: 14px;
+                            transition: border 0.2s, background 0.2s, color 0.2s;
+                        }
+                        body.theme-light .hide-icon-input {
+                            background: #fff;
+                            color: #232323;
+                            border: 1px solid #E9E9E9;
+                        }
+                        body.theme-dark .hide-icon-input {
+                            background: #151515;
+                            color: #fff;
+                            border: 1px solid #333;
+                        }
+                        .hide-icon-input:focus {
+                            border: 1.5px solid var(--color-active);
+                            outline: none;
+                        }
+
+                        .hide-icon-input-confirm {
+                            margin-left: 8px;
+                            background: var(--color-active);
+                            color: #fff;
+                            border: none;
+                            border-radius: 8px;
+                            padding: 6px 16px;
+                            font-size: 14px;
+                            cursor: pointer;
+                            transition: background 0.2s, color 0.2s;
+                        }
+                        .hide-icon-input-confirm:hover {
+                            background: #8B78E0;
+                        }
                     </style>
                 `;
 
@@ -844,67 +1436,40 @@ export class Sidebar {
 
                         <div id="screen-notes" class="screen">
                             <h1 class="title">Notes</h1>
-                            <div style="position: relative; display: flex; align-items: stretch; margin-bottom: 12px;">
-                                <textarea id="note-input" placeholder="What do you want to save?" style="flex: 1; padding-right: 60px;"></textarea>
-                                <button id="save-note"
-                                    style="position: absolute; right: 12px; bottom: 12px; height: 32px; padding: 0 16px; border-radius: 8px; background: #715CFF; color: #fff; border: none; cursor: pointer; z-index: 2;">
-                                    Save
-                                </button>
+                            <div class="notes-input-row" style="position: relative; display: flex; align-items: stretch; margin-bottom: 12px;">
+                                <textarea id="note-input" placeholder="What do you want to save?" class="notes-textarea"></textarea>
+                                <button id="save-note" class="notes-save-btn">Save</button>
                             </div>
-                            <input id="notes-search" type="text" placeholder="Search" style="width: 100%; margin-bottom: 12px; padding: 10px 14px; border-radius: 8px; border: 1px solid #232323; background: #151515; color: #fff; font-size: 15px;" />
+                            <input id="notes-search" type="text" placeholder="Search" class="notes-search-input" />
                             <div id="notes-list"></div>
                         </div>
 
                         
                         <div id="screen-note-detail" class="screen" style="overflow-y: auto; max-height: 80vh;">
                             <h1 class="title">Notes</h1>
-                            <div style="display: flex; align-items: center; margin-bottom: 18px;">
-                                <button id="back-to-notes" style="background: none; color: #aaa; border: none; font-size: 15px; border-radius: 8px; padding: 4px 10px; cursor: pointer;">← Back</button>
-                                <div style="margin-left: auto; display: flex; gap: 8px;">
-                                    <button id="update-note" style="background: #715CFF; color: #fff; border: none; border-radius: 8px; padding: 0 18px; height: 38px; font-size: 15px; font-weight: 600; cursor: pointer;">Save</button>
-                                    <button id="delete-note" style="background: #2d2d2d; color: #ff4444; border: none; border-radius: 8px; padding: 0 18px; height: 38px; font-size: 15px; cursor: pointer;">Delete</button>
+                            <div class="notes-detail-header">
+                                <button id="back-to-notes" class="notes-detail-back">← Back</button>
+                                <div class="notes-detail-btns">
+                                    <button id="update-note" class="notes-detail-btn">Save</button>
+                                    <button id="delete-note" class="notes-detail-btn notes-detail-btn-delete">Delete</button>
                                 </div>
                             </div>
-                            <div style="
-                                background: #232323;
-                                border-radius: 14px;
-                                box-shadow: 0 2px 12px #0002;
-                                margin-bottom: 18px;
-                                margin-top: 18px;
-                            ">
-                                <input id="note-title" placeholder="Title" style="
-                                    width: 100%;
-                                    background: #1A1A1A;
-                                    color: #fff;
-                                    border: 1px solid #333;
-                                    border-radius: 8px;
-                                    padding: 10px 12px;
-                                    font-size: 19px;
-                                ">
-                                <textarea id="note-body" style="
-                                    width: 100%;
-                                    min-height: 120px;
-                                    background: #151515;
-                                    color: #fff;
-                                    border: 1px solid #333;
-                                    border-radius: 8px;
-                                    padding: 12px;
-                                    font-size: 15px;
-                                    resize: vertical;
-                                "></textarea>
+                            <div class="notes-detail-container">
+                                <input id="note-title" placeholder="Title" class="notes-detail-title">
+                                <textarea id="note-body" class="notes-detail-body"></textarea>
                             </div>
                         </div>
 
                         <div id="screen-chat" class="screen">
                             <h1 class="title">Chat</h1>
-                            <div id="chat-container" style="flex: 1 1 0; display: flex; flex-direction: column; background: #000000; border-radius: 8px; overflow-y: auto; gap: 12px; margin-bottom: 16px; min-height: 0; max-height: 80vh; margin-right: 72px; margin-left: 4px;"></div>
+                            <div id="chat-container" style="flex: 1 1 0; display: flex; flex-direction: column; background: var(--color-bg); border-radius: 8px; overflow-y: auto; gap: 12px; margin-bottom: 16px; min-height: 0; max-height: 80vh; margin-right: 72px; margin-left: 4px;"></div>
                             <form id="chat-form" style="display: flex; flex-direction: column; gap: 0; align-items: stretch; margin-top: auto; width: 100%; position: relative;">
                                 <div class="chat-actions" style="display: flex; justify-content: flex-end; gap: 4px; margin-bottom: 4px;">
                                     <button type="button" id="chat-new" style="background: none; border: none; border-radius: 0; padding: 0; height: 40px; width: 40px; cursor: pointer; display: flex; align-items: center; justify-content: center;"><img src="${newChatUrl}" alt="New Chat" style="width:24px;height:24px;object-fit:contain;vertical-align:middle;" /></button>
                                     <button type="button" id="chat-history" style="background: none; border: none; border-radius: 0; padding: 0; height: 40px; width: 40px; cursor: pointer; display: flex; align-items: center; justify-content: center;"><img src="${historyUrl}" alt="History" style="width:24px;height:24px;object-fit:contain;vertical-align:middle;" /></button>
                                 </div>
                                 <div style="position: relative; width: 100%; display: flex; align-items: flex-end; gap: 8px;">
-                                    <textarea id="chat-input" placeholder="Ask whatever you want..." rows="1" style="width: 100%; min-width: 0; flex: 1; resize: none; border-radius: 12px; border: 1.5px solid #232323; background: #151515; color: #fff; padding: 12px 80px 12px 14px; font-size: 15px; transition: border 0.2s; height: 100px; min-height: 100px; margin: 0 0 0 16px;"></textarea>
+                                    <textarea id="chat-input" placeholder="Ask whatever you want..." rows="1" style="width: 100%; min-width: 0; flex: 1; resize: none; border-radius: 12px; border: 1.5px solid var(--color-border); background: var(--color-container); color: var(--color-text); padding: 12px 80px 12px 14px; font-size: 15px; transition: border 0.2s; height: 100px; min-height: 100px; margin: 0 0 0 16px;"></textarea>
                                     <button type="submit" id="chat-send" style="position: absolute; right: 24px; bottom: 18px; background: #715CFF; color: #fff; border: none; border-radius: 10px; padding: 0 18px; height: 40px; font-weight: 600; font-size: 15px; cursor: pointer; z-index: 2;">Send</button>
                                 </div>
                             </form>
@@ -960,11 +1525,13 @@ export class Sidebar {
                         <div id="screen-translate" class="screen">
                             <h1 id="translate-top-row ">Translate</h1>
 
-                            <div class="translate-controls">
+
+                            <div class="translate-lang-row">
                                 <select id="sourceLanguage" class="language-select"></select>
                                 <span id="swapLangs" title="Swap languages">↔</span>
                                 <select id="targetLanguage" class="language-select"></select>
                             </div>
+
 
                             <div class="translate-top-row">
                                 <button id="translate-page-btn" class="page-translate-btn">Translate webpage •</button>
@@ -1032,32 +1599,102 @@ export class Sidebar {
 
                         <div id="screen-account" class="screen">
                             <h1 class="title">Settings</h1>
-                            <div style="margin-bottom: 32px;">
-                                <div style="background: #000; padding: 0 0 24px 0; max-width: 280px; margin: 0 auto 24px auto;">
-                                    <div style="font-size: 18px; font-weight: 500; padding: 20px 0 12px 32px; text-align: left; margin-left: 0px">Account</div>
-                                    <div style="background: #232323; border-radius: 18px; padding: 20px 24px; display: flex; align-items: center; gap: 18px; width: 100%; justify-content: center;">
-                                        <img id="user-avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23b0b0b0'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-4 0-7 2-7 4v2h14v-2c0-2-3-4-7-4z'/%3E%3C/svg%3E" alt="avatar" style="width: 56px; height: 56px; border-radius: 50%; object-fit: cover; background: #fff;" />
-                                        <div style="display: flex; flex-direction: column; width: 100%;">
-                                            <div id="user-name" style="font-size: 15px; font-weight: 600; margin-bottom: 2px;"></div>
-                                            <div id="user-email" style="font-size: 12px; color: #b0b0b0;"></div>
+                            <div class="account-section">
+                                <div class="account-card">
+                                    <div class="account-card-title">Account</div>
+                                    <div class="account-card-content">
+                                        <img id="user-avatar" class="account-avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23b0b0b0'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-4 0-7 2-7 4v2h14v-2c0-2-3-4-7-4z'/%3E%3C/svg%3E" alt="avatar" />
+                                        <div class="account-info">
+                                            <div id="user-name" class="account-name"></div>
+                                            <div id="user-email" class="account-email"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="account-card">
+                                    <div class="account-card-title">Pro plan</div>
+                                    <div class="account-card-content account-pro">
+                                        <div class="account-pro-text">You have no pro plan yet!</div>
+                                        <a href="#" class="account-btn account-btn-pro">Activate</a>
+                                    </div>
+                                </div>
+                                <button id="logout-btn" class="account-btn account-btn-logout">Logout</button>
+                            </div>
+                        </div>
+
+                        <div id="screen-appereance" class="screen">
+                            <div style="padding: 0 60px; height: 100%;">
+                                <h1 class="title">Settings</h1>
+                                <div style="overflow-y: auto; height: calc(100% - 70px); padding-right: 8px; margin-right: -8px;">
+                                    <div class="settings-section">
+                                        <h2 class="section-title">Appereance</h2>
+                                        <div class="settings-group">
+                                            <div class="setting-item">
+                                                <span>Theme</span>
+                                                <select id="theme-select">
+                                                    <option value="system">System</option>
+                                                    <option value="light">Light</option>
+                                                    <option value="dark">Dark</option>
+                                                </select>
+                                            </div>
+                                            <div class="setting-item">
+                                                <span>Zoom</span>
+                                                <select>
+                                                    <option>100%</option>
+                                                    <option>90%</option>
+                                                    <option>110%</option>
+                                                    <option>125%</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                
+                                    <div class="settings-section">
+                                        <div class="section-title-container">
+                                            <h2 class="section-title">Icon</h2>
+                                            <label class="switch">
+                                                <input type="checkbox" checked>
+                                                <span class="slider round"></span>
+                                            </label>
+                                        </div>
+                                        <div class="settings-group">
+                                             <div class="setting-item">
+                                                <span>Location</span>
+                                                <select id="icon-location-select">
+
+                                                    <option value="Bottom">Bottom</option>
+                                                    <option value="Top">Top</option>
+                                                    
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                
+                                    <div class="settings-section">
+                                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                                            <h2 class="section-title" style="margin-bottom: 0;">Hide icon on</h2>
+                                            <button id="add-hide-icon-url-btn" class="add-hide-icon-btn">+</button>
+                                        </div>
+                                        <div id="hide-icon-chips-list" style="margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px;"></div>
+                                        <div id="hide-icon-input-wrap" style="margin-top: 10px; display: none;">
+                                            <input id="hide-icon-input" type="text" placeholder="example.com" class="hide-icon-input" />
+                                            <button id="hide-icon-input-confirm" class="hide-icon-input-confirm">Add</button>
+                                        </div>
+                                    </div>
+                                
+                                    <div class="settings-section">
+                                        <h2 class="section-title">Sidebar</h2>
+                                        <div class="settings-group">
+                                             <div class="setting-item">
+                                                <span>Location</span>
+                                                <select id="sidebar-location-select">
+                                                    <option value="right">Right</option>
+                                                    <option value="left">Left</option>
+                                                </select>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <div>
-                                <div style="background: #000; border-radius: 22px; padding: 0 0 24px 0; max-width: 280px; margin: 0 auto 24px auto;">
-                                    <div style="font-size: 18px; font-weight: 500; padding: 20px 0 12px 32px; text-align: left;">Pro plan</div>
-                                    <div style="background: #232323; border-radius: 18px; padding: 20px 24px; min-width: 200px; width: 100%; margin: 0; display: flex; flex-direction: column; align-items: center;">
-                                        <div style="font-size: 15px; color: #b0b0b0; margin-bottom: 10px;">You have no pro plan yet!</div>
-                                        <a href="#" style="color: #715CFF; font-size: 15px; text-decoration: underline; cursor: pointer;">Activate</a>
-                                    </div>
-                                </div>
-                            </div>
-                            <button id="logout-btn" style="margin: 24px auto 24px auto; max-width: 280px; width: 100%; display: block; background: #ff4444; color: #fff; border: none; border-radius: 8px; padding: 12px 0; font-size: 16px; font-weight: 600; cursor: pointer; transition: background 0.2s;">Logout</button>
-                        </div>
-
-                        <div id="screen-appereance" class="screen">
-                            <h1 class="title">Настройки</h1>
                         </div>
 
                         <nav class="settings_dock">
@@ -1316,6 +1953,117 @@ export class Sidebar {
                 });
                 updateMicBtn();
             }
+
+            const locationSelect = iframeDoc.getElementById('sidebar-location-select') as HTMLSelectElement | null;
+            if (locationSelect) {
+                locationSelect.value = this.sidebarPosition;
+                locationSelect.addEventListener('change', (e) => {
+                    const newPosition = (e.target as HTMLSelectElement).value as 'left' | 'right';
+                    this.setSidebarPosition(newPosition);
+                });
+            }
+
+            // --- Icon location select logic ---
+            const iconLocationSelect = iframeDoc.getElementById('icon-location-select') as HTMLSelectElement | null;
+            if (iconLocationSelect) {
+                iconLocationSelect.value = this.floatingButtonPosition;
+                iconLocationSelect.addEventListener('change', (e) => {
+                    const newPosition = (e.target as HTMLSelectElement).value as 'Bottom' | 'Top';
+                    this.setFloatingButtonPosition(newPosition);
+                });
+            }
+
+            // --- Hide icon on logic ---
+            const chipsList = iframeDoc.getElementById('hide-icon-chips-list');
+            const addBtn = iframeDoc.getElementById('add-hide-icon-url-btn');
+            const inputWrap = iframeDoc.getElementById('hide-icon-input-wrap');
+            const input = iframeDoc.getElementById('hide-icon-input') as HTMLInputElement | null;
+            const confirmBtn = iframeDoc.getElementById('hide-icon-input-confirm');
+
+            const renderChips = () => {
+                if (!chipsList) return;
+                chipsList.innerHTML = '';
+                this.hideIconOn.forEach((url, idx) => {
+                    const chip = iframeDoc.createElement('div');
+                    chip.className = 'chip';
+                    chip.innerHTML = `<span>${url}</span><button class="close-chip" data-idx="${idx}">&times;</button>`;
+                    chipsList.appendChild(chip);
+                });
+                // Add remove listeners
+                chipsList.querySelectorAll('.close-chip').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const idx = +(btn as HTMLElement).getAttribute('data-idx')!;
+                        this.hideIconOn.splice(idx, 1);
+                        chrome.storage.local.set({ hideIconOn: this.hideIconOn });
+                        renderChips();
+                        this.initializeFloatingButton();
+                    });
+                });
+            };
+
+            renderChips();
+
+            if (addBtn && inputWrap && input && confirmBtn) {
+                addBtn.addEventListener('click', () => {
+                    inputWrap.style.display = 'flex';
+                    input.value = '';
+                    input.focus();
+                });
+                confirmBtn.addEventListener('click', () => {
+                    let val = input.value.trim();
+                    // Попробуем извлечь домен через URL
+                    let domain = '';
+                    try {
+                        if (!/^https?:\/\//.test(val)) val = 'https://' + val;
+                        const urlObj = new URL(val);
+                        domain = urlObj.hostname.replace(/^www\./, '');
+                    } catch {
+                        // Если невалидный URL, просто берем как есть, убираем www
+                        domain = val.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
+                    }
+                    if (domain && !this.hideIconOn.includes(domain)) {
+                        this.hideIconOn.push(domain);
+                        chrome.storage.local.set({ hideIconOn: this.hideIconOn });
+                        renderChips();
+                        this.initializeFloatingButton();
+                    }
+                    inputWrap.style.display = 'none';
+                });
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        confirmBtn.click();
+                    } else if (e.key === 'Escape') {
+                        inputWrap.style.display = 'none';
+                    }
+                });
+            }
+
+            // --- Theme select logic ---
+            const themeSelect = iframeDoc.getElementById('theme-select') as HTMLSelectElement | null;
+            const setThemeClass = (theme: 'system' | 'light' | 'dark') => {
+                let t = theme;
+                if (t === 'system') {
+                    t = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+                }
+                iframeDoc.body.classList.remove('theme-light', 'theme-dark');
+                iframeDoc.body.classList.add('theme-' + t);
+            };
+            if (themeSelect) {
+                themeSelect.value = this.theme;
+                setThemeClass(this.theme);
+                themeSelect.addEventListener('change', (e) => {
+                    const newTheme = (e.target as HTMLSelectElement).value as 'system' | 'light' | 'dark';
+                    this.theme = newTheme;
+                    chrome.storage.local.set({ sidebarTheme: newTheme });
+                    setThemeClass(newTheme);
+                });
+                // Listen to system theme changes if system selected
+                if (this.theme === 'system') {
+                    window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
+                        setThemeClass('system');
+                    });
+                }
+            }
         };
 
         // Устанавливаем src для загрузки iframe
@@ -1328,44 +2076,58 @@ export class Sidebar {
             this.createSidebar();
         }
 
-        if (this.sidebar) {
-            // Сохраняем оригинальные стили перед изменением
-            this.saveOriginalStyles();
+        setTimeout(() => {
+            if (this.sidebar) {
+                // Сохраняем оригинальные стили перед изменением
+                this.saveOriginalStyles();
 
-            // Применяем стили для сжатия контента
-            this.applySidebarStyles();
+                // Применяем стили для сжатия контента
+                this.applySidebarStyles();
 
-            // Показываем сайдбар
-            this.sidebar.classList.add('open');
-            (this.sidebar as HTMLElement).style.right = '0';
+                // Показываем сайдбар
+                this.sidebar.classList.add('open');
+                if (this.sidebarPosition === 'left') {
+                    (this.sidebar as HTMLElement).style.left = '0';
+                } else {
+                    (this.sidebar as HTMLElement).style.right = '0';
+                }
 
-            this.sidebarOpen = true;
+                this.sidebarOpen = true;
 
-            // Сдвигаем floating button к левой части сайдбара
-            if (this.floatingButton) {
-                this.floatingButton.style.right = this.sidebarWidth;
+                // Сдвигаем floating button к левой части сайдбара
+                if (this.floatingButton) {
+                    if (this.sidebarPosition === 'left') {
+                        this.floatingButton.style.left = this.sidebarWidth;
+                    } else {
+                        this.floatingButton.style.right = this.sidebarWidth;
+                    }
+                }
+
+                // Update floating button state
+                this.updateFloatingButtonState();
+
+                // Принудительно вызываем событие resize для адаптации элементов
+                setTimeout(() => {
+                    window.dispatchEvent(new Event('resize'));
+                }, 100);
+
+                // Дополнительно через 300ms для завершения анимации
+                setTimeout(() => {
+                    window.dispatchEvent(new Event('resize'));
+                }, 350);
             }
-
-            // Update floating button state
-            this.updateFloatingButtonState();
-
-            // Принудительно вызываем событие resize для адаптации элементов
-            setTimeout(() => {
-                window.dispatchEvent(new Event('resize'));
-            }, 100);
-
-            // Дополнительно через 300ms для завершения анимации
-            setTimeout(() => {
-                window.dispatchEvent(new Event('resize'));
-            }, 350);
-        }
+        }, 50);
     }
 
     public closeSidebar(): void {
         if (this.sidebar) {
             // Скрываем сайдбар
             this.sidebar.classList.remove('open');
-            (this.sidebar as HTMLElement).style.right = `-${this.sidebarWidth}`;
+            if (this.sidebarPosition === 'left') {
+                (this.sidebar as HTMLElement).style.left = `-${this.sidebarWidth}`;
+            } else {
+                (this.sidebar as HTMLElement).style.right = `-${this.sidebarWidth}`;
+            }
 
             // Восстанавливаем оригинальные стили
             this.removeSidebarStyles();
@@ -1374,7 +2136,11 @@ export class Sidebar {
 
             // Возвращаем floating button к правому краю
             if (this.floatingButton) {
-                this.floatingButton.style.right = '0';
+                if (this.sidebarPosition === 'left') {
+                    this.floatingButton.style.left = '0';
+                } else {
+                    this.floatingButton.style.right = '0';
+                }
             }
 
             // Update floating button state
@@ -1397,6 +2163,26 @@ export class Sidebar {
 
     public isOpen(): boolean {
         return this.sidebarOpen;
+    }
+
+    public setSidebarPosition(position: 'left' | 'right'): void {
+        if (this.sidebarPosition === position) return;
+        const wasOpen = this.isOpen();
+
+        if (wasOpen) {
+            this.removeSidebarStyles();
+        }
+
+        this.sidebarPosition = position;
+        chrome.storage.local.set({ sidebarPosition: position });
+
+        this.cleanup();
+        this.initializeFloatingButton();
+
+        if (wasOpen) {
+            this.sidebarOpen = false;
+            this.openSidebar();
+        }
     }
 
     private saveOriginalStyles(): void {
@@ -1424,59 +2210,78 @@ export class Sidebar {
     public applySidebarStyles(): void {
         const contentWidth = `calc(100vw - ${this.sidebarWidth})`;
 
-        // Стили для HTML и body
-        const htmlStyle = `
+        if (this.sidebarPosition === 'left') {
+            const bodyStyle = `
+                position: relative !important;
+                left: ${this.sidebarWidth} !important;
                 width: ${contentWidth} !important;
-                max-width: ${contentWidth} !important;
-                overflow-x: hidden !important;
-                transition: width 0.3s ease !important;
-            `;
-
-        const bodyStyle = `
-                width: ${contentWidth} !important;
-                max-width: ${contentWidth} !important;
-                margin: 0 !important;
-                padding-right: 0 !important;
+                transition: left 0.3s ease, width 0.3s ease !important;
                 box-sizing: border-box !important;
                 overflow-x: hidden !important;
-                transition: width 0.3s ease !important;
             `;
+            document.body.style.cssText += bodyStyle;
+            document.documentElement.style.cssText += `overflow-x: hidden !important;`;
 
-        // Применяем стили
-        document.documentElement.style.cssText += htmlStyle;
-        document.body.style.cssText += bodyStyle;
-
-        // Обрабатываем прямые дочерние элементы body
-        Array.from(document.body.children).forEach((child: Element) => {
-            if (child.id === 'chrome-extension-sidebar-container' ||
-                child.id === 'chrome-extension-floating-button') return;
-
-            const element = child as HTMLElement;
-            const computedStyle = window.getComputedStyle(element);
-
-            // Сохраняем текущие стили если еще не сохранены
-            if (!this.originalStyles.has(element)) {
-                this.originalStyles.set(element, element.getAttribute('style') || '');
-            }
-
-            // Применяем новые стили
-            const newStyle = `
-                    max-width: ${contentWidth} !important;
+        } else { // right
+            // Стили для HTML и body
+            const htmlStyle = `
                     width: ${contentWidth} !important;
-                    box-sizing: border-box !important;
+                    max-width: ${contentWidth} !important;
+                    overflow-x: hidden !important;
+                    transition: width 0.3s ease !important;
                 `;
 
-            element.style.cssText += newStyle;
+            const bodyStyle = `
+                    width: ${contentWidth} !important;
+                    max-width: ${contentWidth} !important;
+                    margin: 0 !important;
+                    padding-right: 0 !important;
+                    box-sizing: border-box !important;
+                    overflow-x: hidden !important;
+                    transition: width 0.3s ease !important;
+                `;
 
-            // Специальная обработка для фиксированных элементов
-            if (computedStyle.position === 'fixed') {
-                element.style.maxWidth = contentWidth + ' !important';
-            }
-        });
+            // Применяем стили
+            document.documentElement.style.cssText += htmlStyle;
+            document.body.style.cssText += bodyStyle;
+
+            // Обрабатываем прямые дочерние элементы body
+            Array.from(document.body.children).forEach((child: Element) => {
+                if (child.id === 'chrome-extension-sidebar-container' ||
+                    child.id === 'chrome-extension-floating-button') return;
+
+                const element = child as HTMLElement;
+                const computedStyle = window.getComputedStyle(element);
+
+                // Сохраняем текущие стили если еще не сохранены
+                if (!this.originalStyles.has(element)) {
+                    this.originalStyles.set(element, element.getAttribute('style') || '');
+                }
+
+                // Применяем новые стили
+                const newStyle = `
+                        max-width: ${contentWidth} !important;
+                        width: ${contentWidth} !important;
+                        box-sizing: border-box !important;
+                    `;
+
+                element.style.cssText += newStyle;
+
+                // Специальная обработка для фиксированных элементов
+                if (computedStyle.position === 'fixed') {
+                    element.style.maxWidth = contentWidth + ' !important';
+                }
+            });
+        }
+
 
         // Adjust floating button position when sidebar is open
         if (this.floatingButton) {
-            this.floatingButton.style.right = '340px';
+            if (this.sidebarPosition === 'left') {
+                this.floatingButton.style.left = this.sidebarWidth;
+            } else {
+                this.floatingButton.style.right = this.sidebarWidth;
+            }
         }
     }
 
@@ -1487,7 +2292,24 @@ export class Sidebar {
 
         // Возвращаем floating button к правому краю
         if (this.floatingButton) {
-            this.floatingButton.style.right = '0';
+            if (this.sidebarPosition === 'left') {
+                this.floatingButton.style.left = '0';
+            } else {
+                this.floatingButton.style.right = '0';
+            }
+        }
+    }
+
+    public setFloatingButtonPosition(position: 'Bottom' | 'Top'): void {
+        if (this.floatingButtonPosition === position) return;
+        this.floatingButtonPosition = position;
+        chrome.storage.local.set({ floatingButtonPosition: position });
+        if (this.sidebarOpen) {
+            this.removeSidebarStyles();
+        }
+        this.initializeFloatingButton();
+        if (this.sidebarOpen) {
+            this.openSidebar();
         }
     }
 }

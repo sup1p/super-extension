@@ -92,3 +92,9 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         }
     }
 });
+
+chrome.action.onClicked.addListener((tab) => {
+    if (tab.id) {
+        chrome.tabs.sendMessage(tab.id, { action: "toggleSidebar" });
+    }
+});

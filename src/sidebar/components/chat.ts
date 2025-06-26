@@ -69,7 +69,7 @@ export class ChatComponent {
                 modal.style.alignItems = 'center';
 
                 const inner = doc.createElement('div');
-                inner.style.background = '#151515';
+                inner.style.background = 'var(--color-container)';
                 inner.style.borderRadius = '12px';
                 inner.style.padding = '32px 24px';
                 inner.style.minWidth = '340px';
@@ -85,14 +85,14 @@ export class ChatComponent {
                 closeBtn.style.background = 'none';
                 closeBtn.style.border = 'none';
                 closeBtn.style.fontSize = '28px';
-                closeBtn.style.color = '#fff';
+                closeBtn.style.color = 'var(--color-text)';
                 closeBtn.style.cursor = 'pointer';
                 closeBtn.onclick = () => modal.remove();
                 inner.appendChild(closeBtn);
 
                 const title = doc.createElement('h2');
                 title.textContent = 'История чатов';
-                title.style.color = '#fff';
+                title.style.color = 'var(--color-text)';
                 title.style.marginBottom = '18px';
                 inner.appendChild(title);
 
@@ -121,9 +121,9 @@ export class ChatComponent {
                     sessions.forEach(session => {
                         const item = doc.createElement('li');
                         item.style.padding = '12px 0';
-                        item.style.borderBottom = '1px solid #232323';
+                        item.style.borderBottom = '1px solid var(--color-border)';
                         item.style.cursor = 'pointer';
-                        item.style.color = '#fff';
+                        item.style.color = 'var(--color-text)';
                         item.textContent = `${session.name}  (${new Date(session.created_at).toLocaleString()})`;
                         item.onclick = async () => {
                             // Загрузить сообщения чата
@@ -185,9 +185,10 @@ export class ChatComponent {
         msg.className = 'chat-message ' + role;
         msg.textContent = text;
         msg.style.alignSelf = role === 'user' ? 'flex-end' : 'flex-start';
-        msg.style.background = role === 'user' ? '#1F1D1D' : '#000000';
-        msg.style.color = '#fff';
+        msg.style.background = role === 'user' ? 'var(--color-container)' : 'var(--color-bg)';
+        msg.style.color = 'var(--color-text)';
         msg.style.padding = '10px 16px';
+        msg.style.border = role === 'user' ? 'var(--color-border)' : 'none';
         msg.style.borderRadius = role === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px';
         msg.style.maxWidth = '70%';
         msg.style.marginTop = '2px';
