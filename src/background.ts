@@ -50,6 +50,33 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         console.log("📥 Команда от клиента:", command);
 
         switch (command.action) {
+
+            case 'control_video':
+            case 'control_media': {
+                chrome.tabs.query({}, (tabs) => {
+                    let found = false;
+                    let checked = 0;
+                    for (const tab of tabs) {
+                        if (typeof tab.id === 'number') {
+                            chrome.tabs.sendMessage(tab.id, { type: 'HAS_VIDEO' }, (response) => {
+                                checked++;
+                                if (found) return;
+                                if (response && response.hasVideo) {
+                                    found = true;
+                                    if (typeof tab.id === 'number') {
+                                        chrome.tabs.sendMessage(tab.id, {
+                                            type: 'VIDEO_CONTROL',
+                                            command: command.videoCommand || command.mediaCommand
+                                        });
+                                    }
+                                }
+                            });
+                        }
+                    }
+                });
+                break;
+            }
+
             case 'switch_tab': {
                 const index = command.tabIndex;
                 chrome.tabs.query({}, (tabs) => {

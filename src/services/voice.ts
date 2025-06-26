@@ -66,7 +66,11 @@ export class VoiceService {
 
                 if (data.command) {
                     console.log("📢 Получена команда от сервера:", data.command);
-                    handleServerCommand(data.command);
+                    if (data.command.action === 'control_media' || data.command.action === 'control_video') {
+                        handleMediaCommand(data.command);
+                    } else {
+                        handleServerCommand(data.command);
+                    }
                     return;
                 }
 
@@ -450,6 +454,28 @@ const getTabs = (): Promise<{ id: number; index: number; url: string; active: bo
 // };
 
 const handleServerCommand = async (command: { action: string; tab?: any; tabIndex?: number; url?: string }) => {
+    console.log(command);
+    chrome.runtime.sendMessage({
+        type: 'EXECUTE_COMMAND',
+        payload: command
+    });
+};
+
+/**
+ * Отправляет media-команду (например, play/pause/next/prev) в background script.
+ * Используйте для управления любыми медиа-элементами (видео, аудио и т.д.).
+ *
+ * Пример команды, которую должен вернуть сервер:
+ * {
+ *   "command": {
+ *     "action": "control_media",
+ *     "mediaCommand": "next" // play | pause | next | prev | forward | backward
+ *   }
+ * }
+ *
+ * mediaCommand — строка, определяющая действие с медиа (play, pause, next, prev и т.д.)
+ */
+const handleMediaCommand = async (command: { action: string; mediaCommand: string;[key: string]: any }) => {
     console.log(command);
     chrome.runtime.sendMessage({
         type: 'EXECUTE_COMMAND',
