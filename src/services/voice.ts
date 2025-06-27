@@ -1,3 +1,6 @@
+import { AuthService } from './auth';
+import { NotesService } from './notes';
+
 export class VoiceService {
     private static _startListening: (() => Promise<void>) | null = null;
     private static _stopListening: (() => void) | null = null;
@@ -61,8 +64,36 @@ export class VoiceService {
                 statusBubble.textContent = 'Ready to listen!';
             };
 
-            wv.onmessage = (e) => {
+            wv.onmessage = async (e) => {
                 const data = JSON.parse(e.data);
+
+                // --- Обработка команды создания заметки по тексту ---
+                if (data.command && data.command.action === 'create_note' && data.command.title && data.command.text) {
+                    // Создать заметку через NotesService
+                    let token: string = '';
+                    if ((window as any).AuthService) {
+                        token = String(await (window as any).AuthService.getToken() || '');
+                    } else if (AuthService) {
+                        token = String(await AuthService.getToken() || '');
+                    }
+                    if (!token) {
+                        statusBubble.textContent = 'Login required to save note.';
+                        return;
+                    }
+                    try {
+                        const note = await NotesService.createNote(data.command.title, data.command.text, token, doc);
+                        if (note) {
+                            statusBubble.textContent = 'Note created!';
+                            // Можно добавить открытие заметки или обновление UI
+                        } else {
+                            statusBubble.textContent = 'Failed to create note.';
+                        }
+                    } catch (e) {
+                        statusBubble.textContent = 'Error creating note.';
+                    }
+                    return;
+                }
+                // --- /Обработка команды создания заметки ---
 
                 if (data.command) {
                     console.log("📢 Получена команда от сервера:", data.command);
