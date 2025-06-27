@@ -55,7 +55,23 @@
         "/public/account.png",
         "/public/appereance.png",
         "/public/account-active.png",
-        "/public/appereance-active.png"
+        "/public/appereance-active.png",
+        "/public/chat-white.png",
+        "/public/notes-white.png",
+        "/public/settings-white.png",
+        "/public/tools-white.png",
+        "/public/translate-white.png",
+        "/public/voice-white.png",
+        "/public/chat-active-white.png",
+        "/public/notes-white-active.png",
+        "/public/settings-white-active.png",
+        "/public/tools-active-white.png",
+        "/public/translate-white-active.png",
+        "/public/voice-white-active.png",
+        "/public/account-white.png",
+        "/public/appereance-white.png",
+        "/public/account-white-active.png",
+        "/public/appereance-white-active.png"
       ],
       "matches": [
         "<all_urls>"

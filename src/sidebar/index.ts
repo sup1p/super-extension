@@ -21,9 +21,10 @@ export class Sidebar {
     private floatingButtonPosition: 'Bottom' | 'Top' = 'Bottom';
     private hideIconOn: string[] = [];
     private theme: 'system' | 'light' | 'dark' = 'system';
+    private floatingButtonVisible: boolean = true;
 
     constructor() {
-        chrome.storage.local.get(['sidebarPosition', 'floatingButtonPosition', 'hideIconOn', 'sidebarTheme'], (result) => {
+        chrome.storage.local.get(['sidebarPosition', 'floatingButtonPosition', 'hideIconOn', 'sidebarTheme', 'floatingButtonEnabled'], (result) => {
             if (result.sidebarPosition === 'left') {
                 this.sidebarPosition = 'left';
             }
@@ -42,6 +43,9 @@ export class Sidebar {
                 this.theme = result.sidebarTheme;
             } else {
                 this.theme = 'system';
+            }
+            if (typeof result.floatingButtonEnabled === 'boolean') {
+                this.floatingButtonVisible = result.floatingButtonEnabled;
             }
             this.initializeFloatingButton();
         });
@@ -64,6 +68,12 @@ export class Sidebar {
             this.floatingButton.remove();
         }
 
+        // Если кнопка должна быть скрыта, не создаём её
+        if (!this.floatingButtonVisible) {
+            this.floatingButton = null;
+            return;
+        }
+
         // Create the floating button
         this.floatingButton = document.createElement('div');
         this.floatingButton.id = 'chrome-extension-floating-button';
@@ -79,7 +89,6 @@ export class Sidebar {
             transform: translateY(-50%) scale(1);
             width: 44px;
             height: 44px;
-            background: #151515;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -87,12 +96,12 @@ export class Sidebar {
             box-shadow: none;
             z-index: 2147483648;
             transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            color: white;
             user-select: none;
-            border: 2px solid rgba(255,255,255,0.08);
             padding: 0;
             gap: 0;
             pointer-events: auto;
+            background: transparent;
+            border: none;
         `;
 
         if (this.sidebarPosition === 'left') {
@@ -108,6 +117,8 @@ export class Sidebar {
                 border-right: none;
             `;
         }
+        // Устанавливаем цвет по теме
+        this.updateFloatingButtonTheme();
 
         // Add click handler
         this.floatingButton.addEventListener('click', (e) => {
@@ -117,6 +128,17 @@ export class Sidebar {
 
         // Add the button to the page
         document.body.appendChild(this.floatingButton);
+
+        // Если сайдбар открыт — сразу позиционируем кнопку у края сайдбара
+        if (this.sidebarOpen) {
+            if (this.sidebarPosition === 'left') {
+                this.floatingButton.style.left = this.sidebarWidth;
+                this.floatingButton.style.right = '';
+            } else {
+                this.floatingButton.style.right = this.sidebarWidth;
+                this.floatingButton.style.left = '';
+            }
+        }
     }
 
     public cleanup(): void {
@@ -370,7 +392,6 @@ export class Sidebar {
                             gap: 24px;
                             background: #151515;
                             border-radius: 0 48px 48px  0;
-                            box-shadow: 0 4px 24px rgba(0,0,0,.45);
                             z-index: 9999;
                             transform: translateY(-50%);
                         }
@@ -421,8 +442,6 @@ export class Sidebar {
                             gap:24px;                      /* расстояние между иконками */
                             background:#151515;
                             border-radius: 56px 0 0 56px;
-
-                            box-shadow:0 4px 24px rgba(0,0,0,.45);
                             z-index:9999;                  /* поверх контента */
                         }
 
@@ -1393,6 +1412,46 @@ export class Sidebar {
                         .hide-icon-input-confirm:hover {
                             background: #8B78E0;
                         }
+
+                        /* --- Light theme dock/button overrides --- */
+                        body.theme-light .dock {
+                            background: #F5F5F5;
+                            box-shadow: 0 4px 24px rgba(0,0,0,.15);
+                        }
+                        body.theme-light .dock__btn,
+                        body.theme-light .tools_button {
+                            background: #EDEDED;
+                        }
+                        body.theme-light .dock__btn.active,
+                        body.theme-light .tools_button.active {
+                            background: #AA97FF;
+                            box-shadow: 0 0 8px #AA97FF;
+                        }
+                        body.theme-light .settings_dock {
+                            background: #F5F5F5;
+                            box-shadow: 0 4px 24px rgba(0,0,0,.15);
+                        }
+                        body.theme-light .settings__dock__btn {
+                            background: #EDEDED;
+                        }
+                        body.theme-light .settings__dock__btn.active {
+                            background: #AA97FF !important;
+                            box-shadow: 0 0 8px #AA97FF !important;
+                        }
+
+                        /* --- Dark theme dock/button overrides --- */
+                        body.theme-dark .dock {
+                            background: #151515;
+                            box-shadow: 0 4px 24px rgba(0,0,0,.45);
+                        }
+                        body.theme-dark .settings_dock {
+                            background: #151515;
+                            box-shadow: 0 4px 24px rgba(0,0,0,.45);
+                        }
+                        body.theme-dark .settings__dock__btn.active {
+                            background: #6F58D5 !important;
+                            box-shadow: 0 0 8px #6F58D5 !important;
+                        }
                     </style>
                 `;
 
@@ -1411,6 +1470,21 @@ export class Sidebar {
             const toolsActiveUrl = chrome.runtime.getURL('public/tools-active.png');
             const settingsActiveUrl = chrome.runtime.getURL('public/settings-active.png');
 
+            // --- WHITE ICON URLS ---
+            const notesWhiteUrl = chrome.runtime.getURL('public/notes-white.png');
+            const chatWhiteUrl = chrome.runtime.getURL('public/chat-white.png');
+            const voiceWhiteUrl = chrome.runtime.getURL('public/voice-white.png');
+            const translateWhiteUrl = chrome.runtime.getURL('public/translate-white.png');
+            const toolsWhiteUrl = chrome.runtime.getURL('public/tools-white.png');
+            const settingsWhiteUrl = chrome.runtime.getURL('public/settings-white.png');
+
+            const notesActiveWhiteUrl = chrome.runtime.getURL('public/notes-white-active.png');
+            const chatActiveWhiteUrl = chrome.runtime.getURL('public/chat-active-white.png');
+            const voiceActiveWhiteUrl = chrome.runtime.getURL('public/voice-white-active.png');
+            const translateActiveWhiteUrl = chrome.runtime.getURL('public/translate-white-active.png');
+            const toolsActiveWhiteUrl = chrome.runtime.getURL('public/tools-active-white.png');
+            const settingsActiveWhiteUrl = chrome.runtime.getURL('public/settings-white-active.png');
+
             const summarizerUrl = chrome.runtime.getURL('public/summarizer.png');
             const simplifierUrl = chrome.runtime.getURL('public/simplifier.png');
 
@@ -1423,6 +1497,14 @@ export class Sidebar {
             const accountActiveUrl = chrome.runtime.getURL('public/account-active.png');
             const appereanceActiveUrl = chrome.runtime.getURL('public/appereance-active.png');
 
+            // Белые иконки для settings_dock (использовать в светлой теме)
+            const accountWhiteUrl = chrome.runtime.getURL('public/account-white.png');
+            const appereanceWhiteUrl = chrome.runtime.getURL('public/appereance-white.png');
+            const accountActiveWhiteUrl = chrome.runtime.getURL('public/account-white-active.png');
+            const appereanceActiveWhiteUrl = chrome.runtime.getURL('public/appereance-white-active.png');
+
+            // --- WHITE ICONS for settings dock ---
+            // (Удалены неиспользуемые переменные)
 
             iframeDoc.body.innerHTML = `
                     <div class="sidebar">
@@ -1599,25 +1681,24 @@ export class Sidebar {
 
                         <div id="screen-account" class="screen">
                             <h1 class="title">Settings</h1>
-                            <div class="account-section">
-                                <div class="account-card">
-                                    <div class="account-card-title">Account</div>
-                                    <div class="account-card-content">
-                                        <img id="user-avatar" class="account-avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23b0b0b0'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-4 0-7 2-7 4v2h14v-2c0-2-3-4-7-4z'/%3E%3C/svg%3E" alt="avatar" />
-                                        <div class="account-info">
-                                            <div id="user-name" class="account-name"></div>
-                                            <div id="user-email" class="account-email"></div>
-                                        </div>
+                            <div style="padding: 0 32px 32px 32px; max-width: 340px; margin: 0 auto;">
+                                <h2 class="section-title" style="margin-bottom: 18px;">Account</h2>
+                                <div style="background: var(--color-container); border-radius: 20px; border: 1px solid var(--color-border); padding: 20px 20px 16px 20px; display: flex; align-items: center; gap: 16px; margin-bottom: 28px;">
+                                    <img id="user-avatar" class="account-avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23b0b0b0'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-4 0-7 2-7 4v2h14v-2c0-2-3-4-7-4z'%3E%3C/svg%3E" alt="avatar" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; background: #fff; border: 1px solid var(--color-border);" />
+                                    <div style="display: flex; flex-direction: column;">
+                                        <div id="user-name" class="account-name" style="font-size: 17px; font-weight: 600; color: var(--color-text); margin-bottom: 2px;"></div>
+                                        <div id="user-email" class="account-email" style="font-size: 14px; color: #b0b0b0;"></div>
                                     </div>
                                 </div>
-                                <div class="account-card">
-                                    <div class="account-card-title">Pro plan</div>
-                                    <div class="account-card-content account-pro">
-                                        <div class="account-pro-text">You have no pro plan yet!</div>
-                                        <a href="#" class="account-btn account-btn-pro">Activate</a>
-                                    </div>
+                                <h2 class="section-title" style="margin-bottom: 18px;">Pro plan</h2>
+                                <div style="background: var(--color-container); border-radius: 20px; border: 1px solid var(--color-border); padding: 20px 20px 16px 20px; margin-bottom: 28px;">
+                                    <div style="font-size: 15px; color: #b0b0b0; margin-bottom: 10px;">You have no pro plan yet!</div>
+                                    <button class="account-btn account-btn-pro" style="color: #6F58D5; background: none; border: none; font-size: 15px; font-weight: 300; padding: 0; cursor: pointer; text-align: left;">Activate</button>
                                 </div>
-                                <button id="logout-btn" class="account-btn account-btn-logout">Logout</button>
+                                <h2 class="section-title" style="margin-bottom: 18px;">Actions</h2>
+                                <div style="background: var(--color-container); border-radius: 20px; border: 1px solid var(--color-border); padding: 0px 20px 0px 20px; margin-bottom: 28px;">
+                                    <button id="logout-btn" class="account-btn account-btn-logout" style="max-width: 180px; background: none; color: #ff5252; border: none; border-radius: 20px; padding: 10px 0 10px 0px; font-size: 15px; font-weight: 300; cursor: pointer; text-align: left;">Logout</button>
+                                </div>
                             </div>
                         </div>
 
@@ -1638,11 +1719,11 @@ export class Sidebar {
                                             </div>
                                             <div class="setting-item">
                                                 <span>Zoom</span>
-                                                <select>
-                                                    <option>100%</option>
-                                                    <option>90%</option>
-                                                    <option>110%</option>
-                                                    <option>125%</option>
+                                                <select id="zoom-select">
+                                                    <option value="100">100%</option>
+                                                    <option value="90">90%</option>
+                                                    <option value="110">110%</option>
+                                                    <option value="125">125%</option>
                                                 </select>
                                             </div>
                                         </div>
@@ -2040,6 +2121,96 @@ export class Sidebar {
 
             // --- Theme select logic ---
             const themeSelect = iframeDoc.getElementById('theme-select') as HTMLSelectElement | null;
+            const zoomSelect = iframeDoc.getElementById('zoom-select') as HTMLSelectElement | null;
+
+            // Helper to apply zoom to sidebar
+            const applySidebarZoom = (zoom: string) => {
+                // Only apply to the sidebar root (body)
+                if (iframeDoc && iframeDoc.body) {
+                    if (zoom === '100') {
+                        iframeDoc.body.style.zoom = '';
+                        iframeDoc.body.style.transform = '';
+                    } else {
+                        // Prefer zoom if supported, fallback to transform: scale
+                        iframeDoc.body.style.zoom = zoom + '%';
+                        iframeDoc.body.style.transform = `scale(${parseInt(zoom, 10) / 100})`;
+                        iframeDoc.body.style.transformOrigin = 'top left';
+                    }
+                }
+            };
+
+            // Restore zoom from storage
+            chrome.storage.local.get(['sidebarZoom'], (result) => {
+                const zoom = result.sidebarZoom || '100';
+                if (zoomSelect) zoomSelect.value = zoom;
+                applySidebarZoom(zoom);
+            });
+
+            if (zoomSelect) {
+                zoomSelect.addEventListener('change', (e) => {
+                    const zoom = (e.target as HTMLSelectElement).value;
+                    chrome.storage.local.set({ sidebarZoom: zoom });
+                    applySidebarZoom(zoom);
+                });
+            }
+
+            // Helper to get current theme (light/dark)
+            const getCurrentTheme = (theme: 'system' | 'light' | 'dark') => {
+                if (theme === 'system') {
+                    return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+                }
+                return theme;
+            };
+            // Helper to update all dock and settings icons based on theme and active state
+            const updateSidebarIcons = (theme: 'system' | 'light' | 'dark') => {
+                const currentTheme = getCurrentTheme(theme);
+                // Dock icons
+                const dockButtons = iframeDoc.querySelectorAll('.dock__btn, .tools_button');
+                dockButtons.forEach(btn => {
+                    const img = btn.querySelector('.dock-icon') as HTMLImageElement | null;
+                    if (!img) return;
+                    const isActive = btn.classList.contains('active');
+                    const screen = btn.getAttribute('data-screen') || (btn.classList.contains('tools_button') ? 'tools' : '');
+                    if (currentTheme === 'light') {
+                        switch (screen) {
+                            case 'screen-notes': img.src = isActive ? notesActiveWhiteUrl : notesWhiteUrl; break;
+                            case 'screen-chat': img.src = isActive ? chatActiveWhiteUrl : chatWhiteUrl; break;
+                            case 'screen-voice': img.src = isActive ? voiceActiveWhiteUrl : voiceWhiteUrl; break;
+                            case 'screen-translate': img.src = isActive ? translateActiveWhiteUrl : translateWhiteUrl; break;
+                            case 'screen-settings': img.src = isActive ? settingsActiveWhiteUrl : settingsWhiteUrl; break;
+                            case 'tools': img.src = isActive ? toolsActiveWhiteUrl : toolsWhiteUrl; break;
+                        }
+                    } else {
+                        switch (screen) {
+                            case 'screen-notes': img.src = isActive ? notesActiveUrl : notesUrl; break;
+                            case 'screen-chat': img.src = isActive ? chatActiveUrl : chatUrl; break;
+                            case 'screen-voice': img.src = isActive ? voiceActiveUrl : voiceUrl; break;
+                            case 'screen-translate': img.src = isActive ? translateActiveUrl : translateUrl; break;
+                            case 'screen-settings': img.src = isActive ? settingsActiveUrl : settingsUrl; break;
+                            case 'tools': img.src = isActive ? toolsActiveUrl : toolsUrl; break;
+                        }
+                    }
+                });
+                // Settings dock icons
+                const settingsDockButtons = iframeDoc.querySelectorAll('.settings__dock__btn');
+                settingsDockButtons.forEach(btn => {
+                    const img = btn.querySelector('.settings-dock-icon') as HTMLImageElement | null;
+                    if (!img) return;
+                    const isActive = btn.classList.contains('active');
+                    const screen = btn.getAttribute('data-screen');
+                    if (currentTheme === 'light') {
+                        switch (screen) {
+                            case 'screen-account': img.src = isActive ? accountActiveWhiteUrl : accountWhiteUrl; break;
+                            case 'screen-appereance': img.src = isActive ? appereanceActiveWhiteUrl : appereanceWhiteUrl; break;
+                        }
+                    } else {
+                        switch (screen) {
+                            case 'screen-account': img.src = isActive ? accountActiveUrl : accountUrl; break;
+                            case 'screen-appereance': img.src = isActive ? appereanceActiveUrl : appereanceUrl; break;
+                        }
+                    }
+                });
+            };
             const setThemeClass = (theme: 'system' | 'light' | 'dark') => {
                 let t = theme;
                 if (t === 'system') {
@@ -2047,6 +2218,8 @@ export class Sidebar {
                 }
                 iframeDoc.body.classList.remove('theme-light', 'theme-dark');
                 iframeDoc.body.classList.add('theme-' + t);
+                updateSidebarIcons(theme);
+                this.updateFloatingButtonTheme();
             };
             if (themeSelect) {
                 themeSelect.value = this.theme;
@@ -2063,6 +2236,32 @@ export class Sidebar {
                         setThemeClass('system');
                     });
                 }
+            }
+            // --- Update icons on dock button click ---
+            const allDockButtons = iframeDoc.querySelectorAll('.dock__btn, .tools_button, .settings__dock__btn');
+            allDockButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    allDockButtons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    updateSidebarIcons(this.theme);
+                    updateSettingsDockVisibility();
+                });
+            });
+
+            // --- Icon toggle switch logic ---
+            const iconSwitch = iframeDoc.querySelector('.switch input[type="checkbox"]') as HTMLInputElement | null;
+            if (iconSwitch) {
+                // Инициализация состояния из chrome.storage.local
+                chrome.storage.local.get(['floatingButtonEnabled'], (result) => {
+                    const enabled = result.floatingButtonEnabled !== false; // по умолчанию true
+                    iconSwitch.checked = enabled;
+                    this.toggleFloatingButton(enabled);
+                });
+                iconSwitch.addEventListener('change', () => {
+                    const enabled = iconSwitch.checked;
+                    chrome.storage.local.set({ floatingButtonEnabled: enabled });
+                    this.toggleFloatingButton(enabled);
+                });
             }
         };
 
@@ -2312,6 +2511,42 @@ export class Sidebar {
             this.openSidebar();
         }
     }
+
+    // Вспомогательная функция для получения текущей темы (light/dark)
+    private getCurrentTheme(): 'light' | 'dark' {
+        if (this.theme === 'system') {
+            return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+        }
+        return this.theme;
+    }
+
+    // Обновление цвета floatingButton в зависимости от темы
+    private updateFloatingButtonTheme(): void {
+        if (!this.floatingButton) return;
+        const theme = this.getCurrentTheme();
+        if (theme === 'light') {
+            this.floatingButton.style.background = '#FAFAFA';
+        } else {
+            this.floatingButton.style.background = '#151515';
+            this.floatingButton.style.border = '2px solid rgba(255,255,255,0.08)';
+        }
+    }
+
+    /**
+     * Показывает или скрывает floatingButton
+     * @param visible true — показать, false — скрыть
+     */
+    public toggleFloatingButton(visible: boolean): void {
+        this.floatingButtonVisible = visible;
+        if (visible) {
+            this.initializeFloatingButton();
+        } else {
+            if (this.floatingButton) {
+                this.floatingButton.remove();
+                this.floatingButton = null;
+            }
+        }
+    }
 }
 
 export function updateUserAvatar(avatarUrl: string | null) {
@@ -2338,7 +2573,7 @@ function loadUserData(doc: Document) {
                         if (userData.avatar) {
                             avatarImg.src = userData.avatar;
                         } else {
-                            avatarImg.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23b0b0b0'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-4 0-7 2-7 4v2h14v-2c0-2-3-4-7-4z'/%3E%3C/svg%3E";
+                            avatarImg.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23b0b0b0'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-4 0-7 2-7 4v2h14v-2c0-2-3-4-7-4z'%3E%3C/svg%3E";
                         }
                     }
                     const nameDiv = doc.getElementById('user-name');

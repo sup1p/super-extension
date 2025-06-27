@@ -118,60 +118,171 @@ export class AuthComponent {
 
 export function showAuthModal(doc: Document) {
     if (doc.getElementById('auth-modal')) return;
+
+    // Detect theme using the same logic as in sidebar
+    const getCurrentTheme = (): 'light' | 'dark' => {
+        // Check if there's a theme class on body
+        const bodyTheme = doc.body.classList.contains('theme-light') ? 'light' :
+            doc.body.classList.contains('theme-dark') ? 'dark' : null;
+
+        if (bodyTheme) return bodyTheme;
+
+        // Check if there's a dark class on html
+        if (doc.documentElement.classList.contains('dark')) return 'dark';
+
+        // Check system preference
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    };
+
+    const isDarkTheme = getCurrentTheme() === 'dark';
+
     const modal = doc.createElement('div');
     modal.id = 'auth-modal';
     modal.style.cssText = `
         position: fixed;
         z-index: 9999;
         left: 0; top: 0; right: 0; bottom: 0;
-        background: rgba(0,0,0,0.85);
+        background: ${isDarkTheme ? 'rgba(0,0,0,0.75)' : 'rgba(0,0,0,0.4)'};
+        backdrop-filter: blur(8px);
         display: flex;
         align-items: center;
         justify-content: center;
+        animation: fadeIn 0.3s ease-out;
     `;
+
     const box = doc.createElement('div');
     box.style.cssText = `
-        background: #222;
-        padding: 36px 32px 28px 32px;
-        border-radius: 16px;
-        box-shadow: 0 4px 32px #0008;
+        background: ${isDarkTheme ? '#1a1a1a' : '#ffffff'};
+        padding: 40px;
+        border-radius: 20px;
+        box-shadow: ${isDarkTheme
+            ? '0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05)'
+            : '0 20px 60px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05)'};
         display: flex;
         flex-direction: column;
         align-items: center;
-        min-width: 320px;
+        min-width: 380px;
+        max-width: 420px;
+        animation: slideUp 0.3s ease-out;
+        border: 1px solid ${isDarkTheme ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'};
     `;
+
     const title = doc.createElement('div');
     title.textContent = 'Требуется авторизация';
-    title.style.cssText = 'font-size: 22px; font-weight: 700; margin-bottom: 18px;';
+    title.style.cssText = `
+        font-size: 24px; 
+        font-weight: 700; 
+        margin-bottom: 8px;
+        color: ${isDarkTheme ? '#ffffff' : '#1a1a1a'};
+        text-align: center;
+    `;
+
+    const subtitle = doc.createElement('div');
+    subtitle.textContent = 'Войдите в свой аккаунт для продолжения';
+    subtitle.style.cssText = `
+        font-size: 14px;
+        color: ${isDarkTheme ? '#a0a0a0' : '#666666'};
+        margin-bottom: 32px;
+        text-align: center;
+        line-height: 1.4;
+    `;
 
     // Форма логина
     const form = doc.createElement('form');
-    form.style.cssText = 'display: flex; flex-direction: column; gap: 12px; width: 100%;';
+    form.style.cssText = 'display: flex; flex-direction: column; gap: 16px; width: 100%;';
+
     const emailInput = doc.createElement('input');
     emailInput.type = 'email';
     emailInput.placeholder = 'Email';
     emailInput.required = true;
-    emailInput.style.cssText = 'padding: 10px; border-radius: 8px; border: 1px solid #444; background: #181818; color: #fff; font-size: 15px;';
+    emailInput.style.cssText = `
+        padding: 14px 16px; 
+        border-radius: 12px; 
+        border: 2px solid ${isDarkTheme ? '#333333' : '#e0e0e0'};
+        background: ${isDarkTheme ? '#2a2a2a' : '#f8f8f8'};
+        color: ${isDarkTheme ? '#ffffff' : '#1a1a1a'};
+        font-size: 15px;
+        transition: all 0.2s ease;
+        outline: none;
+        box-sizing: border-box;
+    `;
+
     const passInput = doc.createElement('input');
     passInput.type = 'password';
     passInput.placeholder = 'Пароль';
     passInput.required = true;
-    passInput.style.cssText = 'padding: 10px; border-radius: 8px; border: 1px solid #444; background: #181818; color: #fff; font-size: 15px;';
+    passInput.style.cssText = emailInput.style.cssText;
+
+    // Focus styles
+    const focusStyle = `
+        border-color: #6F58D5;
+        box-shadow: 0 0 0 3px ${isDarkTheme ? 'rgba(111, 88, 213, 0.2)' : 'rgba(111, 88, 213, 0.1)'};
+    `;
+
+    emailInput.addEventListener('focus', () => {
+        emailInput.style.cssText = emailInput.style.cssText + focusStyle;
+    });
+    emailInput.addEventListener('blur', () => {
+        emailInput.style.cssText = emailInput.style.cssText.replace(focusStyle, '');
+    });
+
+    passInput.addEventListener('focus', () => {
+        passInput.style.cssText = passInput.style.cssText + focusStyle;
+    });
+    passInput.addEventListener('blur', () => {
+        passInput.style.cssText = passInput.style.cssText.replace(focusStyle, '');
+    });
+
     const errorDiv = doc.createElement('div');
-    errorDiv.style.cssText = 'color: #ff5252; font-size: 14px; min-height: 18px;';
+    errorDiv.style.cssText = `
+        color: #ff5252; 
+        font-size: 14px; 
+        min-height: 20px;
+        text-align: center;
+        font-weight: 500;
+    `;
     errorDiv.textContent = '';
+
     const loginBtn = doc.createElement('button');
     loginBtn.type = 'submit';
     loginBtn.textContent = 'Войти';
-    loginBtn.style.cssText = 'margin: 8px 0 0 0; width: 100%; padding: 10px 0; font-size: 16px; border-radius: 8px; border: none; background: #3a7afe; color: #fff; font-weight: 600; cursor: pointer;';
+    loginBtn.style.cssText = `
+        margin: 8px 0 0 0; 
+        width: 100%; 
+        padding: 14px 0; 
+        font-size: 16px; 
+        border-radius: 12px; 
+        border: none; 
+        background: linear-gradient(135deg, #6F58D5 0%, #8B7AE6 100%);
+        color: #ffffff; 
+        font-weight: 600; 
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 16px rgba(111, 88, 213, 0.3);
+    `;
+
+    // Hover effect for button
+    loginBtn.addEventListener('mouseenter', () => {
+        loginBtn.style.transform = 'translateY(-2px)';
+        loginBtn.style.boxShadow = '0 6px 20px rgba(111, 88, 213, 0.4)';
+    });
+    loginBtn.addEventListener('mouseleave', () => {
+        loginBtn.style.transform = 'translateY(0)';
+        loginBtn.style.boxShadow = '0 4px 16px rgba(111, 88, 213, 0.3)';
+    });
+
     form.appendChild(emailInput);
     form.appendChild(passInput);
     form.appendChild(errorDiv);
     form.appendChild(loginBtn);
+
     form.onsubmit = async (e) => {
         e.preventDefault();
         loginBtn.disabled = true;
+        loginBtn.textContent = 'Вход...';
+        loginBtn.style.background = 'linear-gradient(135deg, #5a4bb8 0%, #7a6ad8 100%)';
         errorDiv.textContent = '';
+
         try {
             const success = await AuthService.login(emailInput.value, passInput.value);
             if (success) {
@@ -180,27 +291,91 @@ export function showAuthModal(doc: Document) {
                 window.location.reload();
             } else {
                 errorDiv.textContent = 'Неверный email или пароль';
+                // Shake animation for error
+                box.style.animation = 'shake 0.5s ease-in-out';
+                setTimeout(() => {
+                    box.style.animation = '';
+                }, 500);
             }
         } catch (err) {
             errorDiv.textContent = 'Ошибка авторизации';
         } finally {
             loginBtn.disabled = false;
+            loginBtn.textContent = 'Войти';
+            loginBtn.style.background = 'linear-gradient(135deg, #6F58D5 0%, #8B7AE6 100%)';
         }
     };
-    // Можно добавить кнопку регистрации, если появится реализация
+
     box.appendChild(title);
+    box.appendChild(subtitle);
     box.appendChild(form);
 
     // Добавляю кнопку регистрации
     const registerBtn = doc.createElement('button');
     registerBtn.type = 'button';
     registerBtn.textContent = 'Нет аккаунта? Зарегистрироваться';
-    registerBtn.style.cssText = 'margin-top: 16px; background: none; border: none; color: #3a7afe; font-size: 15px; cursor: pointer; text-decoration: underline;';
+    registerBtn.style.cssText = `
+        margin-top: 24px; 
+        background: none; 
+        border: none; 
+        color: #6F58D5; 
+        font-size: 14px; 
+        cursor: pointer; 
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.2s ease;
+    `;
+
+    registerBtn.addEventListener('mouseenter', () => {
+        registerBtn.style.color = '#8B7AE6';
+    });
+    registerBtn.addEventListener('mouseleave', () => {
+        registerBtn.style.color = '#6F58D5';
+    });
+
     registerBtn.onclick = () => {
         window.open('https://www.youtube.com/watch?v=dQw4w9WgXcQ', '_blank');
     };
+
     box.appendChild(registerBtn);
+
+    // Add CSS animations
+    const style = doc.createElement('style');
+    style.textContent = `
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideUp {
+            from { 
+                opacity: 0; 
+                transform: translateY(20px) scale(0.95);
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0) scale(1);
+            }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+    `;
+    doc.head.appendChild(style);
 
     modal.appendChild(box);
     doc.body.appendChild(modal);
+
+    // Close modal on outside click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+
+    // Focus on email input
+    setTimeout(() => {
+        emailInput.focus();
+    }, 100);
 } 
