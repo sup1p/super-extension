@@ -134,7 +134,21 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
             }
 
             default:
-                console.warn('Неизвестная команда:', command);
+                if (command.action === 'create_note' && command.title && command.text) {
+                    // Отправить команду в content script активной вкладки
+                    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                        const tab = tabs[0];
+                        if (tab && tab.id) {
+                            chrome.tabs.sendMessage(tab.id, {
+                                type: 'CREATE_NOTE',
+                                title: command.title,
+                                text: command.text
+                            });
+                        }
+                    });
+                } else {
+                    console.warn('Неизвестная команда:', command);
+                }
         }
     }
 });

@@ -91,6 +91,14 @@ export class NotesComponent {
             }
         };
 
+        // Сохранять заметку по Enter (без Shift)
+        inputArea.addEventListener('keydown', (e: KeyboardEvent) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                saveBtn.click();
+            }
+        });
+
         // Открыть детальный просмотр
         function openDetail(id: number) {
             NotesComponent.initNoteDetail(doc, id);
@@ -145,13 +153,36 @@ export class NotesComponent {
         };
         // Удалить
         deleteBtn.onclick = async () => {
-            if (!confirm('Удалить заметку?')) return;
-            try {
-                await NotesService.deleteNote(noteId, token!, doc);
-                (doc as any).renderNotes();
-                showScreen('screen-notes');
-            } catch (e) {
-                alert('Ошибка удаления заметки');
+            // Показываем кастомную модалку
+            const modal = doc.getElementById('delete-note-modal');
+            if (!modal) return;
+            modal.classList.add('active');
+
+            // Обработчики кнопок модалки
+            const confirmBtn = doc.getElementById('delete-note-confirm');
+            const cancelBtn = doc.getElementById('delete-note-cancel');
+
+            // Чтобы не навешивать несколько раз
+            function cleanup() {
+                if (modal) modal.classList.remove('active');
+                if (confirmBtn) confirmBtn.replaceWith(confirmBtn.cloneNode(true));
+                if (cancelBtn) cancelBtn.replaceWith(cancelBtn.cloneNode(true));
+            }
+
+            if (confirmBtn && cancelBtn) {
+                confirmBtn.onclick = async () => {
+                    cleanup();
+                    try {
+                        await NotesService.deleteNote(noteId, token!, doc);
+                        (doc as any).renderNotes();
+                        showScreen('screen-notes');
+                    } catch (e) {
+                        alert('Ошибка удаления заметки');
+                    }
+                };
+                cancelBtn.onclick = () => {
+                    cleanup();
+                };
             }
         };
         function showScreen(id: string) {

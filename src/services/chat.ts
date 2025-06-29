@@ -1,3 +1,5 @@
+import { showAuthModal } from "../sidebar/components/auth";
+
 export type ChatEvent = { text: string } | { error: string };
 export type ChatSession = { id: number; name: string; created_at: string; };
 export type ChatMessage = { id: number; role: 'user' | 'assistant'; content: string; created_at: string; };
@@ -79,11 +81,16 @@ export class ChatService {
         return 'AI: ' + message.split('').reverse().join('');
     }
 
-    static async getChatSessions(token: string): Promise<ChatSession[]> {
+    static async getChatSessions(token: string, doc: Document): Promise<ChatSession[]> {
         const res = await fetch('http://localhost:8000/chat/all', {
             headers: { 'Authorization': `Bearer ${token}` }
         });
-        if (!res.ok) throw new Error('Ошибка получения истории чатов');
+        if (!res.ok) {
+            if (res.status === 401) {
+                showAuthModal(doc);
+            }
+            throw new Error('Ошибка получения истории чатов');
+        }
         return await res.json();
     }
 
@@ -93,5 +100,19 @@ export class ChatService {
         });
         if (!res.ok) throw new Error('Ошибка получения сообщений чата');
         return await res.json();
+    }
+
+    static async deleteChatSession(sessionId: number, token: string, doc: Document): Promise<void> {
+        const res = await fetch(`http://localhost:8000/chat/delete?chat_id=${sessionId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) {
+            if (res.status === 401) {
+                showAuthModal(doc);
+            }
+            console.log(res);
+            return;
+        }
     }
 } 

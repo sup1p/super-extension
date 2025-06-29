@@ -77,18 +77,22 @@ export class ChatComponent {
                 inner.style.overflowY = 'auto';
                 inner.style.boxShadow = '0 8px 32px rgba(0,0,0,0.3)';
 
+                const closeBtnRow = doc.createElement('div');
+                closeBtnRow.style.display = 'flex';
+                closeBtnRow.style.justifyContent = 'flex-end';
+                closeBtnRow.style.marginBottom = '8px';
                 const closeBtn = doc.createElement('button');
                 closeBtn.textContent = '×';
-                closeBtn.style.position = 'absolute';
-                closeBtn.style.top = '24px';
-                closeBtn.style.right = '36px';
                 closeBtn.style.background = 'none';
                 closeBtn.style.border = 'none';
                 closeBtn.style.fontSize = '28px';
                 closeBtn.style.color = 'var(--color-text)';
                 closeBtn.style.cursor = 'pointer';
+                closeBtn.style.lineHeight = '1';
+                closeBtn.style.padding = '0 8px';
                 closeBtn.onclick = () => modal.remove();
-                inner.appendChild(closeBtn);
+                closeBtnRow.appendChild(closeBtn);
+                inner.appendChild(closeBtnRow);
 
                 const title = doc.createElement('h2');
                 title.textContent = 'История чатов';
@@ -103,7 +107,7 @@ export class ChatComponent {
                 }
                 let sessions: ChatSession[] = [];
                 try {
-                    sessions = await ChatService.getChatSessions(token);
+                    sessions = await ChatService.getChatSessions(token, doc);
                 } catch (e) {
                     inner.appendChild(doc.createTextNode('Ошибка загрузки истории чатов.'));
                 }
@@ -142,6 +146,80 @@ export class ChatComponent {
                             });
                             modal.remove();
                         };
+                        // Кнопка удаления
+                        const deleteBtn = doc.createElement('button');
+                        deleteBtn.title = 'Удалить чат';
+                        deleteBtn.style.marginLeft = '12px';
+                        deleteBtn.style.background = 'none';
+                        deleteBtn.style.border = 'none';
+                        deleteBtn.style.color = '#e66';
+                        deleteBtn.style.cursor = 'pointer';
+                        deleteBtn.style.display = 'inline-flex';
+                        deleteBtn.style.alignItems = 'center';
+                        deleteBtn.style.justifyContent = 'center';
+                        deleteBtn.style.padding = '0';
+                        deleteBtn.style.width = '22px';
+                        deleteBtn.style.height = '22px';
+                        deleteBtn.innerHTML = `
+                            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M6 7V15C6 15.5523 6.44772 16 7 16H13C13.5523 16 14 15.5523 14 15V7" stroke="#e66" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M4 7H16" stroke="#e66" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M9 10V13" stroke="#e66" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M11 10V13" stroke="#e66" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M8 7V5C8 4.44772 8.44772 4 9 4H11C11.5523 4 12 4.44772 12 5V7" stroke="#e66" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        `;
+                        deleteBtn.onclick = async (e) => {
+                            e.stopPropagation();
+                            // Кастомная модалка подтверждения удаления чата
+                            let customModal = doc.getElementById('delete-chat-modal') as HTMLElement | null;
+                            if (customModal) customModal.remove();
+                            customModal = doc.createElement('div');
+                            customModal.id = 'delete-chat-modal';
+                            customModal.className = 'tools-modal-overlay active';
+                            customModal.innerHTML = `
+                                <div class="modal-content tools-modal-content" style="max-width:340px;">
+                                    <div class="modal-header">
+                                        <div class="modal-title">Delete chat?</div>
+                                    </div>
+                                    <div style="margin-bottom:18px; font-size:15px; text-align:center;">Are you sure you want to delete this chat? This action cannot be undone.</div>
+                                    <div style="display:flex; gap:16px; justify-content:center;">
+                                        <button id="delete-chat-confirm" style="background:#ff4444;color:#fff;padding:10px 24px;border:none;border-radius:8px;font-size:15px;cursor:pointer;">Delete</button>
+                                        <button id="delete-chat-cancel" style="background:#232323;color:#fff;padding:10px 24px;border:none;border-radius:8px;font-size:15px;cursor:pointer;">Cancel</button>
+                                    </div>
+                                </div>
+                            `;
+                            inner.appendChild(customModal);
+                            const confirmBtn = doc.getElementById('delete-chat-confirm');
+                            const cancelBtn = doc.getElementById('delete-chat-cancel');
+                            function cleanup() {
+                                if (customModal) customModal.remove();
+                                if (confirmBtn) confirmBtn.replaceWith(confirmBtn.cloneNode(true));
+                                if (cancelBtn) cancelBtn.replaceWith(cancelBtn.cloneNode(true));
+                            }
+                            if (confirmBtn && cancelBtn) {
+                                confirmBtn.onclick = async () => {
+                                    cleanup();
+                                    try {
+                                        await ChatService.deleteChatSession(session.id, token, doc);
+                                        item.remove();
+                                        // Если после удаления нет чатов, показать сообщение
+                                        if (list.childElementCount === 0) {
+                                            const empty = doc.createElement('div');
+                                            empty.textContent = 'Нет чатов.';
+                                            empty.style.color = '#aaa';
+                                            inner.appendChild(empty);
+                                        }
+                                    } catch (err) {
+                                        alert('Ошибка удаления чата');
+                                    }
+                                };
+                                cancelBtn.onclick = () => {
+                                    cleanup();
+                                };
+                            }
+                        };
+                        item.appendChild(deleteBtn);
                         list.appendChild(item);
                     });
                     inner.appendChild(list);
@@ -178,6 +256,14 @@ export class ChatComponent {
             chatInput.style.height = 'auto';
             chatInput.style.height = chatInput.scrollHeight + 'px';
         });
+
+        // Send message on Enter (but allow Shift+Enter for newline)
+        chatInput.addEventListener('keydown', (e: KeyboardEvent) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                chatForm.requestSubmit();
+            }
+        });
     }
 
     static appendMessage(container: HTMLElement, text: string, role: 'user' | 'ai') {
@@ -190,7 +276,7 @@ export class ChatComponent {
         msg.style.padding = '10px 16px';
         msg.style.border = role === 'user' ? 'var(--color-border)' : 'none';
         msg.style.borderRadius = role === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px';
-        msg.style.maxWidth = '70%';
+        msg.style.maxWidth = role === 'user' ? '70%' : '100%';
         msg.style.marginTop = '2px';
         container.appendChild(msg);
     }

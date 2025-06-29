@@ -22,6 +22,7 @@ export class Sidebar {
     private hideIconOn: string[] = [];
     private theme: 'system' | 'light' | 'dark' = 'system';
     private floatingButtonVisible: boolean = true;
+    private currentScreen: string = 'screen-home'; // <--- добавлено
 
     constructor() {
         chrome.storage.local.get(['sidebarPosition', 'floatingButtonPosition', 'hideIconOn', 'sidebarTheme', 'floatingButtonEnabled'], (result) => {
@@ -203,6 +204,7 @@ export class Sidebar {
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
                     <title>Extension Sidebar</title>
                     <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
                         :root {
                             --color-bg: #000;
                             --color-container: #232323;
@@ -232,7 +234,7 @@ export class Sidebar {
                         }
                         
                         body {
-                            font-family: 'Inter', sans-serif;
+                            font-family: 'Poppins', 'Inter', 'Segoe UI', Arial, sans-serif;
                             background: var(--color-bg);
                             color: var(--color-text);
                             height: 100vh;
@@ -1119,8 +1121,13 @@ export class Sidebar {
                         #notes-list {
                             border-radius: 12px;
                             color: var(--color-text);
+                            max-height: 70vh;
+                            overflow-y: auto;
+                            scrollbar-width: none; /* Firefox */
                         }
-
+                        #notes-list::-webkit-scrollbar {
+                            display: none; /* Chrome, Safari, Opera */
+                        }
                         .notes-detail-header {
                             display: flex;
                             align-items: center;
@@ -1452,10 +1459,137 @@ export class Sidebar {
                             background: #6F58D5 !important;
                             box-shadow: 0 0 8px #6F58D5 !important;
                         }
+
+                        /* ... existing styles ... */
+                        #screen-home.screen.active {
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            height: 100%;
+                            background: none;
+                        }
+                        #screen-home .gradient-text {
+                            background: linear-gradient(90deg, #715CFF 0%, #8B78E0 50%, #AA97FF 100%);
+                            -webkit-background-clip: text;
+                            -webkit-text-fill-color: transparent;
+                            background-clip: text;
+                            text-fill-color: transparent;
+                            /* Чёткая тень без блюра, для читаемости */
+                            text-shadow: 0 2px 0 #fff2, 0 1px 0 #715CFF44;
+                        }
+                        .custom-dropdown {
+                            position: relative;
+                            width: 160px;
+                            user-select: none;
+                            font-size: 15px;
+                            font-weight: 500;
+                        }
+                        .custom-dropdown-selected {
+                            background: var(--color-container);
+                            color: var(--color-text);
+                            border: 1.5px solid var(--color-active);
+                            border-radius: 10px;
+                            padding: 10px 38px 10px 14px;
+                            cursor: pointer;
+                            transition: border 0.2s, box-shadow 0.2s;
+                            box-shadow: 0 2px 8px #715cff11;
+                            position: relative;
+                        }
+                        .custom-dropdown-selected:after {
+                            content: '';
+                            position: absolute;
+                            right: 16px;
+                            top: 50%;
+                            width: 16px;
+                            height: 16px;
+                            background-image: url('data:image/svg+xml;utf8,<svg fill="none" stroke="%23715CFF" stroke-width="2" viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg"><path d="M6 9l6 6 6-6"/></svg>');
+                            background-size: 16px 16px;
+                            background-repeat: no-repeat;
+                            background-position: center;
+                            transform: translateY(-50%);
+                            pointer-events: none;
+                        }
+                        .custom-dropdown-list {
+                            display: none;
+                            position: absolute;
+                            left: 0;
+                            right: 0;
+                            top: 110%;
+                            background: var(--color-container);
+                            border: 1.5px solid var(--color-active);
+                            border-radius: 10px;
+                            box-shadow: 0 8px 32px rgba(111,88,213,0.10);
+                            z-index: 99999;
+                            animation: fadeInDropdown 0.18s;
+                        }
+                        .custom-dropdown.open .custom-dropdown-list {
+                            display: block;
+                        }
+                        .custom-dropdown-option {
+                            padding: 12px 18px;
+                            cursor: pointer;
+                            color: var(--color-text);
+                            transition: background 0.15s, color 0.15s;
+                        }
+                        .custom-dropdown-option:hover {
+                            background: var(--color-active);
+                            color: #fff;
+                        }
+                        @keyframes fadeInDropdown {
+                            from { opacity: 0; transform: translateY(-8px); }
+                            to { opacity: 1; transform: translateY(0); }
+                        }
+                        .settings-section, .settings-group, .screen.active, .sidebar {
+                            overflow: visible !important;
+                        }
+                        #chat-container::-webkit-scrollbar {
+                            width: 8px;
+                            background: #232323;
+                        }
+                        #chat-container::-webkit-scrollbar-thumb {
+                            background: #333;
+                            border-radius: 8px;
+                        }
+                        body.theme-light #chat-container::-webkit-scrollbar {
+                            background: #E9E9E9;
+                        }
+                        body.theme-light #chat-container::-webkit-scrollbar-thumb {
+                            background: #CFCFCF;
+                        }
+                        /* Стили для placeholder-ов */
+                        input::placeholder,
+                        textarea::placeholder {
+                            font-family: 'Poppins', 'Inter', 'Segoe UI', Arial, sans-serif;
+                            color: #b0b0b0;
+                            opacity: 1;
+                        }
+                        /* Для кроссбраузерности */
+                        input::-webkit-input-placeholder,
+                        textarea::-webkit-input-placeholder {
+                            font-family: 'Poppins', 'Inter', 'Segoe UI', Arial, sans-serif;
+                            color: #b0b0b0;
+                        }
+                        input::-moz-placeholder,
+                        textarea::-moz-placeholder {
+                            font-family: 'Poppins', 'Inter', 'Segoe UI', Arial, sans-serif;
+                            color: #b0b0b0;
+                        }
+                        input:-ms-input-placeholder,
+                        textarea:-ms-input-placeholder {
+                            font-family: 'Poppins', 'Inter', 'Segoe UI', Arial, sans-serif;
+                            color: #b0b0b0;
+                        }
+                        input::-ms-input-placeholder,
+                        textarea::-ms-input-placeholder {
+                            font-family: 'Poppins', 'Inter', 'Segoe UI', Arial, sans-serif;
+                            color: #b0b0b0;
+                        }
                     </style>
                 `;
 
             // --- ICON URLS ---
+            const iconUrl = chrome.runtime.getURL('public/icon.png');
+
             const notesUrl = chrome.runtime.getURL('public/notes.png');
             const chatUrl = chrome.runtime.getURL('public/chat.png');
             const voiceUrl = chrome.runtime.getURL('public/voice.png');
@@ -1511,9 +1645,13 @@ export class Sidebar {
                         <button class="close-btn" id="close-sidebar">×</button>
 
                         <div id="screen-home" class="screen active">
-                            <h1 class="title">"Notitile"</h1>
-                            <div class="avatar">😊</div>
-                            <p class="intro">Hello! I'm your AI assistant — "notitile", here to help you work smarter and faster. I can summarize, rewrite, translate, generate content and assist with research 24/7. Let's get things done.</p>
+                            <div class="megan-card" style="box-shadow: 0 8px 32px rgb(84, 57, 202); border-radius: 24px; padding: 40px 36px 32px 36px; max-width: 340px; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 18px; border: 1px solid var(--color-border, #ececec); background: var(--color-bg);">
+                                <div class="avatar" style="width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, #715CFF 0%, #AA97FF 100%); display: flex; align-items: center; justify-content: center; margin-bottom: 12px; box-shadow: 0 2px 12px #715cff22; border: 3px solid #fff;">
+                                    <img src="${iconUrl}" alt="Megan Icon" style="width: 48px; height: 48px; object-fit: contain; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px #715cff11;" />
+                                </div>
+                                <h1 class="title gradient-text" style="font-size: 26px; font-weight: 700; margin-bottom: 0; text-align: center; letter-spacing: 0.5px;">Megan</h1>
+                                <p class="intro" style="line-height: 1.6; font-size: 16px; color: var(--color-text, #232323); text-align: center; margin-top: 0; margin-bottom: 0; opacity: 0.85;">Hello! I'm your AI assistant — <b class='gradient-text'>Megan</b>, here to help you work smarter and faster.<br><br>I can <b>summarize</b>, <b>rewrite</b>, <b>translate</b>, <b>generate content</b> and assist with <b>research</b> 24/7.<br><br><span class='gradient-text' style='font-weight:600;'>Let's get things done!</span></p>
+                            </div>
                         </div>
 
                         <div id="screen-notes" class="screen">
@@ -1541,10 +1679,23 @@ export class Sidebar {
                                 <textarea id="note-body" class="notes-detail-body"></textarea>
                             </div>
                         </div>
+                        <!-- Кастомная модалка подтверждения удаления заметки -->
+                        <div id="delete-note-modal" class="tools-modal-overlay">
+                            <div class="modal-content tools-modal-content" style="max-width:340px;">
+                                <div class="modal-header">
+                                    <div class="modal-title">Delete note?</div>
+                                </div>
+                                <div style="margin-bottom:18px; font-size:15px; text-align:center;">Are you sure you want to delete this note? This action cannot be undone.</div>
+                                <div style="display:flex; gap:16px; justify-content:center;">
+                                    <button id="delete-note-confirm" style="background:#ff4444;color:#fff;padding:10px 24px;border:none;border-radius:8px;font-size:15px;cursor:pointer;">Delete</button>
+                                    <button id="delete-note-cancel" style="background:#232323;color:#fff;padding:10px 24px;border:none;border-radius:8px;font-size:15px;cursor:pointer;">Cancel</button>
+                                </div>
+                            </div>
+                        </div>
 
                         <div id="screen-chat" class="screen">
                             <h1 class="title">Chat</h1>
-                            <div id="chat-container" style="flex: 1 1 0; display: flex; flex-direction: column; background: var(--color-bg); border-radius: 8px; overflow-y: auto; gap: 12px; margin-bottom: 16px; min-height: 0; max-height: 80vh; margin-right: 72px; margin-left: 4px;"></div>
+                            <div id="chat-container" style="flex: 1 1 0; display: flex; flex-direction: column; background: var(--color-bg); border-radius: 8px; overflow-y: auto; gap: 12px; margin-bottom: 16px; min-height: 0; max-height: 80vh; margin-right: 60px; margin-left: 4px;"></div>
                             <form id="chat-form" style="display: flex; flex-direction: column; gap: 0; align-items: stretch; margin-top: auto; width: 100%; position: relative;">
                                 <div class="chat-actions" style="display: flex; justify-content: flex-end; gap: 4px; margin-bottom: 4px;">
                                     <button type="button" id="chat-new" style="background: none; border: none; border-radius: 0; padding: 0; height: 40px; width: 40px; cursor: pointer; display: flex; align-items: center; justify-content: center;"><img src="${newChatUrl}" alt="New Chat" style="width:24px;height:24px;object-fit:contain;vertical-align:middle;" /></button>
@@ -1711,19 +1862,18 @@ export class Sidebar {
                                         <div class="settings-group">
                                             <div class="setting-item">
                                                 <span>Theme</span>
-                                                <select id="theme-select">
+                                                <div class="custom-dropdown" id="theme-dropdown">
+                                                    <div class="custom-dropdown-selected" id="theme-dropdown-selected">System</div>
+                                                    <div class="custom-dropdown-list" id="theme-dropdown-list">
+                                                        <div class="custom-dropdown-option" data-value="system">System</div>
+                                                        <div class="custom-dropdown-option" data-value="light">Light</div>
+                                                        <div class="custom-dropdown-option" data-value="dark">Dark</div>
+                                                    </div>
+                                                </div>
+                                                <select id="theme-select" style="display:none">
                                                     <option value="system">System</option>
                                                     <option value="light">Light</option>
                                                     <option value="dark">Dark</option>
-                                                </select>
-                                            </div>
-                                            <div class="setting-item">
-                                                <span>Zoom</span>
-                                                <select id="zoom-select">
-                                                    <option value="100">100%</option>
-                                                    <option value="90">90%</option>
-                                                    <option value="110">110%</option>
-                                                    <option value="125">125%</option>
                                                 </select>
                                             </div>
                                         </div>
@@ -1740,11 +1890,16 @@ export class Sidebar {
                                         <div class="settings-group">
                                              <div class="setting-item">
                                                 <span>Location</span>
-                                                <select id="icon-location-select">
-
+                                                <div class="custom-dropdown" id="icon-location-dropdown">
+                                                    <div class="custom-dropdown-selected" id="icon-location-dropdown-selected">Bottom</div>
+                                                    <div class="custom-dropdown-list" id="icon-location-dropdown-list">
+                                                        <div class="custom-dropdown-option" data-value="Bottom">Bottom</div>
+                                                        <div class="custom-dropdown-option" data-value="Top">Top</div>
+                                                    </div>
+                                                </div>
+                                                <select id="icon-location-select" style="display:none">
                                                     <option value="Bottom">Bottom</option>
                                                     <option value="Top">Top</option>
-                                                    
                                                 </select>
                                             </div>
                                         </div>
@@ -1767,7 +1922,14 @@ export class Sidebar {
                                         <div class="settings-group">
                                              <div class="setting-item">
                                                 <span>Location</span>
-                                                <select id="sidebar-location-select">
+                                                <div class="custom-dropdown" id="sidebar-location-dropdown">
+                                                    <div class="custom-dropdown-selected" id="sidebar-location-dropdown-selected">Right</div>
+                                                    <div class="custom-dropdown-list" id="sidebar-location-dropdown-list">
+                                                        <div class="custom-dropdown-option" data-value="right">Right</div>
+                                                        <div class="custom-dropdown-option" data-value="left">Left</div>
+                                                    </div>
+                                                </div>
+                                                <select id="sidebar-location-select" style="display:none">
                                                     <option value="right">Right</option>
                                                     <option value="left">Left</option>
                                                 </select>
@@ -1984,6 +2146,9 @@ export class Sidebar {
                         }
                     }
                     updateSettingsDockVisibility();
+                    // --- сохраняем текущий экран ---
+                    const screenId = btn.getAttribute('data-screen') || (btn.classList.contains('tools_button') ? 'screen-tools' : 'screen-home');
+                    (this as any).currentScreen = screenId;
                 });
             });
             // Следим за изменением классов у .screen (например, при программном переключении)
@@ -1994,6 +2159,14 @@ export class Sidebar {
                     new MutationObserver(updateSettingsDockVisibility).observe(el, { attributes: true, attributeFilter: ['class'] });
                 }
             });
+
+            // --- ВОССТАНАВЛИВАЕМ АКТИВНЫЙ ЭКРАН ---
+            if (this.currentScreen && this.currentScreen !== 'screen-home') {
+                const allScreens = iframeDoc.querySelectorAll('.screen');
+                allScreens.forEach(screen => screen.classList.remove('active'));
+                const targetScreen = iframeDoc.getElementById(this.currentScreen);
+                if (targetScreen) targetScreen.classList.add('active');
+            }
 
             // Микрофонная кнопка — управление напрямую через VoiceService
             const micToggleBtn = iframeDoc.getElementById('mic-toggle-btn');
@@ -2121,38 +2294,6 @@ export class Sidebar {
 
             // --- Theme select logic ---
             const themeSelect = iframeDoc.getElementById('theme-select') as HTMLSelectElement | null;
-            const zoomSelect = iframeDoc.getElementById('zoom-select') as HTMLSelectElement | null;
-
-            // Helper to apply zoom to sidebar
-            const applySidebarZoom = (zoom: string) => {
-                // Only apply to the sidebar root (body)
-                if (iframeDoc && iframeDoc.body) {
-                    if (zoom === '100') {
-                        iframeDoc.body.style.zoom = '';
-                        iframeDoc.body.style.transform = '';
-                    } else {
-                        // Prefer zoom if supported, fallback to transform: scale
-                        iframeDoc.body.style.zoom = zoom + '%';
-                        iframeDoc.body.style.transform = `scale(${parseInt(zoom, 10) / 100})`;
-                        iframeDoc.body.style.transformOrigin = 'top left';
-                    }
-                }
-            };
-
-            // Restore zoom from storage
-            chrome.storage.local.get(['sidebarZoom'], (result) => {
-                const zoom = result.sidebarZoom || '100';
-                if (zoomSelect) zoomSelect.value = zoom;
-                applySidebarZoom(zoom);
-            });
-
-            if (zoomSelect) {
-                zoomSelect.addEventListener('change', (e) => {
-                    const zoom = (e.target as HTMLSelectElement).value;
-                    chrome.storage.local.set({ sidebarZoom: zoom });
-                    applySidebarZoom(zoom);
-                });
-            }
 
             // Helper to get current theme (light/dark)
             const getCurrentTheme = (theme: 'system' | 'light' | 'dark') => {
@@ -2263,6 +2404,79 @@ export class Sidebar {
                     this.toggleFloatingButton(enabled);
                 });
             }
+
+            // --- Custom dropdown logic ---
+            function setupCustomDropdown(
+                dropdownId: string,
+                selectId: string
+            ) {
+                if (!iframeDoc) return;
+                const dropdown = iframeDoc.getElementById(dropdownId);
+                const selected = iframeDoc.getElementById(dropdownId + '-selected');
+                const list = iframeDoc.getElementById(dropdownId + '-list');
+                const select = iframeDoc.getElementById(selectId) as HTMLSelectElement | null;
+                if (!dropdown || !selected || !list || !select) return;
+                // Открытие/закрытие
+                selected.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    dropdown.classList.toggle('open');
+                });
+                // Клик по опции
+                list.querySelectorAll('.custom-dropdown-option').forEach(opt => {
+                    opt.addEventListener('click', () => {
+                        const value = opt.getAttribute('data-value');
+                        selected.textContent = opt.textContent;
+                        if (value) select.value = value;
+                        select.dispatchEvent(new Event('change', { bubbles: true }));
+                        dropdown.classList.remove('open');
+                    });
+                });
+                // Клик вне — закрыть
+                iframeDoc.addEventListener('click', () => dropdown.classList.remove('open'));
+                // Синхронизация select -> кастом
+                select.addEventListener('change', () => {
+                    const val = select.value;
+                    const found = Array.from(list.querySelectorAll('.custom-dropdown-option')).find(opt => opt.getAttribute('data-value') === val);
+                    if (found) selected.textContent = found.textContent;
+                });
+                // Инициализация значения
+                const val = select.value;
+                const found = Array.from(list.querySelectorAll('.custom-dropdown-option')).find(opt => opt.getAttribute('data-value') === val);
+                if (found) selected.textContent = found.textContent;
+            }
+            setupCustomDropdown('theme-dropdown', 'theme-select');
+            setupCustomDropdown('icon-location-dropdown', 'icon-location-select');
+            setupCustomDropdown('sidebar-location-dropdown', 'sidebar-location-select');
+
+            // --- Позиционирование dock и settings_dock ---
+            function updateDockPositions(position: 'left' | 'right') {
+                if (!iframeDoc) return;
+                const dock = iframeDoc.querySelector('.dock') as HTMLElement | null;
+                const settingsDock = iframeDoc.querySelector('.settings_dock') as HTMLElement | null;
+                if (dock) {
+                    if (position === 'left') {
+                        dock.style.left = '0px';
+                        dock.style.right = '';
+                        dock.style.borderRadius = '0 56px 56px 0';
+                    } else {
+                        dock.style.right = '0px';
+                        dock.style.left = '';
+                        dock.style.borderRadius = '56px 0 0 56px';
+                    }
+                }
+                if (settingsDock) {
+                    if (position === 'left') {
+                        settingsDock.style.right = '';
+                        settingsDock.style.left = '420px';
+                        settingsDock.style.borderRadius = '48px 0 0 48px';
+                    } else {
+                        settingsDock.style.left = '0px';
+                        settingsDock.style.right = '';
+                        settingsDock.style.borderRadius = '0 48px 48px 0';
+                    }
+                }
+            }
+            updateDockPositions(this.sidebarPosition);
         };
 
         // Устанавливаем src для загрузки iframe
@@ -2367,6 +2581,18 @@ export class Sidebar {
     public setSidebarPosition(position: 'left' | 'right'): void {
         if (this.sidebarPosition === position) return;
         const wasOpen = this.isOpen();
+
+        // --- сохраняем активный экран перед удалением сайдбара ---
+        if (this.sidebar) {
+            const iframe = this.sidebar as HTMLIFrameElement;
+            const iframeDoc = iframe.contentDocument;
+            if (iframeDoc) {
+                const activeScreen = iframeDoc.querySelector('.screen.active');
+                if (activeScreen) {
+                    this.currentScreen = activeScreen.id;
+                }
+            }
+        }
 
         if (wasOpen) {
             this.removeSidebarStyles();
