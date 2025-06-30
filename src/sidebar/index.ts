@@ -14,7 +14,9 @@ import { TranslationService, Language } from '../services/translations';
 export class Sidebar {
     private sidebar: HTMLElement | null = null;
     private sidebarContainer: HTMLElement | null = null;
+    private floatingContainer: HTMLElement | null = null;
     private floatingButton: HTMLElement | null = null;
+    private actionButtons: { [key: string]: { button: HTMLElement, icon: HTMLImageElement } } = {};
     private originalStyles: Map<Element, string> = new Map();
     private sidebarOpen = false;
     private sidebarWidth = '480px';
@@ -71,20 +73,26 @@ export class Sidebar {
             const d = domain.replace(/^www\./, '');
             return currentHost === d || currentHost.endsWith('.' + d);
         })) {
-            if (this.floatingButton) this.floatingButton.remove();
+            if (this.floatingContainer) this.floatingContainer.remove();
+            this.floatingContainer = null;
             this.floatingButton = null;
             return;
         }
         // Remove existing button if it exists
-        if (this.floatingButton) {
-            this.floatingButton.remove();
+        if (this.floatingContainer) {
+            this.floatingContainer.remove();
         }
 
         // Если кнопка должна быть скрыта, не создаём её
         if (!this.floatingButtonVisible) {
+            this.floatingContainer = null;
             this.floatingButton = null;
             return;
         }
+
+        // Create the floating container
+        this.floatingContainer = document.createElement('div');
+        this.floatingContainer.id = 'chrome-extension-floating-container';
 
         // Create the floating button
         this.floatingButton = document.createElement('div');
@@ -94,41 +102,147 @@ export class Sidebar {
             <img id="floating-btn-avatar-img" src="${iconUrl}" alt="icon" style="width:28px;height:28px;object-fit:cover;display:block;border-radius:50%;margin:auto;" />
         `;
 
+        // Create action buttons
+        const actionButtonsContainer = document.createElement('div');
+        actionButtonsContainer.id = 'chrome-extension-action-buttons';
+
+        const createActionButton = (id: string, iconName: string, screen: string): HTMLElement => {
+            const button = document.createElement('button');
+            button.id = `action-btn-${id}`;
+            button.className = 'chrome-extension-action-btn';
+            const icon = document.createElement('img');
+            icon.src = chrome.runtime.getURL(`public/${iconName}.png`);
+            button.appendChild(icon);
+            button.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.navigateTo(screen);
+            });
+            this.actionButtons[id] = { button, icon };
+            return button;
+        };
+
+        const voiceButton = createActionButton('voice', 'voice', 'screen-voice');
+        const chatButton = createActionButton('chat', 'chat', 'screen-chat');
+        const translateButton = createActionButton('translate', 'translate', 'screen-translate');
+
+        actionButtonsContainer.appendChild(voiceButton);
+        actionButtonsContainer.appendChild(chatButton);
+        actionButtonsContainer.appendChild(translateButton);
+
+        this.floatingContainer.appendChild(actionButtonsContainer);
+        this.floatingContainer.appendChild(this.floatingButton);
+
+
         const topValue = this.floatingButtonPosition === 'Top' ? '25%' : '75%';
         const commonStyles = `
             position: fixed;
             top: ${topValue};
-            transform: translateY(-50%) scale(1);
+            transform: translateY(-50%);
+            z-index: 2147483648;
+            user-select: none;
+            pointer-events: none; /* Container is passthrough */
+        `;
+
+        const buttonStyles = `
             width: 44px;
-            height: 44px;
+            height: 38px;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             box-shadow: none;
-            z-index: 2147483648;
             transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            user-select: none;
             padding: 0;
             gap: 0;
-            pointer-events: auto;
+            pointer-events: auto; /* Button is clickable */
             background: transparent;
             border: none;
         `;
 
         if (this.sidebarPosition === 'left') {
-            this.floatingButton.style.cssText = commonStyles + `
-                left: 0;
+            this.floatingContainer.style.cssText = commonStyles + `left: 0;`;
+            this.floatingButton.style.cssText = buttonStyles + `
                 border-radius: 0 22px 22px 0;
                 border-left: none;
             `;
         } else {
-            this.floatingButton.style.cssText = commonStyles + `
-                right: 0;
+            this.floatingContainer.style.cssText = commonStyles + `right: 0;`;
+            this.floatingButton.style.cssText = buttonStyles + `
                 border-radius: 22px 0 0 22px;
                 border-right: none;
             `;
         }
+
+        // Create a style element for hover effects
+        const styleElement = document.createElement('style');
+        styleElement.setAttribute('data-floating-button-hover', 'true');
+        styleElement.textContent = `
+            #chrome-extension-floating-button {
+                transition: width 0.25s cubic-bezier(0.4,0,0.2,1), box-shadow 0.25s;
+                overflow: hidden;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            #chrome-extension-floating-button img {
+                transition: margin 0.25s;
+                margin-left: auto;
+                margin-right: auto;
+            }
+             #chrome-extension-floating-container:hover #chrome-extension-floating-button {
+                width: 80px !important;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+            }
+             #chrome-extension-floating-container:hover #chrome-extension-floating-button img {
+                margin-left: ${this.sidebarPosition === 'left' ? 'auto' : '8px'} !important;
+                margin-right: ${this.sidebarPosition === 'left' ? '8px' : 'auto'} !important;
+            }
+            /* When sidebar is open, adjust hover width only */
+            #chrome-extension-sidebar-container.open ~ #chrome-extension-floating-container:hover #chrome-extension-floating-button {
+                width: 80px !important;
+            }
+            #chrome-extension-action-buttons {
+                position: absolute;
+                bottom: calc(100% + 10px);
+                left: 50%;
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                opacity: 0;
+                visibility: hidden;
+                transform: translateX(-50%) translateY(10px);
+                transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
+                pointer-events: none;
+            }
+            #chrome-extension-floating-container:hover #chrome-extension-action-buttons {
+                opacity: 1;
+                visibility: visible;
+                transform: translateX(-50%) translateY(0);
+                pointer-events: auto;
+            }
+            .chrome-extension-action-btn {
+                width: 44px;
+                height: 44px;
+                border-radius: 50%;
+                border: none;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                transition: transform 0.2s ease, box-shadow 0.2s ease;
+            }
+            .chrome-extension-action-btn:hover {
+                transform: scale(1.1);
+                box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+            }
+            .chrome-extension-action-btn img {
+                width: 24px;
+                height: 24px;
+            }
+        `;
+        document.head.appendChild(styleElement);
+
         // Устанавливаем цвет по теме
         this.updateFloatingButtonTheme();
 
@@ -139,23 +253,24 @@ export class Sidebar {
         });
 
         // Add the button to the page
-        document.body.appendChild(this.floatingButton);
+        document.body.appendChild(this.floatingContainer);
 
         // Если сайдбар открыт — сразу позиционируем кнопку у края сайдбара
         if (this.sidebarOpen) {
             if (this.sidebarPosition === 'left') {
-                this.floatingButton.style.left = this.sidebarWidth;
-                this.floatingButton.style.right = '';
+                this.floatingContainer.style.left = this.sidebarWidth;
+                this.floatingContainer.style.right = '';
             } else {
-                this.floatingButton.style.right = this.sidebarWidth;
-                this.floatingButton.style.left = '';
+                this.floatingContainer.style.right = this.sidebarWidth;
+                this.floatingContainer.style.left = '';
             }
         }
     }
 
     public cleanup(): void {
-        if (this.floatingButton) {
-            this.floatingButton.remove();
+        if (this.floatingContainer) {
+            this.floatingContainer.remove();
+            this.floatingContainer = null;
             this.floatingButton = null;
         }
         if (this.sidebarContainer) {
@@ -2576,11 +2691,11 @@ export class Sidebar {
                 this.sidebarOpen = true;
 
                 // Сдвигаем floating button к левой части сайдбара
-                if (this.floatingButton) {
+                if (this.floatingContainer) {
                     if (this.sidebarPosition === 'left') {
-                        this.floatingButton.style.left = this.sidebarWidth;
+                        this.floatingContainer.style.left = this.sidebarWidth;
                     } else {
-                        this.floatingButton.style.right = this.sidebarWidth;
+                        this.floatingContainer.style.right = this.sidebarWidth;
                     }
                 }
 
@@ -2616,11 +2731,11 @@ export class Sidebar {
             this.sidebarOpen = false;
 
             // Возвращаем floating button к правому краю
-            if (this.floatingButton) {
+            if (this.floatingContainer) {
                 if (this.sidebarPosition === 'left') {
-                    this.floatingButton.style.left = '0';
+                    this.floatingContainer.style.left = '0';
                 } else {
-                    this.floatingButton.style.right = '0';
+                    this.floatingContainer.style.right = '0';
                 }
             }
 
@@ -2635,6 +2750,7 @@ export class Sidebar {
     }
 
     public toggleSidebar(): void {
+        this.updateFloatingButtonTheme();
         if (this.sidebarOpen) {
             this.closeSidebar();
         } else {
@@ -2741,7 +2857,7 @@ export class Sidebar {
             // Обрабатываем прямые дочерние элементы body
             Array.from(document.body.children).forEach((child: Element) => {
                 if (child.id === 'chrome-extension-sidebar-container' ||
-                    child.id === 'chrome-extension-floating-button') return;
+                    child.id === 'chrome-extension-floating-container') return;
 
                 const element = child as HTMLElement;
                 const computedStyle = window.getComputedStyle(element);
@@ -2769,11 +2885,11 @@ export class Sidebar {
 
 
         // Adjust floating button position when sidebar is open
-        if (this.floatingButton) {
+        if (this.floatingContainer) {
             if (this.sidebarPosition === 'left') {
-                this.floatingButton.style.left = this.sidebarWidth;
+                this.floatingContainer.style.left = this.sidebarWidth;
             } else {
-                this.floatingButton.style.right = this.sidebarWidth;
+                this.floatingContainer.style.right = this.sidebarWidth;
             }
         }
     }
@@ -2784,11 +2900,11 @@ export class Sidebar {
         this.originalStyles.clear();
 
         // Возвращаем floating button к правому краю
-        if (this.floatingButton) {
+        if (this.floatingContainer) {
             if (this.sidebarPosition === 'left') {
-                this.floatingButton.style.left = '0';
+                this.floatingContainer.style.left = '0';
             } else {
-                this.floatingButton.style.right = '0';
+                this.floatingContainer.style.right = '0';
             }
         }
     }
@@ -2816,13 +2932,44 @@ export class Sidebar {
 
     // Обновление цвета floatingButton в зависимости от темы
     private updateFloatingButtonTheme(): void {
-        if (!this.floatingButton) return;
+        if (!this.floatingButton || !this.floatingContainer) return;
         const theme = this.getCurrentTheme();
-        if (theme === 'light') {
-            this.floatingButton.style.background = '#FAFAFA';
+        const isLight = theme === 'light';
+
+        this.floatingButton.style.background = isLight ? '#FAFAFA' : '#151515';
+        if (isLight) {
+            this.floatingButton.style.border = '1px solid #E9E9E9';
         } else {
-            this.floatingButton.style.background = '#151515';
             this.floatingButton.style.border = '2px solid rgba(255,255,255,0.08)';
+        }
+
+        // Update action buttons theme
+        const updateActionButtonTheme = (buttonInfo: { button: HTMLElement, icon: HTMLImageElement }, iconName: string) => {
+            if (buttonInfo) {
+                buttonInfo.icon.src = chrome.runtime.getURL(`public/${iconName}${isLight ? '-white' : ''}.png`);
+                buttonInfo.button.style.background = isLight ? '#FAFAFA' : '#232323';
+                buttonInfo.button.style.border = isLight ? '1px solid #E9E9E9' : '1px solid #333';
+            }
+        };
+
+        updateActionButtonTheme(this.actionButtons.voice, 'voice');
+        updateActionButtonTheme(this.actionButtons.chat, 'chat');
+        updateActionButtonTheme(this.actionButtons.translate, 'translate');
+
+        // Update hover shadow
+        const styleElement = document.querySelector('style[data-floating-button-hover]');
+        if (styleElement && styleElement.textContent) {
+            if (isLight) {
+                styleElement.textContent = styleElement.textContent.replace(
+                    /box-shadow: 0 4px 12px rgba\(0,0,0,0\.15\)/g,
+                    'box-shadow: 0 4px 12px rgba(0,0,0,0.1)'
+                );
+            } else {
+                styleElement.textContent = styleElement.textContent.replace(
+                    /box-shadow: 0 4px 12px rgba\(0,0,0,0\.1\)/g,
+                    'box-shadow: 0 4px 12px rgba(0,0,0,0.15)'
+                );
+            }
         }
     }
 
@@ -2835,11 +2982,32 @@ export class Sidebar {
         if (visible) {
             this.initializeFloatingButton();
         } else {
-            if (this.floatingButton) {
-                this.floatingButton.remove();
+            if (this.floatingContainer) {
+                this.floatingContainer.remove();
+                this.floatingContainer = null;
                 this.floatingButton = null;
             }
         }
+    }
+
+    public navigateTo(screenId: string): void {
+        this.currentScreen = screenId;
+        if (!this.sidebarOpen) {
+            this.openSidebar();
+        }
+
+        // Use a timeout to ensure the iframe is ready, especially if opening for the first time
+        setTimeout(() => {
+            if (!this.sidebar) return;
+            const iframe = this.sidebar as HTMLIFrameElement;
+            const iframeDoc = iframe.contentDocument;
+            if (!iframeDoc) return;
+
+            const button = iframeDoc.querySelector(`.dock__btn[data-screen="${screenId}"]`) as HTMLElement | null;
+            if (button) {
+                button.click();
+            }
+        }, this.sidebarOpen ? 0 : 400); // Wait longer if sidebar needs to open
     }
 }
 

@@ -367,13 +367,6 @@ export function showAuthModal(doc: Document) {
     modal.appendChild(box);
     doc.body.appendChild(modal);
 
-    // Close modal on outside click
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            modal.remove();
-        }
-    });
-
     // Focus on email input
     setTimeout(() => {
         emailInput.focus();
