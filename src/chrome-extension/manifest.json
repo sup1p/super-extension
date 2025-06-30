@@ -36,6 +36,8 @@
         "sidebar.html",
         "public/32.png",
         "/public/icon.png",
+        "/public/icon-white-bg.png",
+        "/public/icon-black-bg.png",
         "/public/chat.png",
         "/public/notes.png",
         "/public/settings.png",

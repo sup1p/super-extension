@@ -126,7 +126,70 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
             case 'open_url': {
                 const url = command.url;
                 if (url && typeof url === 'string') {
-                    chrome.tabs.create({ url });
+                    chrome.tabs.create({ url }, (newTab) => {
+                        if (newTab.id) {
+                            const tabId = newTab.id;
+                            const onUpdatedListener = (updatedTabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab) => {
+                                if (updatedTabId === tabId && changeInfo.status === 'complete' && tab.url) {
+                                    if (tab.url.includes('google.com/search')) {
+                                        chrome.scripting.executeScript({
+                                            target: { tabId: tabId },
+                                            func: () => {
+                                                const clickFirstLink = () => {
+                                                    const firstResult = document.querySelector('#rso a');
+                                                    if (firstResult) {
+                                                        (firstResult as HTMLElement).click();
+                                                        return true;
+                                                    }
+                                                    return false;
+                                                };
+                                                if (!clickFirstLink()) {
+                                                    const observer = new MutationObserver((_mutations, obs) => {
+                                                        if (clickFirstLink()) {
+                                                            obs.disconnect();
+                                                        }
+                                                    });
+                                                    observer.observe(document.body, {
+                                                        childList: true,
+                                                        subtree: true
+                                                    });
+                                                }
+                                            }
+                                        });
+                                        chrome.tabs.onUpdated.removeListener(onUpdatedListener);
+                                    } else if (tab.url.includes('youtube.com/results')) {
+                                        chrome.scripting.executeScript({
+                                            target: { tabId: tabId },
+                                            func: () => {
+                                                const clickFirstVideo = () => {
+                                                    const firstVideo = document.querySelector('ytd-video-renderer a#video-title');
+                                                    if (firstVideo) {
+                                                        (firstVideo as HTMLElement).click();
+                                                        return true;
+                                                    }
+                                                    return false;
+                                                };
+
+                                                if (!clickFirstVideo()) {
+                                                    const observer = new MutationObserver((_mutations, obs) => {
+                                                        if (clickFirstVideo()) {
+                                                            obs.disconnect();
+                                                        }
+                                                    });
+                                                    observer.observe(document.body, {
+                                                        childList: true,
+                                                        subtree: true
+                                                    });
+                                                }
+                                            }
+                                        });
+                                        chrome.tabs.onUpdated.removeListener(onUpdatedListener);
+                                    }
+                                }
+                            };
+                            chrome.tabs.onUpdated.addListener(onUpdatedListener);
+                        }
+                    });
                 } else {
                     console.warn('Неверный URL:', url);
                 }
