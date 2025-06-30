@@ -1,5 +1,6 @@
 import { ChatService, ChatEvent, ChatSession, ChatMessage } from "../../services/chat";
 import { AuthService } from "../../services/auth";
+import { TranslationService } from "../../services/translations";
 
 export class ChatComponent {
     static initChat(doc: Document): void {
@@ -95,7 +96,7 @@ export class ChatComponent {
                 inner.appendChild(closeBtnRow);
 
                 const title = doc.createElement('h2');
-                title.textContent = 'История чатов';
+                title.textContent = TranslationService.translate('chat_history');
                 title.style.color = 'var(--color-text)';
                 title.style.marginBottom = '18px';
                 inner.appendChild(title);
@@ -109,12 +110,12 @@ export class ChatComponent {
                 try {
                     sessions = await ChatService.getChatSessions(token, doc);
                 } catch (e) {
-                    inner.appendChild(doc.createTextNode('Ошибка загрузки истории чатов.'));
+                    inner.appendChild(doc.createTextNode(TranslationService.translate('error_loading_chat_history')));
                 }
 
                 if (sessions.length === 0) {
                     const empty = doc.createElement('div');
-                    empty.textContent = 'Нет чатов.';
+                    empty.textContent = TranslationService.translate('no_chats');
                     empty.style.color = '#aaa';
                     inner.appendChild(empty);
                 } else {
@@ -135,7 +136,7 @@ export class ChatComponent {
                             try {
                                 messages = await ChatService.getChatMessages(session.id, token);
                             } catch (e) {
-                                alert('Ошибка загрузки сообщений чата');
+                                alert(TranslationService.translate('error_loading_messages'));
                                 return;
                             }
                             // Показать сообщения в основном окне чата
@@ -148,7 +149,7 @@ export class ChatComponent {
                         };
                         // Кнопка удаления
                         const deleteBtn = doc.createElement('button');
-                        deleteBtn.title = 'Удалить чат';
+                        deleteBtn.title = TranslationService.translate('delete_chat');
                         deleteBtn.style.marginLeft = '12px';
                         deleteBtn.style.background = 'none';
                         deleteBtn.style.border = 'none';
@@ -180,12 +181,12 @@ export class ChatComponent {
                             customModal.innerHTML = `
                                 <div class="modal-content tools-modal-content" style="max-width:340px;">
                                     <div class="modal-header">
-                                        <div class="modal-title">Delete chat?</div>
+                                        <div class="modal-title">${TranslationService.translate('delete_chat_confirm')}</div>
                                     </div>
-                                    <div style="margin-bottom:18px; font-size:15px; text-align:center;">Are you sure you want to delete this chat? This action cannot be undone.</div>
+                                    <div style="margin-bottom:18px; font-size:15px; text-align:center;">${TranslationService.translate('delete_chat_message')}</div>
                                     <div style="display:flex; gap:16px; justify-content:center;">
-                                        <button id="delete-chat-confirm" style="background:#ff4444;color:#fff;padding:10px 24px;border:none;border-radius:8px;font-size:15px;cursor:pointer;">Delete</button>
-                                        <button id="delete-chat-cancel" style="background:#232323;color:#fff;padding:10px 24px;border:none;border-radius:8px;font-size:15px;cursor:pointer;">Cancel</button>
+                                        <button id="delete-chat-confirm" style="background:#ff4444;color:#fff;padding:10px 24px;border:none;border-radius:8px;font-size:15px;cursor:pointer;">${TranslationService.translate('delete')}</button>
+                                        <button id="delete-chat-cancel" style="background:#232323;color:#fff;padding:10px 24px;border:none;border-radius:8px;font-size:15px;cursor:pointer;">${TranslationService.translate('cancel')}</button>
                                     </div>
                                 </div>
                             `;
@@ -206,12 +207,12 @@ export class ChatComponent {
                                         // Если после удаления нет чатов, показать сообщение
                                         if (list.childElementCount === 0) {
                                             const empty = doc.createElement('div');
-                                            empty.textContent = 'Нет чатов.';
+                                            empty.textContent = TranslationService.translate('no_chats');
                                             empty.style.color = '#aaa';
                                             inner.appendChild(empty);
                                         }
                                     } catch (err) {
-                                        alert('Ошибка удаления чата');
+                                        alert(TranslationService.translate('error_deleting_chat'));
                                     }
                                 };
                                 cancelBtn.onclick = () => {

@@ -1,5 +1,6 @@
 import { AuthService } from './auth';
 import { NotesService } from './notes';
+import { TranslationService } from './translations';
 
 export class VoiceService {
     private static _startListening: (() => Promise<void>) | null = null;
@@ -61,7 +62,7 @@ export class VoiceService {
 
             wv.onopen = () => {
                 console.log('WebSocket подключен');
-                statusBubble.textContent = 'Ready to listen!';
+                statusBubble.textContent = TranslationService.translate('ready_to_listen');
             };
 
             wv.onmessage = async (e) => {
@@ -77,19 +78,19 @@ export class VoiceService {
                         token = String(await AuthService.getToken() || '');
                     }
                     if (!token) {
-                        statusBubble.textContent = 'Login required to save note.';
+                        statusBubble.textContent = TranslationService.translate('login_required');
                         return;
                     }
                     try {
                         const note = await NotesService.createNote(data.command.title, data.command.text, token, doc);
                         if (note) {
-                            statusBubble.textContent = 'Note created!';
+                            statusBubble.textContent = TranslationService.translate('note_created');
                             // Можно добавить открытие заметки или обновление UI
                         } else {
-                            statusBubble.textContent = 'Failed to create note.';
+                            statusBubble.textContent = TranslationService.translate('failed_create_note');
                         }
                     } catch (e) {
-                        statusBubble.textContent = 'Error creating note.';
+                        statusBubble.textContent = TranslationService.translate('error_creating_note');
                     }
                     return;
                 }
@@ -107,12 +108,12 @@ export class VoiceService {
 
                 const { text, audio_base64 } = data;
                 output.textContent = text;
-                statusBubble.textContent = 'Playing response...';
+                statusBubble.textContent = TranslationService.translate('playing_response');
 
                 if (audio_base64) {
                     playResponse(audio_base64);
                 } else {
-                    statusBubble.textContent = 'I have something to say';
+                    statusBubble.textContent = TranslationService.translate('have_something_to_say');
                 }
             };
         };
@@ -170,7 +171,7 @@ export class VoiceService {
                         const blob = new Blob(chunks, { type: 'audio/webm' });
                         if (blob.size > 1000) {
                             sendAudio(blob);
-                            statusBubble.textContent = 'Thinking...';
+                            statusBubble.textContent = TranslationService.translate('thinking');
                         } else {
                             console.log('Аудио слишком маленькое, игнорируем');
                         }
@@ -192,7 +193,7 @@ export class VoiceService {
                 return true;
             } catch (error) {
                 console.error('Ошибка доступа к микрофону:', error);
-                statusBubble.textContent = 'Microphone access denied.';
+                statusBubble.textContent = TranslationService.translate('microphone_denied');
                 return false;
             }
         };
@@ -229,7 +230,7 @@ export class VoiceService {
                 console.log('Воспроизведение завершено');
                 isPlaying = false;
                 currentAudio = null;
-                statusBubble.textContent = 'Listening...';
+                statusBubble.textContent = TranslationService.translate('listening');
 
                 if (isListening && rec) {
                     setTimeout(() => {
@@ -246,7 +247,7 @@ export class VoiceService {
                 console.error('Ошибка воспроизведения');
                 isPlaying = false;
                 currentAudio = null;
-                statusBubble.textContent = 'Error playing response.';
+                statusBubble.textContent = TranslationService.translate('error_playing_response');
 
                 if (isListening && rec) {
                     rec.start();
@@ -256,7 +257,7 @@ export class VoiceService {
 
             currentAudio.play().catch(e => {
                 console.error("Playback error:", e);
-                statusBubble.textContent = 'Could not play audio.';
+                statusBubble.textContent = TranslationService.translate('could_not_play_audio');
                 isPlaying = false;
             });
         };
@@ -391,12 +392,12 @@ export class VoiceService {
             }
 
             if (!stream && !(await setupMicrophone())) {
-                statusBubble.textContent = 'Could not access microphone.';
+                statusBubble.textContent = TranslationService.translate('could_not_access_microphone');
                 return;
             }
 
             isListening = true;
-            statusBubble.textContent = 'Listening...';
+            statusBubble.textContent = TranslationService.translate('listening');
 
             if (rec) {
                 chunks = [];
@@ -412,7 +413,7 @@ export class VoiceService {
 
             // Не вызываем processSilence напрямую, просто останавливаем запись
             isListening = false;
-            statusBubble.textContent = 'I\'m waiting to hear your pretty voice!';
+            statusBubble.textContent = TranslationService.translate('voice_waiting');
 
             cancelAnimationFrame(animationFrameId);
             bars.forEach(bar => bar.style.height = '2px');

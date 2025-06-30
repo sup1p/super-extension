@@ -9,6 +9,7 @@ import { NotesComponent } from './components/notes';
 import { PageTranslateService } from '../services/pageTranslate';
 import { languages } from '../services/translate';
 import { AuthService } from '../services/auth';
+import { TranslationService, Language } from '../services/translations';
 
 export class Sidebar {
     private sidebar: HTMLElement | null = null;
@@ -23,9 +24,10 @@ export class Sidebar {
     private theme: 'system' | 'light' | 'dark' = 'system';
     private floatingButtonVisible: boolean = true;
     private currentScreen: string = 'screen-home'; // <--- добавлено
+    private language: 'en' | 'ru' | 'es' = 'en'; // <--- добавлено
 
     constructor() {
-        chrome.storage.local.get(['sidebarPosition', 'floatingButtonPosition', 'hideIconOn', 'sidebarTheme', 'floatingButtonEnabled'], (result) => {
+        chrome.storage.local.get(['sidebarPosition', 'floatingButtonPosition', 'hideIconOn', 'sidebarTheme', 'floatingButtonEnabled', 'sidebarLanguage'], (result) => {
             if (result.sidebarPosition === 'left') {
                 this.sidebarPosition = 'left';
             }
@@ -48,6 +50,15 @@ export class Sidebar {
             if (typeof result.floatingButtonEnabled === 'boolean') {
                 this.floatingButtonVisible = result.floatingButtonEnabled;
             }
+            if (result.sidebarLanguage === 'ru' || result.sidebarLanguage === 'es') {
+                this.language = result.sidebarLanguage;
+            } else {
+                this.language = 'en';
+            }
+
+            // Initialize TranslationService with current language
+            TranslationService.setLanguage(this.language);
+
             this.initializeFloatingButton();
         });
     }
@@ -1650,32 +1661,32 @@ export class Sidebar {
                                     <img src="${iconUrl}" alt="Megan Icon" style="width: 48px; height: 48px; object-fit: contain; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px #715cff11;" />
                                 </div>
                                 <h1 class="title gradient-text" style="font-size: 26px; font-weight: 700; margin-bottom: 0; text-align: center; letter-spacing: 0.5px;">Megan</h1>
-                                <p class="intro" style="line-height: 1.6; font-size: 16px; color: var(--color-text, #232323); text-align: center; margin-top: 0; margin-bottom: 0; opacity: 0.85;">Hello! I'm your AI assistant — <b class='gradient-text'>Megan</b>, here to help you work smarter and faster.<br><br>I can <b>summarize</b>, <b>rewrite</b>, <b>translate</b>, <b>generate content</b> and assist with <b>research</b> 24/7.<br><br><span class='gradient-text' style='font-weight:600;'>Let's get things done!</span></p>
+                                <p class="intro" style="line-height: 1.6; font-size: 16px; color: var(--color-text, #232323); text-align: center; margin-top: 0; margin-bottom: 0; opacity: 0.85;"><span data-translate="megan_intro">Hello! I'm your AI assistant — Megan, here to help you work smarter and faster.</span><br><br><span data-translate="megan_capabilities">I can summarize, rewrite, translate, generate content and assist with research 24/7.</span><br><br><span class='gradient-text' style='font-weight:600;' data-translate="lets_get_started">Let's get things done!</span></p>
                             </div>
                         </div>
 
                         <div id="screen-notes" class="screen">
-                            <h1 class="title">Notes</h1>
+                            <h1 class="title" data-translate="notes">Notes</h1>
                             <div class="notes-input-row" style="position: relative; display: flex; align-items: stretch; margin-bottom: 12px;">
-                                <textarea id="note-input" placeholder="What do you want to save?" class="notes-textarea"></textarea>
-                                <button id="save-note" class="notes-save-btn">Save</button>
+                                <textarea id="note-input" data-translate="note_placeholder" placeholder="What do you want to save?" class="notes-textarea"></textarea>
+                                <button id="save-note" class="notes-save-btn" data-translate="save">Save</button>
                             </div>
-                            <input id="notes-search" type="text" placeholder="Search" class="notes-search-input" />
+                            <input id="notes-search" type="text" data-translate="search" placeholder="Search" class="notes-search-input" />
                             <div id="notes-list"></div>
                         </div>
 
                         
                         <div id="screen-note-detail" class="screen" style="overflow-y: auto; max-height: 80vh;">
-                            <h1 class="title">Notes</h1>
+                            <h1 class="title" data-translate="notes">Notes</h1>
                             <div class="notes-detail-header">
-                                <button id="back-to-notes" class="notes-detail-back">← Back</button>
+                                <button id="back-to-notes" class="notes-detail-back" data-translate="back">← Back</button>
                                 <div class="notes-detail-btns">
-                                    <button id="update-note" class="notes-detail-btn">Save</button>
-                                    <button id="delete-note" class="notes-detail-btn notes-detail-btn-delete">Delete</button>
+                                    <button id="update-note" class="notes-detail-btn" data-translate="save">Save</button>
+                                    <button id="delete-note" class="notes-detail-btn notes-detail-btn-delete" data-translate="delete">Delete</button>
                                 </div>
                             </div>
                             <div class="notes-detail-container">
-                                <input id="note-title" placeholder="Title" class="notes-detail-title">
+                                <input id="note-title" data-translate="title" placeholder="Title" class="notes-detail-title">
                                 <textarea id="note-body" class="notes-detail-body"></textarea>
                             </div>
                         </div>
@@ -1683,18 +1694,18 @@ export class Sidebar {
                         <div id="delete-note-modal" class="tools-modal-overlay">
                             <div class="modal-content tools-modal-content" style="max-width:340px;">
                                 <div class="modal-header">
-                                    <div class="modal-title">Delete note?</div>
+                                    <div class="modal-title" data-translate="delete_note_confirm">Delete note?</div>
                                 </div>
-                                <div style="margin-bottom:18px; font-size:15px; text-align:center;">Are you sure you want to delete this note? This action cannot be undone.</div>
+                                <div style="margin-bottom:18px; font-size:15px; text-align:center;" data-translate="delete_note_message">Are you sure you want to delete this note? This action cannot be undone.</div>
                                 <div style="display:flex; gap:16px; justify-content:center;">
-                                    <button id="delete-note-confirm" style="background:#ff4444;color:#fff;padding:10px 24px;border:none;border-radius:8px;font-size:15px;cursor:pointer;">Delete</button>
-                                    <button id="delete-note-cancel" style="background:#232323;color:#fff;padding:10px 24px;border:none;border-radius:8px;font-size:15px;cursor:pointer;">Cancel</button>
+                                    <button id="delete-note-confirm" style="background:#ff4444;color:#fff;padding:10px 24px;border:none;border-radius:8px;font-size:15px;cursor:pointer;" data-translate="delete">Delete</button>
+                                    <button id="delete-note-cancel" style="background:#232323;color:#fff;padding:10px 24px;border:none;border-radius:8px;font-size:15px;cursor:pointer;" data-translate="cancel">Cancel</button>
                                 </div>
                             </div>
                         </div>
 
                         <div id="screen-chat" class="screen">
-                            <h1 class="title">Chat</h1>
+                            <h1 class="title" data-translate="chat">Chat</h1>
                             <div id="chat-container" style="flex: 1 1 0; display: flex; flex-direction: column; background: var(--color-bg); border-radius: 8px; overflow-y: auto; gap: 12px; margin-bottom: 16px; min-height: 0; max-height: 80vh; margin-right: 60px; margin-left: 4px;"></div>
                             <form id="chat-form" style="display: flex; flex-direction: column; gap: 0; align-items: stretch; margin-top: auto; width: 100%; position: relative;">
                                 <div class="chat-actions" style="display: flex; justify-content: flex-end; gap: 4px; margin-bottom: 4px;">
@@ -1702,8 +1713,8 @@ export class Sidebar {
                                     <button type="button" id="chat-history" style="background: none; border: none; border-radius: 0; padding: 0; height: 40px; width: 40px; cursor: pointer; display: flex; align-items: center; justify-content: center;"><img src="${historyUrl}" alt="History" style="width:24px;height:24px;object-fit:contain;vertical-align:middle;" /></button>
                                 </div>
                                 <div style="position: relative; width: 100%; display: flex; align-items: flex-end; gap: 8px;">
-                                    <textarea id="chat-input" placeholder="Ask whatever you want..." rows="1" style="width: 100%; min-width: 0; flex: 1; resize: none; border-radius: 12px; border: 1.5px solid var(--color-border); background: var(--color-container); color: var(--color-text); padding: 12px 80px 12px 14px; font-size: 15px; transition: border 0.2s; height: 100px; min-height: 100px; margin: 0 0 0 16px;"></textarea>
-                                    <button type="submit" id="chat-send" style="position: absolute; right: 24px; bottom: 18px; background: #715CFF; color: #fff; border: none; border-radius: 10px; padding: 0 18px; height: 40px; font-weight: 600; font-size: 15px; cursor: pointer; z-index: 2;">Send</button>
+                                    <textarea id="chat-input" data-translate="chat_placeholder" placeholder="Ask whatever you want..." rows="1" style="width: 100%; min-width: 0; flex: 1; resize: none; border-radius: 12px; border: 1.5px solid var(--color-border); background: var(--color-container); color: var(--color-text); padding: 12px 80px 12px 14px; font-size: 15px; transition: border 0.2s; height: 100px; min-height: 100px; margin: 0 0 0 16px;"></textarea>
+                                    <button type="submit" id="chat-send" style="position: absolute; right: 24px; bottom: 18px; background: #715CFF; color: #fff; border: none; border-radius: 10px; padding: 0 18px; height: 40px; font-weight: 600; font-size: 15px; cursor: pointer; z-index: 2;" data-translate="send">Send</button>
                                 </div>
                             </form>
                             <style>
@@ -1744,11 +1755,11 @@ export class Sidebar {
                         </div>
 
                         <div id="screen-voice" class="screen">
-                            <h1 class="title">Let's talk!</h1>
+                            <h1 class="title" data-translate="lets_talk">Let's talk!</h1>
                             <button id="mic-toggle-btn" style="margin-bottom: 18px; background: #1A1A1A; color: #fff; border: none; border-radius: 50%; width: 56px; height: 56px; font-size: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s; position: relative;">
                                 <span id="mic-toggle-icon" style="display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; position: relative;"></span>
                             </button>
-                            <p id="voice-status-bubble">I'm waiting to hear your pretty voice!</p>
+                            <p id="voice-status-bubble" data-translate="voice_waiting">I'm waiting to hear your pretty voice!</p>
                             <div id="voice-waveform-container">
                                 <!-- Bars will be generated by JS -->
                             </div>
@@ -1756,8 +1767,7 @@ export class Sidebar {
                         </div>
 
                         <div id="screen-translate" class="screen">
-                            <h1 id="translate-top-row ">Translate</h1>
-
+                            <h1 id="translate-top-row" data-translate="translate">Translate</h1>
 
                             <div class="translate-lang-row">
                                 <select id="sourceLanguage" class="language-select"></select>
@@ -1765,17 +1775,16 @@ export class Sidebar {
                                 <select id="targetLanguage" class="language-select"></select>
                             </div>
 
-
                             <div class="translate-top-row">
-                                <button id="translate-page-btn" class="page-translate-btn">Translate webpage •</button>
+                                <button id="translate-page-btn" class="page-translate-btn" data-translate="translate_webpage">Translate webpage •</button>
                             </div>
 
                             <div class="source-wrapper">
-                                <textarea id="sourceText" placeholder="Type here..."></textarea>
-                                <button id="translateButton" class="translate-btn translate-btn-inside">Translate</button>
+                                <textarea id="sourceText" data-translate="type_here" placeholder="Type here..."></textarea>
+                                <button id="translateButton" class="translate-btn translate-btn-inside" data-translate="translate">Translate</button>
                             </div>
 
-                            <textarea id="translatedText" readonly placeholder="Translation will appear here..."></textarea>
+                            <textarea id="translatedText" readonly data-translate="translation_placeholder" placeholder="Translation will appear here..."></textarea>
                         </div>
 
                         <div id="screen-tools" class="screen">
@@ -1784,18 +1793,18 @@ export class Sidebar {
                         <div id="tools-modal" class="tools-modal-overlay">
                             <div class="modal-content tools-modal-content">
                                 <div class="modal-header">
-                                    <div class="modal-title">All tools</div>
+                                    <div class="modal-title" data-translate="all_tools">All tools</div>
                                 </div>
                                 <div class="tools-section">
-                                    <div class="tools-section-title">Here is the all available tools</div>
+                                    <div class="tools-section-title" data-translate="available_tools">Here is the all available tools</div>
                                     <div class="tools-icons-row">
                                         <div class="tool-icon-block">
                                             <span class="tool-icon"><img src="${translateUrl}" alt="Translate" style="width:32px;height:32px;object-fit:contain;display:block;" /></span>
-                                            <div class="tool-label">Translate</div>
+                                            <div class="tool-label" data-translate="translate">Translate</div>
                                         </div>
                                         <div class="tool-icon-block">
                                             <span class="tool-icon"><img src="${summarizerUrl}" alt="Summarize" style="width:32px;height:32px;object-fit:contain;display:block;" /></span>
-                                            <div class="tool-label">Summarize</div>
+                                            <div class="tool-label" data-translate="summarize">Summarize</div>
                                         </div>
                                         <div class="tool-icon-block disabled-tool">
                                             <span class="tool-icon" style="position: relative; display: flex; align-items: center; justify-content: center;">
@@ -1804,13 +1813,13 @@ export class Sidebar {
                                                     <line x1="4" y1="28" x2="28" y2="4" stroke="#ff4444" stroke-width="2.5" stroke-linecap="round" />
                                                 </svg>
                                             </span>
-                                            <div class="tool-label" style="color: #888;">Soon</div>
+                                            <div class="tool-label" style="color: #888;" data-translate="soon">Soon</div>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="tools-section" style="margin-top:32px;">
-                                    <div class="modal-title" style="font-size:20px;">Hotbar tools</div>
-                                    <div class="tools-section-title">Here is tools that is in your hotbar</div>
+                                    <div class="modal-title" style="font-size:20px;" data-translate="hotbar_tools">Hotbar tools</div>
+                                    <div class="tools-section-title" data-translate="hotbar_tools_desc">Here is tools that is in your hotbar</div>
                                     <div class="tools-icons-row">
                                         <div class="tool-icon-block disabled-tool">
                                              <span class="tool-icon" style="position: relative; display: flex; align-items: center; justify-content: center;">
@@ -1819,7 +1828,7 @@ export class Sidebar {
                                                     <line x1="4" y1="28" x2="28" y2="4" stroke="#ff4444" stroke-width="2.5" stroke-linecap="round" />
                                                 </svg>
                                             </span>
-                                            <div class="tool-label" style="color: #888;">Soon</div>
+                                            <div class="tool-label" style="color: #888;" data-translate="soon">Soon</div>
                                         </div>
                                     </div>
                                 </div>
@@ -1827,13 +1836,13 @@ export class Sidebar {
                         </div>
 
                         <div id="screen-settings" class="screen">
-                            <h1 class="title">Settings</h1>
+                            <h1 class="title" data-translate="settings">Settings</h1>
                         </div>
 
                         <div id="screen-account" class="screen">
-                            <h1 class="title">Settings</h1>
+                            <h1 class="title" data-translate="settings">Settings</h1>
                             <div style="padding: 0 32px 32px 32px; max-width: 340px; margin: 0 auto;">
-                                <h2 class="section-title" style="margin-bottom: 18px;">Account</h2>
+                                <h2 class="section-title" style="margin-bottom: 18px;" data-translate="account">Account</h2>
                                 <div style="background: var(--color-container); border-radius: 20px; border: 1px solid var(--color-border); padding: 20px 20px 16px 20px; display: flex; align-items: center; gap: 16px; margin-bottom: 28px;">
                                     <img id="user-avatar" class="account-avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23b0b0b0'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-4 0-7 2-7 4v2h14v-2c0-2-3-4-7-4z'%3E%3C/svg%3E" alt="avatar" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; background: #fff; border: 1px solid var(--color-border);" />
                                     <div style="display: flex; flex-direction: column;">
@@ -1841,33 +1850,33 @@ export class Sidebar {
                                         <div id="user-email" class="account-email" style="font-size: 14px; color: #b0b0b0;"></div>
                                     </div>
                                 </div>
-                                <h2 class="section-title" style="margin-bottom: 18px;">Pro plan</h2>
+                                <h2 class="section-title" style="margin-bottom: 18px;" data-translate="pro_plan">Pro plan</h2>
                                 <div style="background: var(--color-container); border-radius: 20px; border: 1px solid var(--color-border); padding: 20px 20px 16px 20px; margin-bottom: 28px;">
-                                    <div style="font-size: 15px; color: #b0b0b0; margin-bottom: 10px;">You have no pro plan yet!</div>
-                                    <button class="account-btn account-btn-pro" style="color: #6F58D5; background: none; border: none; font-size: 15px; font-weight: 300; padding: 0; cursor: pointer; text-align: left;">Activate</button>
+                                    <div style="font-size: 15px; color: #b0b0b0; margin-bottom: 10px;" data-translate="no_pro_plan">You have no pro plan yet!</div>
+                                    <button class="account-btn account-btn-pro" style="color: #6F58D5; background: none; border: none; font-size: 15px; font-weight: 300; padding: 0; cursor: pointer; text-align: left;" data-translate="activate">Activate</button>
                                 </div>
-                                <h2 class="section-title" style="margin-bottom: 18px;">Actions</h2>
+                                <h2 class="section-title" style="margin-bottom: 18px;" data-translate="actions">Actions</h2>
                                 <div style="background: var(--color-container); border-radius: 20px; border: 1px solid var(--color-border); padding: 0px 20px 0px 20px; margin-bottom: 28px;">
-                                    <button id="logout-btn" class="account-btn account-btn-logout" style="max-width: 180px; background: none; color: #ff5252; border: none; border-radius: 20px; padding: 10px 0 10px 0px; font-size: 15px; font-weight: 300; cursor: pointer; text-align: left;">Logout</button>
+                                    <button id="logout-btn" class="account-btn account-btn-logout" style="max-width: 180px; background: none; color: #ff5252; border: none; border-radius: 20px; padding: 10px 0 10px 0px; font-size: 15px; font-weight: 300; cursor: pointer; text-align: left;" data-translate="logout">Logout</button>
                                 </div>
                             </div>
                         </div>
 
                         <div id="screen-appereance" class="screen">
                             <div style="padding: 0 60px; height: 100%;">
-                                <h1 class="title">Settings</h1>
+                                <h1 class="title" data-translate="settings">Settings</h1>
                                 <div style="overflow-y: auto; height: calc(100% - 70px); padding-right: 8px; margin-right: -8px;">
                                     <div class="settings-section">
-                                        <h2 class="section-title">Appereance</h2>
+                                        <h2 class="section-title" data-translate="appearance">Appereance</h2>
                                         <div class="settings-group">
                                             <div class="setting-item">
-                                                <span>Theme</span>
+                                                <span data-translate="theme">Theme</span>
                                                 <div class="custom-dropdown" id="theme-dropdown">
-                                                    <div class="custom-dropdown-selected" id="theme-dropdown-selected">System</div>
+                                                    <div class="custom-dropdown-selected" id="theme-dropdown-selected" data-translate-key="system">System</div>
                                                     <div class="custom-dropdown-list" id="theme-dropdown-list">
-                                                        <div class="custom-dropdown-option" data-value="system">System</div>
-                                                        <div class="custom-dropdown-option" data-value="light">Light</div>
-                                                        <div class="custom-dropdown-option" data-value="dark">Dark</div>
+                                                        <div class="custom-dropdown-option" data-value="system" data-translate="system">System</div>
+                                                        <div class="custom-dropdown-option" data-value="light" data-translate="light">Light</div>
+                                                        <div class="custom-dropdown-option" data-value="dark" data-translate="dark">Dark</div>
                                                     </div>
                                                 </div>
                                                 <select id="theme-select" style="display:none">
@@ -1876,12 +1885,28 @@ export class Sidebar {
                                                     <option value="dark">Dark</option>
                                                 </select>
                                             </div>
+                                            <div class="setting-item">
+                                                <span data-translate="language">Language</span>
+                                                <div class="custom-dropdown" id="language-dropdown">
+                                                    <div class="custom-dropdown-selected" id="language-dropdown-selected" data-translate-key="english"></div>
+                                                    <div class="custom-dropdown-list" id="language-dropdown-list">
+                                                        <div class="custom-dropdown-option" data-value="en">English</div>
+                                                        <div class="custom-dropdown-option" data-value="ru">Русский</div>
+                                                        <div class="custom-dropdown-option" data-value="es">Español</div>
+                                                    </div>
+                                                </div>
+                                                <select id="language-select" style="display:none">
+                                                    <option value="en">English</option>
+                                                    <option value="ru">Русский</option>
+                                                    <option value="es">Español</option>
+                                                </select>
+                                            </div>
                                         </div>
                                     </div>
                                 
                                     <div class="settings-section">
                                         <div class="section-title-container">
-                                            <h2 class="section-title">Icon</h2>
+                                            <h2 class="section-title" data-translate="icon">Icon</h2>
                                             <label class="switch">
                                                 <input type="checkbox" checked>
                                                 <span class="slider round"></span>
@@ -1889,12 +1914,12 @@ export class Sidebar {
                                         </div>
                                         <div class="settings-group">
                                              <div class="setting-item">
-                                                <span>Location</span>
+                                                <span data-translate="location">Location</span>
                                                 <div class="custom-dropdown" id="icon-location-dropdown">
-                                                    <div class="custom-dropdown-selected" id="icon-location-dropdown-selected">Bottom</div>
+                                                    <div class="custom-dropdown-selected" id="icon-location-dropdown-selected" data-translate-key="bottom">Bottom</div>
                                                     <div class="custom-dropdown-list" id="icon-location-dropdown-list">
-                                                        <div class="custom-dropdown-option" data-value="Bottom">Bottom</div>
-                                                        <div class="custom-dropdown-option" data-value="Top">Top</div>
+                                                        <div class="custom-dropdown-option" data-value="Bottom" data-translate="bottom">Bottom</div>
+                                                        <div class="custom-dropdown-option" data-value="Top" data-translate="top">Top</div>
                                                     </div>
                                                 </div>
                                                 <select id="icon-location-select" style="display:none">
@@ -1907,7 +1932,7 @@ export class Sidebar {
                                 
                                     <div class="settings-section">
                                         <div style="display: flex; align-items: center; justify-content: space-between;">
-                                            <h2 class="section-title" style="margin-bottom: 0;">Hide icon on</h2>
+                                            <h2 class="section-title" style="margin-bottom: 0;" data-translate="hide_icon_on">Hide icon on</h2>
                                             <button id="add-hide-icon-url-btn" class="add-hide-icon-btn">+</button>
                                         </div>
                                         <div id="hide-icon-chips-list" style="margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px;"></div>
@@ -1918,15 +1943,15 @@ export class Sidebar {
                                     </div>
                                 
                                     <div class="settings-section">
-                                        <h2 class="section-title">Sidebar</h2>
+                                        <h2 class="section-title" data-translate="sidebar">Sidebar</h2>
                                         <div class="settings-group">
                                              <div class="setting-item">
-                                                <span>Location</span>
+                                                <span data-translate="location">Location</span>
                                                 <div class="custom-dropdown" id="sidebar-location-dropdown">
-                                                    <div class="custom-dropdown-selected" id="sidebar-location-dropdown-selected">Right</div>
+                                                    <div class="custom-dropdown-selected" id="sidebar-location-dropdown-selected" data-translate-key="right">Right</div>
                                                     <div class="custom-dropdown-list" id="sidebar-location-dropdown-list">
-                                                        <div class="custom-dropdown-option" data-value="right">Right</div>
-                                                        <div class="custom-dropdown-option" data-value="left">Left</div>
+                                                        <div class="custom-dropdown-option" data-value="right" data-translate="right">Right</div>
+                                                        <div class="custom-dropdown-option" data-value="left" data-translate="left">Left</div>
                                                     </div>
                                                 </div>
                                                 <select id="sidebar-location-select" style="display:none">
@@ -1982,6 +2007,9 @@ export class Sidebar {
             ToolsComponent.initTools(iframeDoc);
             AccountComponent.initAuth(iframeDoc);
             ChatComponent.initChat(iframeDoc);
+
+            // Initialize translations for the iframe document
+            TranslationService.updateAllTranslations(iframeDoc);
 
             // Добавляем обработчик для кнопки закрытия
             const closeBtn = iframeDoc.getElementById('close-sidebar');
@@ -2040,7 +2068,7 @@ export class Sidebar {
                     background: rgba(0,0,0,0.35); justify-content: center; align-items: center; flex-direction: column;`;
                 loaderOverlay.innerHTML = `
                     <div class="loader-circle" style="width:56px;height:56px;border:6px solid #eee;border-top:6px solid #715CFF;border-radius:50%;animation:spin 1s linear infinite;"></div>
-                    <div style="margin-top:18px;color:#fff;font-size:18px;font-weight:500;letter-spacing:0.5px;">Loading... , please wait</div>
+                    <div style="margin-top:18px;color:#fff;font-size:18px;font-weight:500;letter-spacing:0.5px;" data-translate="loading">Loading... , please wait</div>
                     <style>@keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }</style>
                 `;
                 iframeDoc.body.appendChild(loaderOverlay);
@@ -2447,6 +2475,7 @@ export class Sidebar {
             setupCustomDropdown('theme-dropdown', 'theme-select');
             setupCustomDropdown('icon-location-dropdown', 'icon-location-select');
             setupCustomDropdown('sidebar-location-dropdown', 'sidebar-location-select');
+            setupCustomDropdown('language-dropdown', 'language-select');
 
             // --- Позиционирование dock и settings_dock ---
             function updateDockPositions(position: 'left' | 'right') {
@@ -2477,6 +2506,45 @@ export class Sidebar {
                 }
             }
             updateDockPositions(this.sidebarPosition);
+
+            // --- Language select logic ---
+            const languageSelect = iframeDoc.getElementById('language-select') as HTMLSelectElement | null;
+            if (languageSelect) {
+                languageSelect.value = this.language;
+
+                // Initialize custom dropdown with correct language
+                const dropdownSelected = iframeDoc.getElementById('language-dropdown-selected');
+                if (dropdownSelected) {
+                    const selectedOption = languageSelect.options[languageSelect.selectedIndex];
+                    dropdownSelected.textContent = selectedOption.textContent;
+                    // Update the data-translate-key attribute to match the current language
+                    const languageKey = this.language === 'en' ? 'english' : this.language === 'ru' ? 'russian' : 'spanish';
+                    dropdownSelected.setAttribute('data-translate-key', languageKey);
+                }
+
+                languageSelect.addEventListener('change', (e) => {
+                    const newLanguage = (e.target as HTMLSelectElement).value as Language;
+                    this.language = newLanguage;
+                    chrome.storage.local.set({ sidebarLanguage: newLanguage });
+
+                    // Update TranslationService and all translations
+                    TranslationService.setLanguage(newLanguage, iframeDoc);
+
+                    // Update dropdown selected text
+                    const dropdownSelected = iframeDoc.getElementById('language-dropdown-selected');
+                    if (dropdownSelected) {
+                        const selectedOption = languageSelect.options[languageSelect.selectedIndex];
+                        dropdownSelected.textContent = selectedOption.textContent;
+                        // Update the data-translate-key attribute
+                        const languageKey = newLanguage === 'en' ? 'english' : newLanguage === 'ru' ? 'russian' : 'spanish';
+                        dropdownSelected.setAttribute('data-translate-key', languageKey);
+                    }
+
+                    console.log('Language changed to:', newLanguage);
+                });
+            }
+
+            // --- Update icons on dock button click ---
         };
 
         // Устанавливаем src для загрузки iframe

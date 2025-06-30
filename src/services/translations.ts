@@ -1,0 +1,479 @@
+export interface Translations {
+    [key: string]: {
+        en: string;
+        ru: string;
+        es: string;
+    };
+}
+
+export const translations: Translations = {
+    // Home screen
+    'megan_intro': {
+        en: "Hello! I'm your AI assistant — Megan, here to help you work smarter and faster.",
+        ru: "Привет! Я ваш ИИ-ассистент — Меган, здесь чтобы помочь вам работать умнее и быстрее.",
+        es: "¡Hola! Soy tu asistente de IA — Megan, aquí para ayudarte a trabajar más inteligente y rápido."
+    },
+    'megan_capabilities': {
+        en: "I can summarize, rewrite, translate, generate content and assist with research 24/7.",
+        ru: "Я могу резюмировать, переписывать, переводить, генерировать контент и помогать с исследованиями 24/7.",
+        es: "Puedo resumir, reescribir, traducir, generar contenido y ayudar con investigaciones 24/7."
+    },
+    'lets_get_started': {
+        en: "Let's get things done!",
+        ru: "Давайте начнем работу!",
+        es: "¡Hagamos las cosas!"
+    },
+
+    // Navigation
+    'notes': {
+        en: "Notes",
+        ru: "Заметки",
+        es: "Notas"
+    },
+    'chat': {
+        en: "Chat",
+        ru: "Чат",
+        es: "Chat"
+    },
+    'voice': {
+        en: "Voice",
+        ru: "Голос",
+        es: "Voz"
+    },
+    'translate': {
+        en: "Translate",
+        ru: "Перевод",
+        es: "Traducir"
+    },
+    'tools': {
+        en: "Tools",
+        ru: "Инструменты",
+        es: "Herramientas"
+    },
+    'settings': {
+        en: "Settings",
+        ru: "Настройки",
+        es: "Configuración"
+    },
+
+    // Notes
+    'note_placeholder': {
+        en: "What do you want to save?",
+        ru: "Что вы хотите сохранить?",
+        es: "¿Qué quieres guardar?"
+    },
+    'save': {
+        en: "Save",
+        ru: "Сохранить",
+        es: "Guardar"
+    },
+    'search': {
+        en: "Search",
+        ru: "Поиск",
+        es: "Buscar"
+    },
+    'back': {
+        en: "← Back",
+        ru: "← Назад",
+        es: "← Atrás"
+    },
+    'delete': {
+        en: "Delete",
+        ru: "Удалить",
+        es: "Eliminar"
+    },
+    'title': {
+        en: "Title",
+        ru: "Заголовок",
+        es: "Título"
+    },
+    'delete_note_confirm': {
+        en: "Delete note?",
+        ru: "Удалить заметку?",
+        es: "¿Eliminar nota?"
+    },
+    'delete_note_message': {
+        en: "Are you sure you want to delete this note? This action cannot be undone.",
+        ru: "Вы уверены, что хотите удалить эту заметку? Это действие нельзя отменить.",
+        es: "¿Estás seguro de que quieres eliminar esta nota? Esta acción no se puede deshacer."
+    },
+    'cancel': {
+        en: "Cancel",
+        ru: "Отмена",
+        es: "Cancelar"
+    },
+
+    // Chat
+    'chat_placeholder': {
+        en: "Ask whatever you want...",
+        ru: "Спрашивайте что угодно...",
+        es: "Pregunta lo que quieras..."
+    },
+    'send': {
+        en: "Send",
+        ru: "Отправить",
+        es: "Enviar"
+    },
+    'chat_history': {
+        en: "Chat History",
+        ru: "История чатов",
+        es: "Historial de chat"
+    },
+    'error_loading_chat_history': {
+        en: "Error loading chat history.",
+        ru: "Ошибка загрузки истории чатов.",
+        es: "Error al cargar el historial de chat."
+    },
+    'no_chats': {
+        en: "No chats.",
+        ru: "Нет чатов.",
+        es: "No hay chats."
+    },
+    'delete_chat': {
+        en: "Delete chat",
+        ru: "Удалить чат",
+        es: "Eliminar chat"
+    },
+    'delete_chat_confirm': {
+        en: "Delete chat?",
+        ru: "Удалить чат?",
+        es: "¿Eliminar chat?"
+    },
+    'delete_chat_message': {
+        en: "Are you sure you want to delete this chat? This action cannot be undone.",
+        ru: "Вы уверены, что хотите удалить этот чат? Это действие нельзя отменить.",
+        es: "¿Estás seguro de que quieres eliminar este chat? Esta acción no se puede deshacer."
+    },
+    'error_loading_messages': {
+        en: "Error loading chat messages",
+        ru: "Ошибка загрузки сообщений чата",
+        es: "Error al cargar mensajes del chat"
+    },
+    'error_deleting_chat': {
+        en: "Error deleting chat",
+        ru: "Ошибка удаления чата",
+        es: "Error al eliminar chat"
+    },
+
+    // Voice
+    'lets_talk': {
+        en: "Let's talk!",
+        ru: "Давайте поговорим!",
+        es: "¡Hablemos!"
+    },
+    'voice_waiting': {
+        en: "I'm waiting to hear your pretty voice!",
+        ru: "Я жду, чтобы услышать ваш прекрасный голос!",
+        es: "¡Estoy esperando escuchar tu hermosa voz!"
+    },
+    'ready_to_listen': {
+        en: "Ready to listen!",
+        ru: "Готов слушать!",
+        es: "¡Listo para escuchar!"
+    },
+    'login_required': {
+        en: "Login required to save note.",
+        ru: "Требуется вход для сохранения заметки.",
+        es: "Se requiere iniciar sesión para guardar la nota."
+    },
+    'note_created': {
+        en: "Note created!",
+        ru: "Заметка создана!",
+        es: "¡Nota creada!"
+    },
+    'failed_create_note': {
+        en: "Failed to create note.",
+        ru: "Не удалось создать заметку.",
+        es: "Error al crear la nota."
+    },
+    'error_creating_note': {
+        en: "Error creating note.",
+        ru: "Ошибка создания заметки.",
+        es: "Error al crear la nota."
+    },
+    'playing_response': {
+        en: "Playing response...",
+        ru: "Воспроизведение ответа...",
+        es: "Reproduciendo respuesta..."
+    },
+    'have_something_to_say': {
+        en: "I have something to say",
+        ru: "У меня есть что сказать",
+        es: "Tengo algo que decir"
+    },
+    'thinking': {
+        en: "Thinking...",
+        ru: "Думаю...",
+        es: "Pensando..."
+    },
+    'microphone_denied': {
+        en: "Microphone access denied.",
+        ru: "Доступ к микрофону запрещен.",
+        es: "Acceso al micrófono denegado."
+    },
+    'listening': {
+        en: "Listening...",
+        ru: "Слушаю...",
+        es: "Escuchando..."
+    },
+    'error_playing_response': {
+        en: "Error playing response.",
+        ru: "Ошибка воспроизведения ответа.",
+        es: "Error al reproducir respuesta."
+    },
+    'could_not_play_audio': {
+        en: "Could not play audio.",
+        ru: "Не удалось воспроизвести аудио.",
+        es: "No se pudo reproducir el audio."
+    },
+    'could_not_access_microphone': {
+        en: "Could not access microphone.",
+        ru: "Не удалось получить доступ к микрофону.",
+        es: "No se pudo acceder al micrófono."
+    },
+
+    // Translate
+    'translate_webpage': {
+        en: "Translate webpage •",
+        ru: "Перевести страницу •",
+        es: "Traducir página web •"
+    },
+    'type_here': {
+        en: "Type here...",
+        ru: "Введите здесь...",
+        es: "Escribe aquí..."
+    },
+    'translation_placeholder': {
+        en: "Translation will appear here...",
+        ru: "Перевод появится здесь...",
+        es: "La traducción aparecerá aquí..."
+    },
+
+    // Tools
+    'all_tools': {
+        en: "All tools",
+        ru: "Все инструменты",
+        es: "Todas las herramientas"
+    },
+    'available_tools': {
+        en: "Here is the all available tools",
+        ru: "Вот все доступные инструменты",
+        es: "Aquí están todas las herramientas disponibles"
+    },
+    'summarize': {
+        en: "Summarize",
+        ru: "Резюмировать",
+        es: "Resumir"
+    },
+    'simplify': {
+        en: "Simplify",
+        ru: "Упростить",
+        es: "Simplificar"
+    },
+    'soon': {
+        en: "Soon",
+        ru: "Скоро",
+        es: "Pronto"
+    },
+    'hotbar_tools': {
+        en: "Hotbar tools",
+        ru: "Инструменты панели",
+        es: "Herramientas de barra"
+    },
+    'hotbar_tools_desc': {
+        en: "Here is tools that is in your hotbar",
+        ru: "Вот инструменты, которые находятся в вашей панели",
+        es: "Aquí están las herramientas que están en tu barra"
+    },
+
+    // Settings
+    'appearance': {
+        en: "Appearance",
+        ru: "Внешний вид",
+        es: "Apariencia"
+    },
+    'theme': {
+        en: "Theme",
+        ru: "Тема",
+        es: "Tema"
+    },
+    'system': {
+        en: "System",
+        ru: "Системная",
+        es: "Sistema"
+    },
+    'light': {
+        en: "Light",
+        ru: "Светлая",
+        es: "Claro"
+    },
+    'dark': {
+        en: "Dark",
+        ru: "Темная",
+        es: "Oscuro"
+    },
+    'language': {
+        en: "Language",
+        ru: "Язык",
+        es: "Idioma"
+    },
+    'english': {
+        en: "English",
+        ru: "Английский",
+        es: "Inglés"
+    },
+    'russian': {
+        en: "Русский",
+        ru: "Русский",
+        es: "Ruso"
+    },
+    'spanish': {
+        en: "Español",
+        ru: "Испанский",
+        es: "Español"
+    },
+    'icon': {
+        en: "Icon",
+        ru: "Иконка",
+        es: "Icono"
+    },
+    'location': {
+        en: "Location",
+        ru: "Расположение",
+        es: "Ubicación"
+    },
+    'bottom': {
+        en: "Bottom",
+        ru: "Снизу",
+        es: "Abajo"
+    },
+    'top': {
+        en: "Top",
+        ru: "Сверху",
+        es: "Arriba"
+    },
+    'hide_icon_on': {
+        en: "Hide icon on",
+        ru: "Скрыть иконку на",
+        es: "Ocultar icono en"
+    },
+    'sidebar': {
+        en: "Sidebar",
+        ru: "Боковая панель",
+        es: "Barra lateral"
+    },
+    'right': {
+        en: "Right",
+        ru: "Справа",
+        es: "Derecha"
+    },
+    'left': {
+        en: "Left",
+        ru: "Слева",
+        es: "Izquierda"
+    },
+
+    // Account
+    'account': {
+        en: "Account",
+        ru: "Аккаунт",
+        es: "Cuenta"
+    },
+    'pro_plan': {
+        en: "Pro plan",
+        ru: "Pro план",
+        es: "Plan Pro"
+    },
+    'no_pro_plan': {
+        en: "You have no pro plan yet!",
+        ru: "У вас пока нет pro плана!",
+        es: "¡Aún no tienes un plan Pro!"
+    },
+    'activate': {
+        en: "Activate",
+        ru: "Активировать",
+        es: "Activar"
+    },
+    'actions': {
+        en: "Actions",
+        ru: "Действия",
+        es: "Acciones"
+    },
+    'logout': {
+        en: "Logout",
+        ru: "Выйти",
+        es: "Cerrar sesión"
+    },
+
+    // Modal
+    'select_language': {
+        en: "Select language",
+        ru: "Выберите язык",
+        es: "Seleccionar idioma"
+    },
+    'loading': {
+        en: "Loading... , please wait",
+        ru: "Загрузка... , пожалуйста, подождите",
+        es: "Cargando... , por favor espera"
+    }
+};
+
+export type Language = 'en' | 'ru' | 'es';
+
+export class TranslationService {
+    private static currentLanguage: Language = 'en';
+
+    public static setLanguage(language: Language, doc?: Document): void {
+        this.currentLanguage = language;
+        this.updateAllTranslations(doc);
+    }
+
+    public static getLanguage(): Language {
+        return this.currentLanguage;
+    }
+
+    public static translate(key: string): string {
+        const translation = translations[key];
+        if (!translation) {
+            console.warn(`Translation key not found: ${key}`);
+            return key;
+        }
+        return translation[this.currentLanguage] || translation.en;
+    }
+
+    public static updateAllTranslations(doc?: Document): void {
+        const targetDoc = doc || document;
+
+        // Update all elements with data-translate attribute
+        const elements = targetDoc.querySelectorAll('[data-translate]');
+        elements.forEach(element => {
+            const key = element.getAttribute('data-translate');
+            if (key) {
+                const translation = this.translate(key);
+                if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                    (element as HTMLInputElement | HTMLTextAreaElement).placeholder = translation;
+                } else {
+                    element.textContent = translation;
+                }
+            }
+        });
+
+        // Update dropdown selected values
+        const dropdowns = targetDoc.querySelectorAll('.custom-dropdown-selected');
+        dropdowns.forEach(dropdown => {
+            const key = dropdown.getAttribute('data-translate-key');
+            if (key) {
+                const translation = this.translate(key);
+                dropdown.textContent = translation;
+            }
+        });
+    }
+
+    public static initializeTranslations(): void {
+        // Load language from storage
+        chrome.storage.local.get(['sidebarLanguage'], (result) => {
+            const language = (result.sidebarLanguage as Language) || 'en';
+            this.setLanguage(language);
+        });
+    }
+} 
