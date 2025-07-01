@@ -5,7 +5,7 @@ interface AuthResponse {
 
 export class AuthService {
     private static readonly TOKEN_KEY = 'auth_token';
-    private static readonly API_URL = 'http://localhost:8000/auth/login'; // Replace with your actual API endpoint
+    private static readonly API_URL = `${import.meta.env.VITE_API_URL}/auth/login`; // Replace with your actual API endpoint
     private static cachedToken: string | null = null;
 
     static async login(email: string, password: string): Promise<boolean> {

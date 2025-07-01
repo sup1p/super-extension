@@ -3171,7 +3171,8 @@ export function updateUserAvatar(avatarUrl: string | null) {
 function loadUserData(doc: Document) {
     AuthService.getToken().then(token => {
         if (token) {
-            fetch('http://localhost:8000/me', { headers: { 'Authorization': `Bearer ${token}` } })
+            const API_URL = import.meta.env.VITE_API_URL;
+            fetch(`${API_URL}/me`, { headers: { 'Authorization': `Bearer ${token}` } })
                 .then(response => response.json())
                 .then(userData => {
                     const avatarImg = doc.getElementById('user-avatar') as HTMLImageElement | null;

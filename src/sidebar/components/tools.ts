@@ -48,6 +48,8 @@ export class ToolsComponent {
             });
         };
 
+        const API_URL = import.meta.env.VITE_API_URL;
+
         items.forEach(el =>
             el.addEventListener('click', async () => {
                 const label = (el.querySelector('.tool-label')?.textContent || '').toLowerCase();
@@ -91,7 +93,7 @@ export class ToolsComponent {
                         }
                         let summary = '';
                         try {
-                            const res = await fetch('http://localhost:8000/tool/summarize', {
+                            const res = await fetch(`${API_URL}/tool/summarize`, {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',

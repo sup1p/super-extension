@@ -9,6 +9,8 @@ let currentTargetLang: string = 'en';
 let currentToken: string | undefined = undefined;
 if (currentToken) { console.log("jojo") }
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 export class PageTranslateService {
     private observer: IntersectionObserver | null = null;
     private translationQueue: Map<HTMLElement, { originalText: string }> = new Map();
@@ -119,7 +121,7 @@ export class PageTranslateService {
 
         console.log('[PageTranslateService] Processing queue. Texts:', texts);
 
-        const url = `http://localhost:8000/translate-page?dest=${encodeURIComponent(this.targetLang)}`;
+        const url = `${API_URL}/translate-page?dest=${encodeURIComponent(this.targetLang)}`;
         const headers: Record<string, string> = {
             'Content-Type': 'application/json',
             'accept': 'application/json',

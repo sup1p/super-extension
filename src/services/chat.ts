@@ -4,11 +4,14 @@ export type ChatEvent = { text: string } | { error: string };
 export type ChatSession = { id: number; name: string; created_at: string; };
 export type ChatMessage = { id: number; role: 'user' | 'assistant'; content: string; created_at: string; };
 
+const API_URL = import.meta.env.VITE_API_URL;
+const WS_URL = import.meta.env.VITE_WS_URL || API_URL.replace(/^http(s?):\/\//, 'wss://');
+
 export class ChatService {
     private static ws: WebSocket | null = null;
     private static token: string | null = null;
     private static onMessageCallback: ((event: ChatEvent) => void) | null = null;
-    private static wsUrl = (token: string) => `${process.env.BACKEND_WS_URL || "ws://localhost:8000"}/chat/websocket?token=${token}`;
+    private static wsUrl = (token: string) => `${WS_URL}/chat/websocket?token=${token}`;
 
     static connect(token: string, onMessage: (event: ChatEvent) => void): Promise<void> {
         return new Promise((resolve, reject) => {
@@ -82,7 +85,7 @@ export class ChatService {
     }
 
     static async getChatSessions(token: string, doc: Document): Promise<ChatSession[]> {
-        const res = await fetch('http://localhost:8000/chat/all', {
+        const res = await fetch(`${API_URL}/chat/all`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         if (!res.ok) {
@@ -95,7 +98,7 @@ export class ChatService {
     }
 
     static async getChatMessages(sessionId: number, token: string): Promise<ChatMessage[]> {
-        const res = await fetch(`http://localhost:8000/chat/messages/${sessionId}`, {
+        const res = await fetch(`${API_URL}/chat/messages/${sessionId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         if (!res.ok) throw new Error('Ошибка получения сообщений чата');
@@ -103,7 +106,7 @@ export class ChatService {
     }
 
     static async deleteChatSession(sessionId: number, token: string, doc: Document): Promise<void> {
-        const res = await fetch(`http://localhost:8000/chat/delete?chat_id=${sessionId}`, {
+        const res = await fetch(`${API_URL}/chat/delete?chat_id=${sessionId}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${token}` }
         });

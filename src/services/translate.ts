@@ -71,7 +71,8 @@ export class TranslateService {
         if (!token) throw new Error('No auth token found');
 
         const params = new URLSearchParams({ text, src, dest });
-        const res = await fetch(`http://localhost:8000/translate?${params}`, {
+        const API_URL = import.meta.env.VITE_API_URL;
+        const res = await fetch(`${API_URL}/translate?${params}`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`

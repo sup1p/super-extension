@@ -28,7 +28,9 @@ export class VoiceService {
         let manualClose = false;
         console.log(manualClose);
 
-        const WV_URL = 'ws://localhost:8000/websocket-voice';
+        const API_URL = import.meta.env.VITE_API_URL;
+        const WS_URL = import.meta.env.VITE_WS_URL || API_URL.replace(/^http(s?):\/\//, 'wss://');
+        const WV_URL = `${WS_URL}/websocket-voice`;
         let wv: WebSocket | null = null;
         let rec: MediaRecorder | null = null;
         let stream: MediaStream | null = null;
