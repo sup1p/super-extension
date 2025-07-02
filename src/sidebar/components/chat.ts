@@ -3,6 +3,7 @@ import { AuthService } from "../../services/auth";
 import { TranslationService } from "../../services/translations";
 
 export class ChatComponent {
+    static currentChatId: number | null = null;
     static initChat(doc: Document): void {
         const chatContainer = doc.getElementById('chat-container');
         const chatForm = doc.getElementById('chat-form') as HTMLFormElement;
@@ -34,7 +35,7 @@ export class ChatComponent {
                         console.log('Ошибка чата: ' + event.error);
                         isConnected = false; // Сбросить флаг при ошибке
                     }
-                });
+                }, ChatComponent.currentChatId ?? undefined);
                 isConnected = true;
             } catch (error) {
                 console.error("Failed to connect WebSocket:", error);
@@ -47,6 +48,7 @@ export class ChatComponent {
         if (chatNewBtn) {
             chatNewBtn.addEventListener('click', () => {
                 chatContainer.innerHTML = '';
+                ChatComponent.currentChatId = null;
                 ChatService.resetSession();
                 connectWebSocket(); // Переподключаемся для новой сессии
             });
@@ -141,11 +143,13 @@ export class ChatComponent {
                             }
                             // Показать сообщения в основном окне чата
                             chatContainer.innerHTML = '';
+                            ChatComponent.currentChatId = session.id;
                             messages.forEach(msg => {
                                 const role = msg.role === 'assistant' ? 'ai' : 'user';
-                                ChatComponent.appendMessage(chatContainer, msg.content, role);
+                                ChatComponent.appendMessage(chatContainer, msg.content, role, false);
                             });
                             modal.remove();
+                            connectWebSocket();
                         };
                         // Кнопка удаления
                         const deleteBtn = doc.createElement('button');
@@ -211,6 +215,16 @@ export class ChatComponent {
                                             empty.style.color = '#aaa';
                                             inner.appendChild(empty);
                                         }
+                                        // Если удалённый чат был открыт — сбросить состояние и начать новый чат
+                                        if (ChatComponent.currentChatId === session.id) {
+                                            ChatComponent.currentChatId = null;
+                                            chatContainer.innerHTML = '';
+                                            ChatService.resetSession();
+                                            connectWebSocket();
+                                            // Закрыть модалку истории чатов, если она открыта
+                                            const modal = doc.getElementById('chat-history-modal');
+                                            if (modal) modal.remove();
+                                        }
                                     } catch (err) {
                                         alert(TranslationService.translate('error_deleting_chat'));
                                     }
@@ -267,10 +281,9 @@ export class ChatComponent {
         });
     }
 
-    static appendMessage(container: HTMLElement, text: string, role: 'user' | 'ai') {
+    static appendMessage(container: HTMLElement, text: string, role: 'user' | 'ai', animate: boolean = true) {
         const msg = document.createElement('div');
         msg.className = 'chat-message ' + role;
-        msg.textContent = text;
         msg.style.alignSelf = role === 'user' ? 'flex-end' : 'flex-start';
         msg.style.background = role === 'user' ? 'var(--color-container)' : 'var(--color-bg)';
         msg.style.color = 'var(--color-text)';
@@ -279,6 +292,76 @@ export class ChatComponent {
         msg.style.borderRadius = role === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px';
         msg.style.maxWidth = role === 'user' ? '70%' : '100%';
         msg.style.marginTop = '2px';
+        if (role === 'ai') {
+            this.animateMessageMarkdown(msg, text, 4, animate);
+        } else {
+            msg.textContent = text;
+        }
         container.appendChild(msg);
     }
+
+    // Плавная "печать" текста для AI-сообщений с поддержкой Markdown
+    static animateMessageMarkdown(element: HTMLElement, text: string, speed: number = 4, animate: boolean = true) {
+        function escapeHtml(str: string) {
+            return str.replace(/[&<>"']/g, function (tag) {
+                const chars: any = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' };
+                return chars[tag] || tag;
+            });
+        }
+        function markdownToHtml(str: string) {
+            str = str.replace(/\n\* (.+)/g, '<li>$1</li>');
+            if (/^<li>/.test(str)) str = '<ul>' + str + '</ul>';
+            str = str.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+            str = str.replace(/\*(.+?)\*/g, '<i>$1</i>');
+            str = str.replace(/\n/g, '<br>');
+            return str;
+        }
+        if (!animate) {
+            element.innerHTML = markdownToHtml(escapeHtml(text));
+            return;
+        }
+        let i = 0;
+        let cursor = document.createElement('span');
+        cursor.className = 'chat-typing-cursor';
+        cursor.textContent = '▍';
+        cursor.style.display = 'inline-block';
+        cursor.style.animation = 'blink-cursor 1s steps(1) infinite';
+        element.innerHTML = '';
+        element.appendChild(cursor);
+        function printNext() {
+            if (i <= text.length) {
+                let html = markdownToHtml(escapeHtml(text.slice(0, i)));
+                element.innerHTML = html;
+                element.appendChild(cursor);
+                i++;
+                element.scrollIntoView({ behavior: 'auto', block: 'end' });
+                setTimeout(printNext, speed);
+            } else {
+                cursor.remove();
+                element.innerHTML = markdownToHtml(escapeHtml(text));
+            }
+        }
+        printNext();
+    }
+}
+
+/* Добавить CSS-анимацию для курсора */
+if (!document.getElementById('chat-typing-cursor-style')) {
+    const style = document.createElement('style');
+    style.id = 'chat-typing-cursor-style';
+    style.innerHTML = `
+    @keyframes blink-cursor {
+        0% { opacity: 1; }
+        50% { opacity: 0; }
+        100% { opacity: 1; }
+    }
+    .chat-typing-cursor {
+        font-weight: bold;
+        font-size: 1.1em;
+        margin-left: 2px;
+        color: #aaa;
+        animation: blink-cursor 1s steps(1) infinite;
+    }
+    `;
+    document.head.appendChild(style);
 } 

@@ -29,7 +29,7 @@ export class VoiceService {
         console.log(manualClose);
 
         const API_URL = import.meta.env.VITE_API_URL;
-        const WS_URL = import.meta.env.VITE_WS_URL || API_URL.replace(/^http(s?):\/\//, 'wss://');
+        const WS_URL = import.meta.env.VITE_WS_URL || API_URL.replace(/^http(s?):\/\//, 'ws://');
         const WV_URL = `${WS_URL}/websocket-voice`;
         let wv: WebSocket | null = null;
         let rec: MediaRecorder | null = null;

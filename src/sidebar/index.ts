@@ -1419,6 +1419,8 @@ export class Sidebar {
                                 gap: 8px;
                                 width: 100%;
                                 margin-top: 16px;
+                                align-items: center;
+                                /* Remove any max-width here */
                             }
                             .language-select {
                                 flex: 1 1 0;
@@ -1669,6 +1671,7 @@ export class Sidebar {
                                 user-select: none;
                                 font-size: 15px;
                                 font-weight: 500;
+                                flex-shrink: 0;
                             }
                             .custom-dropdown-selected {
                                 background: var(--color-container);
@@ -1707,6 +1710,18 @@ export class Sidebar {
                                 box-shadow: 0 8px 32px rgba(111,88,213,0.10);
                                 z-index: 99999;
                                 animation: fadeInDropdown 0.18s;
+                                max-height: 260px;
+                                overflow-y: auto;
+                                scrollbar-width: thin;
+                                scrollbar-color: var(--color-active) var(--color-container);
+                            }
+                            .custom-dropdown-list::-webkit-scrollbar {
+                                width: 7px;
+                                background: var(--color-container);
+                            }
+                            .custom-dropdown-list::-webkit-scrollbar-thumb {
+                                background: var(--color-active);
+                                border-radius: 6px;
                             }
                             .custom-dropdown.open .custom-dropdown-list {
                                 display: block;
@@ -1728,19 +1743,17 @@ export class Sidebar {
                             .settings-section, .settings-group, .screen.active, .sidebar {
                                 overflow: visible !important;
                             }
+                            #chat-container {
+                                scrollbar-width: thin;
+                                scrollbar-color: var(--color-active) var(--color-container);
+                            }
                             #chat-container::-webkit-scrollbar {
-                                width: 8px;
-                                background: #232323;
+                                width: 7px;
+                                background: var(--color-container);
                             }
                             #chat-container::-webkit-scrollbar-thumb {
-                                background: #333;
-                                border-radius: 8px;
-                            }
-                            body.theme-light #chat-container::-webkit-scrollbar {
-                                background: #E9E9E9;
-                            }
-                            body.theme-light #chat-container::-webkit-scrollbar-thumb {
-                                background: #CFCFCF;
+                                background: var(--color-active);
+                                border-radius: 6px;
                             }
                             /* Стили для placeholder-ов */
                             input::placeholder,
@@ -1769,6 +1782,25 @@ export class Sidebar {
                             textarea::-ms-input-placeholder {
                                 font-family: 'Poppins', 'Inter', 'Segoe UI', Arial, sans-serif;
                                 color: #b0b0b0;
+                            }
+                            .translate-block-align {
+                                max-width: 420px;
+                                margin: 0 auto;
+                                width: 100%;
+                                display: flex;
+                                flex-direction: column;
+                                gap: 12px;
+                                padding-right: 20px; /* Prevent overlap with .dock on the right */
+                            }
+                            @media (max-width: 600px) {
+                                .translate-block-align {
+                                    padding-right: 45px;
+                                }
+                            }
+                            @media (max-width: 400px) {
+                                .translate-block-align {
+                                    padding-right: 0;
+                                }
                             }
                         </style>
                     `;
@@ -1945,23 +1977,29 @@ export class Sidebar {
 
                             <div id="screen-translate" class="screen">
                                 <h1 id="translate-top-row" data-translate="translate">Translate</h1>
-
-                                <div class="translate-lang-row">
-                                    <select id="sourceLanguage" class="language-select"></select>
-                                    <span id="swapLangs" title="Swap languages">↔</span>
-                                    <select id="targetLanguage" class="language-select"></select>
+                                <div class="translate-block-align">
+                                    <div class="translate-lang-row">
+                                        <div class="custom-dropdown" id="source-lang-dropdown">
+                                            <div class="custom-dropdown-selected" id="source-lang-dropdown-selected">Auto</div>
+                                            <div class="custom-dropdown-list" id="source-lang-dropdown-list"></div>
+                                        </div>
+                                        <span id="swapLangs" title="Swap languages">↔</span>
+                                        <div class="custom-dropdown" id="target-lang-dropdown">
+                                            <div class="custom-dropdown-selected" id="target-lang-dropdown-selected">English</div>
+                                            <div class="custom-dropdown-list" id="target-lang-dropdown-list"></div>
+                                        </div>
+                                        <select id="sourceLanguage" style="display:none"></select>
+                                        <select id="targetLanguage" style="display:none"></select>
+                                    </div>
+                                    <div class="translate-top-row">
+                                        <button id="translate-page-btn" class="page-translate-btn" data-translate="translate_webpage">Translate webpage •</button>
+                                    </div>
+                                    <div class="source-wrapper">
+                                        <textarea id="sourceText" data-translate="type_here" placeholder="Type here..."></textarea>
+                                        <button id="translateButton" class="translate-btn translate-btn-inside" data-translate="translate">Translate</button>
+                                    </div>
+                                    <textarea id="translatedText" readonly data-translate="translation_placeholder" placeholder="Translation will appear here..."></textarea>
                                 </div>
-
-                                <div class="translate-top-row">
-                                    <button id="translate-page-btn" class="page-translate-btn" data-translate="translate_webpage">Translate webpage •</button>
-                                </div>
-
-                                <div class="source-wrapper">
-                                    <textarea id="sourceText" data-translate="type_here" placeholder="Type here..."></textarea>
-                                    <button id="translateButton" class="translate-btn translate-btn-inside" data-translate="translate">Translate</button>
-                                </div>
-
-                                <textarea id="translatedText" readonly data-translate="translation_placeholder" placeholder="Translation will appear here..."></textarea>
                             </div>
 
                             <div id="screen-tools" class="screen">
@@ -2768,6 +2806,152 @@ export class Sidebar {
                 observer.observe(iframeDoc.body, { attributes: true, attributeFilter: ['class'] });
 
                 // ... existing code ...
+                TranslateService.initTranslate(iframeDoc);
+
+                // --- Custom dropdowns for translate screen ---
+                const srcSel = iframeDoc.getElementById('sourceLanguage') as HTMLSelectElement;
+                const tgtSel = iframeDoc.getElementById('targetLanguage') as HTMLSelectElement;
+                const srcDropdown = iframeDoc.getElementById('source-lang-dropdown');
+                const srcDropdownSelected = iframeDoc.getElementById('source-lang-dropdown-selected');
+                const srcDropdownList = iframeDoc.getElementById('source-lang-dropdown-list');
+                const tgtDropdown = iframeDoc.getElementById('target-lang-dropdown');
+                const tgtDropdownSelected = iframeDoc.getElementById('target-lang-dropdown-selected');
+                const tgtDropdownList = iframeDoc.getElementById('target-lang-dropdown-list');
+
+                if (srcDropdown && srcDropdownSelected && srcDropdownList && srcSel) {
+                    // Fill custom dropdown for source
+                    srcDropdownList.innerHTML = '';
+                    languages.forEach(({ code, name }) => {
+                        const opt = iframeDoc.createElement('div');
+                        opt.className = 'custom-dropdown-option';
+                        opt.setAttribute('data-value', code);
+                        opt.textContent = name;
+                        opt.addEventListener('click', () => {
+                            srcDropdownSelected.textContent = name;
+                            srcSel.value = code;
+                            srcSel.dispatchEvent(new Event('change', { bubbles: true }));
+                            srcDropdown.classList.remove('open');
+                        });
+                        srcDropdownList.appendChild(opt);
+                    });
+                    // Open/close logic
+                    srcDropdownSelected.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        srcDropdown.classList.toggle('open');
+                    });
+                    iframeDoc.addEventListener('click', () => srcDropdown.classList.remove('open'));
+                    // Sync custom with select
+                    srcSel.addEventListener('change', () => {
+                        const found = Array.from(srcDropdownList.children).find(opt => opt.getAttribute('data-value') === srcSel.value);
+                        if (found) srcDropdownSelected.textContent = found.textContent;
+                    });
+                    // Init
+                    const found = Array.from(srcDropdownList.children).find(opt => opt.getAttribute('data-value') === srcSel.value);
+                    if (found) srcDropdownSelected.textContent = found.textContent;
+                }
+                if (tgtDropdown && tgtDropdownSelected && tgtDropdownList && tgtSel) {
+                    // Fill custom dropdown for target (exclude auto)
+                    tgtDropdownList.innerHTML = '';
+                    languages.filter(l => l.code !== 'auto').forEach(({ code, name }) => {
+                        const opt = iframeDoc.createElement('div');
+                        opt.className = 'custom-dropdown-option';
+                        opt.setAttribute('data-value', code);
+                        opt.textContent = name;
+                        opt.addEventListener('click', () => {
+                            tgtDropdownSelected.textContent = name;
+                            tgtSel.value = code;
+                            tgtSel.dispatchEvent(new Event('change', { bubbles: true }));
+                            tgtDropdown.classList.remove('open');
+                        });
+                        tgtDropdownList.appendChild(opt);
+                    });
+                    // Open/close logic
+                    tgtDropdownSelected.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        tgtDropdown.classList.toggle('open');
+                    });
+                    iframeDoc.addEventListener('click', () => tgtDropdown.classList.remove('open'));
+                    // Sync custom with select
+                    tgtSel.addEventListener('change', () => {
+                        const found = Array.from(tgtDropdownList.children).find(opt => opt.getAttribute('data-value') === tgtSel.value);
+                        if (found) tgtDropdownSelected.textContent = found.textContent;
+                    });
+                    // Init
+                    const found = Array.from(tgtDropdownList.children).find(opt => opt.getAttribute('data-value') === tgtSel.value);
+                    if (found) tgtDropdownSelected.textContent = found.textContent;
+                }
+                // --- Swap logic: update both selects and custom dropdowns ---
+                const swapBtn = iframeDoc.getElementById('swapLangs');
+                if (swapBtn && srcSel && tgtSel && srcDropdownSelected && tgtDropdownSelected && srcDropdownList && tgtDropdownList) {
+                    swapBtn.addEventListener('click', () => {
+                        if (srcSel.value === 'auto') return;
+                        [srcSel.value, tgtSel.value] = [tgtSel.value, srcSel.value];
+                        srcSel.dispatchEvent(new Event('change', { bubbles: true }));
+                        tgtSel.dispatchEvent(new Event('change', { bubbles: true }));
+                    });
+                }
+
+                // After TranslateService.initTranslate(iframeDoc);, add:
+                const srcTxt = iframeDoc.getElementById('sourceText');
+                const translateBtn = iframeDoc.getElementById('translateButton');
+                if (srcTxt && translateBtn) {
+                    srcTxt.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            (translateBtn as HTMLElement).click();
+                        }
+                    });
+                }
+
+                // --- Улучшенная логика открытия tools-модалки по ховеру ---
+                const toolsButtonHoverBtn = iframeDoc.querySelector('.tools_button');
+                const toolsModalHoverModal = iframeDoc.getElementById('tools-modal');
+                let toolsModalHoverFlag = false;
+                let toolsButtonHoverFlag = false;
+                let toolsModalCloseTimeoutId: number | null = null;
+                if (toolsButtonHoverBtn && toolsModalHoverModal) {
+                    toolsButtonHoverBtn.addEventListener('mouseenter', () => {
+                        toolsButtonHoverFlag = true;
+                        if (toolsModalCloseTimeoutId) {
+                            clearTimeout(toolsModalCloseTimeoutId);
+                            toolsModalCloseTimeoutId = null;
+                        }
+                        if (!toolsModalHoverModal.classList.contains('active')) {
+                            toolsModalHoverModal.classList.add('active');
+                        }
+                    });
+                    toolsButtonHoverBtn.addEventListener('mouseleave', () => {
+                        toolsButtonHoverFlag = false;
+                        toolsModalCloseTimeoutId = window.setTimeout(() => {
+                            if (!toolsModalHoverFlag && !toolsButtonHoverFlag) {
+                                toolsModalHoverModal.classList.remove('active');
+                            }
+                        }, 120);
+                    });
+                    toolsModalHoverModal.addEventListener('mouseenter', () => {
+                        toolsModalHoverFlag = true;
+                        if (toolsModalCloseTimeoutId) {
+                            clearTimeout(toolsModalCloseTimeoutId);
+                            toolsModalCloseTimeoutId = null;
+                        }
+                        if (!toolsModalHoverModal.classList.contains('active')) {
+                            toolsModalHoverModal.classList.add('active');
+                        }
+                    });
+                    toolsModalHoverModal.addEventListener('mouseleave', () => {
+                        toolsModalHoverFlag = false;
+                        toolsModalCloseTimeoutId = window.setTimeout(() => {
+                            if (!toolsModalHoverFlag && !toolsButtonHoverFlag) {
+                                toolsModalHoverModal.classList.remove('active');
+                            }
+                        }, 120);
+                    });
+                    // Отключить клик
+                    toolsButtonHoverBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    });
+                }
             }
 
             // Устанавливаем src для загрузки iframe

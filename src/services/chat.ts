@@ -5,20 +5,21 @@ export type ChatSession = { id: number; name: string; created_at: string; };
 export type ChatMessage = { id: number; role: 'user' | 'assistant'; content: string; created_at: string; };
 
 const API_URL = import.meta.env.VITE_API_URL;
-const WS_URL = import.meta.env.VITE_WS_URL || API_URL.replace(/^http(s?):\/\//, 'wss://');
+const WS_URL = import.meta.env.VITE_WS_URL || API_URL.replace(/^http(s?):\/\//, 'ws://');
 
 export class ChatService {
     private static ws: WebSocket | null = null;
     private static token: string | null = null;
     private static onMessageCallback: ((event: ChatEvent) => void) | null = null;
-    private static wsUrl = (token: string) => `${WS_URL}/chat/websocket?token=${token}`;
+    private static wsUrl = (token: string, chatId?: number) =>
+        chatId ? `${WS_URL}/chat/websocket?token=${token}&chat_id=${chatId}` : `${WS_URL}/chat/websocket?token=${token}`;
 
-    static connect(token: string, onMessage: (event: ChatEvent) => void): Promise<void> {
+    static connect(token: string, onMessage: (event: ChatEvent) => void, chatId?: number): Promise<void> {
         return new Promise((resolve, reject) => {
             this.disconnect();
             this.token = token;
             this.onMessageCallback = onMessage;
-            this.ws = new WebSocket(this.wsUrl(token));
+            this.ws = new WebSocket(this.wsUrl(token, chatId));
 
             this.ws.onopen = () => {
                 console.log("WebSocket connection established");

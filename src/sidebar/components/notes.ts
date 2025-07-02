@@ -134,6 +134,8 @@ export class NotesComponent {
         }
         titleInp.value = note.title;
         bodyArea.value = note.content;
+        bodyArea.style.height = 'auto';
+        bodyArea.style.height = bodyArea.scrollHeight + 'px';
         bodyArea.focus();
         bodyArea.selectionStart = bodyArea.value.length;
 
