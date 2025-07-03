@@ -3,6 +3,7 @@ import { AuthService } from './services/auth';
 
 // Initialize the sidebar
 const sidebarInstance = new Sidebar();
+(window as any).sidebarInstance = sidebarInstance;
 
 // Listen for messages from background script
 chrome.runtime.onMessage.addListener((request) => {
@@ -206,6 +207,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         const hasMedia = hasVideo || hasAudio || hasPlatformControls;
         sendResponse({ hasVideo: hasMedia });
     } else if (message.type === 'CREATE_NOTE') {
+        console.log('[content-enhanced] Received CREATE_NOTE message:', message); // LOG 1: Message received
         // Обработка создания заметки по команде от background (например, от voice)
         (async () => {
             try {
@@ -218,6 +220,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                 }
                 if (!token) {
                     alert('Login required to save note.');
+                    console.log('[content-enhanced] Login required, returning.');
                     return;
                 }
                 // Импортировать NotesService динамически, если нужно
@@ -228,8 +231,38 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                     NotesService = (await import('./services/notes')).NotesService;
                 }
                 const note = await NotesService.createNote(message.title, message.text, token, document);
+                console.log('[content-enhanced] Note creation attempt, message.answer:', message.answer, 'message.audio_base64:', message.audio_base64); // LOG 2: Check message content
+                // --- Отправляем данные для озвучки и показа в iframe сайдбара ---
+                if (message.answer || message.audio_base64) {
+                    const sidebarIframe = document.getElementById('chrome-extension-sidebar') as HTMLIFrameElement | null;
+                    console.log('[content-enhanced] sidebarIframe found:', !!sidebarIframe, 'contentWindow available:', !!(sidebarIframe?.contentWindow)); // LOG 3: Iframe status
+                    if (sidebarIframe && sidebarIframe.contentWindow) {
+                        sidebarIframe.contentWindow.postMessage({
+                            type: 'VOICE_FEEDBACK', // Новый специфичный тип для iframe communication
+                            answer: message.answer,
+                            audio_base64: message.audio_base64
+                        }, '*'); // TODO: Ограничить origin для безопасности в продакшене
+                        console.log('[content-enhanced] Sent VOICE_FEEDBACK via postMessage.'); // LOG 4: postMessage sent
+                    } else {
+                        // Fallback если sidebar iframe не найден или не готов (показываем alert и воспроизводим аудио на главной странице)
+                        console.log('[content-enhanced] Sidebar iframe not found or not ready, executing fallback.'); // LOG 5: Fallback triggered
+                        if (message.answer) {
+                            console.log('[content-enhanced] Fallback alert shown.'); // LOG 6: Fallback alert
+                        }
+                        if (message.audio_base64) {
+                            try {
+                                const audio = new Audio('data:audio/mp3;base64,' + message.audio_base64);
+                                audio.play();
+                                console.log('[content-enhanced] Fallback audio played.'); // LOG 7: Fallback audio
+                            } catch (e) {
+                                console.error('[content-enhanced] Fallback audio error:', e);
+                            }
+                        }
+                    }
+                }
+                // --- /Отправляем данные в iframe сайдбара ---
                 if (note) {
-                    alert('Note created!');
+                    console.log('[content-enhanced] Note created alert shown.'); // LOG 9: Note created alert
                     // Открыть детали созданной заметки
                     let NotesComponent;
                     if ((window as any).NotesComponent) {
@@ -240,9 +273,10 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                     await NotesComponent.initNoteDetail(document, note.id);
                 } else {
                     alert('Failed to create note.');
+                    console.log('[content-enhanced] Failed to create note alert shown.'); // LOG 10: Failed note alert
                 }
             } catch (e) {
-                alert('Error creating note.');
+                console.error('[content-enhanced] Error creating note:', e); // LOG 11: General error
             }
         })();
     }

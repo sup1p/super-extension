@@ -205,7 +205,9 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                             chrome.tabs.sendMessage(tab.id, {
                                 type: 'CREATE_NOTE',
                                 title: command.title,
-                                text: command.text
+                                text: command.text,
+                                answer: command.answer,
+                                audio_base64: command.audio_base64
                             });
                         }
                     });

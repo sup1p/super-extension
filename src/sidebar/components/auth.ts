@@ -339,6 +339,44 @@ export function showAuthModal(doc: Document) {
 
     box.appendChild(registerBtn);
 
+    // Add close (X) button to the top right of the modal
+    const closeSidebarBtn = doc.createElement('button');
+    closeSidebarBtn.textContent = '×';
+    closeSidebarBtn.setAttribute('aria-label', 'Закрыть сайдбар');
+    closeSidebarBtn.style.cssText = `
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        background: none;
+        border: none;
+        color: ${isDarkTheme ? '#fff' : '#232323'};
+        font-size: 28px;
+        font-weight: 700;
+        cursor: pointer;
+        z-index: 10;
+        padding: 0 8px;
+        border-radius: 4px;
+        transition: background 0.2s, color 0.2s;
+    `;
+    closeSidebarBtn.addEventListener('mouseenter', () => {
+        closeSidebarBtn.style.background = isDarkTheme ? '#232323' : '#ececec';
+    });
+    closeSidebarBtn.addEventListener('mouseleave', () => {
+        closeSidebarBtn.style.background = 'none';
+    });
+    closeSidebarBtn.onclick = () => {
+        // Try to close the sidebar via Sidebar instance or global function
+        if (typeof (window as any).sidebarInstance?.closeSidebar === 'function') {
+            (window as any).sidebarInstance.closeSidebar();
+        } else if (typeof (window as any).closeSidebar === 'function') {
+            (window as any).closeSidebar();
+        } else {
+            // Fallback: remove modal
+            modal.remove();
+        }
+    };
+    box.appendChild(closeSidebarBtn);
+
     // Add CSS animations
     const style = doc.createElement('style');
     style.textContent = `

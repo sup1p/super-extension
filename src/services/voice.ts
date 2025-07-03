@@ -79,9 +79,11 @@ export class VoiceService {
 
             wv.onmessage = async (e) => {
                 const data = JSON.parse(e.data);
+                console.log('[voice.ts - WebSocket] Raw message data from server:', data); // LOG: Raw server data
 
                 // --- Обработка команды создания заметки по тексту ---
                 if (data.command && data.command.action === 'create_note' && data.command.title && data.command.text) {
+                    console.log('[voice.ts - WebSocket] Handling create_note command from server.', data.command); // LOG: Command detail
                     // Создать заметку через NotesService
                     try {
                         const note = await NotesService.createNote(data.command.title, data.command.text, token, doc);
@@ -94,28 +96,32 @@ export class VoiceService {
                     } catch (e) {
                         statusBubble.textContent = TranslationService.translate('error_creating_note');
                     }
-                    return;
                 }
                 // --- /Обработка команды создания заметки ---
 
+                // --- Обработка других команд от сервера ---
                 if (data.command) {
-                    console.log("📢 Получена команда от сервера:", data.command);
+                    console.log("📢 [voice.ts - WebSocket] Получена команда от сервера:", data.command); // LOG: Command detail
                     if (data.command.action === 'control_media' || data.command.action === 'control_video') {
                         handleMediaCommand(data.command);
                     } else {
                         handleServerCommand(data.command);
                     }
-                    return;
                 }
 
-                const { text, audio_base64 } = data;
-                output.textContent = text;
-                statusBubble.textContent = TranslationService.translate('playing_response');
+                // --- УНИВЕРСАЛЬНАЯ ОЗВУЧКА и ПОКАЗ ОТВЕТА (для всех типов сообщений, после обработки команды) ---
+                const responseText = data.answer || data.text;
+                const responseAudioBase64 = data.audio_base64;
 
-                if (audio_base64) {
-                    playResponse(audio_base64);
-                } else {
+                if (responseText) {
+                    output.textContent = responseText;
+                    statusBubble.textContent = TranslationService.translate('playing_response'); // Или более специфичный статус
+                } else if (statusBubble.textContent !== TranslationService.translate('listening')) { // Если нет текста ответа, но мы не слушаем
                     statusBubble.textContent = TranslationService.translate('have_something_to_say');
+                }
+
+                if (responseAudioBase64) {
+                    playResponse(responseAudioBase64);
                 }
             };
         };
@@ -457,6 +463,33 @@ export class VoiceService {
         VoiceService._startListening = startListening;
         VoiceService._stopListening = stopListening;
         VoiceService._isListening = () => isListening;
+
+        // --- Listener для сообщений из родительского окна (content-enhanced.ts) ---
+        window.addEventListener('message', (event) => {
+            // Важно: Проверяйте origin в продакшене!
+            // if (event.origin !== 'Ваш_Ожидаемый_Origin') return;
+
+            const message = event.data;
+
+            if (message.type === 'VOICE_FEEDBACK') {
+                console.log('[voice.ts - iframe] Получено VOICE_FEEDBACK', message);
+                if (message.answer) {
+                    output.textContent = message.answer;
+                    // Также можем обновить statusBubble если нужно, например, "Заметка создана: [ответ]"
+                    statusBubble.textContent = message.answer;
+                    console.log('[voice.ts - iframe] Показал текст на voice-result');
+                }
+                if (message.audio_base64) {
+                    try {
+                        const audio = new Audio('data:audio/mp3;base64,' + message.audio_base64);
+                        audio.play();
+                        console.log('[voice.ts - iframe] Воспроизвожу аудио');
+                    } catch (e) {
+                        console.error('[voice.ts - iframe] Ошибка воспроизведения аудио', e);
+                    }
+                }
+            }
+        });
     }
 
     static async startListening() {

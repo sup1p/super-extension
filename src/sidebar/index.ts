@@ -899,8 +899,8 @@ export class Sidebar {
                             }
 
                             .page-translate-btn{
-                                position:absolute; top:16px; right:24px;
-                                background:#262626; color:#ccc; padding:8px 18px;
+                                position:absolute; top:40px; right:72px;
+                                background:#262626; color:#ccc; padding:6px 6px;
                                 border-radius:8px; font-size:14px; border:none; cursor:pointer;
                                 color: #A48FFF;
                             }
@@ -946,12 +946,13 @@ export class Sidebar {
                             }
                             .page-translate-btn {
                                 flex: 0 0 auto;
-                                width: calc(50% - 8px);
+                                width: 10rem;
+                                height: 4%;
                                 background: var(--color-container);
                                 color: var(--color-active);
                                 border: 1px solid var(--color-border);
                                 border-radius: 8px;
-                                font-weight: 600;
+                                font-weight: 300;
                                 transition: background 0.2s, color 0.2s;
                             }
                             .page-translate-btn:hover {
@@ -1976,7 +1977,13 @@ export class Sidebar {
                             </div>
 
                             <div id="screen-translate" class="screen">
-                                <h1 id="translate-top-row" data-translate="translate">Translate</h1>
+                                <div class="translation-header" style="display: flex; align-items: center; justify-content: space-between;"/*  */>
+                                     <h1 id="translate-top-row" data-translate="translate">Translate</h1>
+                                
+                                    <button id="translate-page-btn" class="page-translate-btn" data-translate="translate_webpage"></button>
+                                </div>
+                               
+                                
                                 <div class="translate-block-align">
                                     <div class="translate-lang-row">
                                         <div class="custom-dropdown" id="source-lang-dropdown">
@@ -1991,9 +1998,7 @@ export class Sidebar {
                                         <select id="sourceLanguage" style="display:none"></select>
                                         <select id="targetLanguage" style="display:none"></select>
                                     </div>
-                                    <div class="translate-top-row">
-                                        <button id="translate-page-btn" class="page-translate-btn" data-translate="translate_webpage">Translate webpage •</button>
-                                    </div>
+                                    
                                     <div class="source-wrapper">
                                         <textarea id="sourceText" data-translate="type_here" placeholder="Type here..."></textarea>
                                         <button id="translateButton" class="translate-btn translate-btn-inside" data-translate="translate">Translate</button>

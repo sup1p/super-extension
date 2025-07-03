@@ -233,11 +233,6 @@ export const translations: Translations = {
     },
 
     // Translate
-    'translate_webpage': {
-        en: "Translate webpage •",
-        ru: "Перевести страницу •",
-        es: "Traducir página web •"
-    },
     'type_here': {
         en: "Type here...",
         ru: "Введите здесь...",
@@ -415,6 +410,11 @@ export const translations: Translations = {
         en: "Loading... , please wait",
         ru: "Загрузка... , пожалуйста, подождите",
         es: "Cargando... , por favor espera"
+    },
+    'translate_webpage': {
+        en: 'Translate Webpage •',
+        ru: 'Перевести страницу •',
+        es: 'Traducir página •'
     }
 };
 
