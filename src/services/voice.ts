@@ -30,7 +30,6 @@ export class VoiceService {
 
         const API_URL = import.meta.env.VITE_API_URL;
         const WS_URL = import.meta.env.VITE_WS_URL || API_URL.replace(/^http(s?):\/\//, 'ws://');
-        const WV_URL = `${WS_URL}/websocket-voice`;
         let wv: WebSocket | null = null;
         let rec: MediaRecorder | null = null;
         let stream: MediaStream | null = null;
@@ -56,11 +55,22 @@ export class VoiceService {
         const MAX_AUDIO_DURATION = 30000;
         let recordingStartTime = 0;
 
-        const connectWS = () => {
+        const connectWS = async () => {
             if (wv && wv.readyState === WebSocket.OPEN) {
                 return;
             }
-            wv = new WebSocket(WV_URL);
+            let token: string = '';
+            if ((window as any).AuthService) {
+                token = String(await (window as any).AuthService.getToken() || '');
+            } else if (AuthService) {
+                token = String(await AuthService.getToken() || '');
+            }
+            if (!token) {
+                statusBubble.textContent = TranslationService.translate('login_required');
+                return;
+            }
+            const WV_URL_WITH_TOKEN = `${WS_URL}/websocket-voice?token=${encodeURIComponent(token)}`;
+            wv = new WebSocket(WV_URL_WITH_TOKEN);
 
             wv.onopen = () => {
                 console.log('WebSocket подключен');
@@ -73,16 +83,6 @@ export class VoiceService {
                 // --- Обработка команды создания заметки по тексту ---
                 if (data.command && data.command.action === 'create_note' && data.command.title && data.command.text) {
                     // Создать заметку через NotesService
-                    let token: string = '';
-                    if ((window as any).AuthService) {
-                        token = String(await (window as any).AuthService.getToken() || '');
-                    } else if (AuthService) {
-                        token = String(await AuthService.getToken() || '');
-                    }
-                    if (!token) {
-                        statusBubble.textContent = TranslationService.translate('login_required');
-                        return;
-                    }
                     try {
                         const note = await NotesService.createNote(data.command.title, data.command.text, token, doc);
                         if (note) {
@@ -385,7 +385,7 @@ export class VoiceService {
             manualClose = false;
 
             if (!wv || wv.readyState !== WebSocket.OPEN) {
-                connectWS();
+                await connectWS();
             }
 
             if (wv && wv.readyState === WebSocket.OPEN) {
