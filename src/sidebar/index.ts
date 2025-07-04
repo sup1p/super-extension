@@ -1154,6 +1154,7 @@ export class Sidebar {
                                 -webkit-appearance: none;
                                 -moz-appearance: none;
                                 appearance: none;
+                                background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%23a0a0a0" viewBox="0 0 16 16"><path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/></svg>');
                                 background-repeat: no-repeat;
                                 background-position: right 4px top 50%;
                                 background-size: .7em auto;
@@ -1703,6 +1704,7 @@ export class Sidebar {
                                 top: 50%;
                                 width: 16px;
                                 height: 16px;
+                                background-image: url('data:image/svg+xml;utf8,<svg fill="none" stroke="%23715CFF" stroke-width="2" viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg"><path d="M6 9l6 6 6-6"/></svg>');
                                 background-size: 16px 16px;
                                 background-repeat: no-repeat;
                                 background-position: center;
