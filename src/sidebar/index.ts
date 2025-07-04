@@ -452,6 +452,7 @@ export class Sidebar {
 
                             textarea {
                                 width: 390px;
+                                min-width: 390px;
                                 height: 100px;
                                 padding: 10px;
                                 font-size: 14px;
