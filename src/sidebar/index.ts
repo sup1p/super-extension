@@ -1383,6 +1383,7 @@ export class Sidebar {
                             .notes-detail-body {
                                 width: 100%;
                                 min-height: 120px;
+                                max-height: 700px !important;
                                 background: var(--color-bg);
                                 color: var(--color-text);
                                 border: 1px solid var(--color-border);
@@ -1390,6 +1391,19 @@ export class Sidebar {
                                 padding: 12px;
                                 font-size: 15px;
                                 resize: vertical;
+                                overflow-y: auto !important;
+                                scrollbar-width: thin;
+                                scrollbar-color: var(--color-active) var(--color-bg);
+                            }
+                            .notes-detail-body::-webkit-scrollbar {
+                                width: 8px;
+                                background: var(--color-bg);
+                                background-clip: padding-box;
+                            }
+                            .notes-detail-body::-webkit-scrollbar-thumb {
+                                background: var(--color-active);
+                                border-radius: 8px;
+                                background-clip: padding-box;
                             }
                             .notes-detail-body:focus {
                                 border: 1.5px solid var(--color-active);
@@ -2252,10 +2266,6 @@ export class Sidebar {
                     langModal.id = 'page-translate-lang-modal';
                     langModal.className = 'tools-modal-overlay';
                     // Генерируем опции из массива languages
-                    const options = languages
-                        .filter(l => l.code !== 'auto')
-                        .map(l => `<option value="${l.code}">${l.name}</option>`) // без auto
-                        .join('');
                     langModal.innerHTML = `
                       <div class="modal-content" style="max-width:320px;">
                         <div class="modal-header">
@@ -2263,9 +2273,14 @@ export class Sidebar {
                           <button class="modal-close" id="close-lang-modal">×</button>
                         </div>
                         <div style="margin-bottom:18px;">
-                          <select id="page-translate-lang-select" style="width:100%;padding:8px 12px;border-radius:8px;">
-                            ${options}
-                          </select>
+                          <div class="custom-dropdown" id="lang-modal-dropdown">
+                            <div class="custom-dropdown-selected" id="lang-modal-dropdown-selected">English</div>
+                            <div class="custom-dropdown-list" id="lang-modal-dropdown-list">
+                              <div class="custom-dropdown-option" data-value="en">English</div>
+                              <div class="custom-dropdown-option" data-value="ru">Русский</div>
+                              <div class="custom-dropdown-option" data-value="es">Español</div>
+                            </div>
+                          </div>
                         </div>
                         <button id="page-translate-confirm" style="width:100%;background:#715CFF;color:#fff;padding:10px 0;border:none;border-radius:8px;font-size:16px;cursor:pointer;">Translate</button>
                         <div id="page-translate-loader" style="display:none;justify-content:center;align-items:center;margin-top:18px;">
@@ -2315,9 +2330,8 @@ export class Sidebar {
                     const confirmBtn = iframeDoc.getElementById('page-translate-confirm');
                     if (confirmBtn) {
                         confirmBtn.addEventListener('click', async () => {
-                            const select = iframeDoc.getElementById('page-translate-lang-select') as HTMLSelectElement;
-                            const lang = select.value;
-
+                            // используем выбранный язык из selectedLang
+                            const lang = selectedLang;
                             const token = await AuthService.getToken();
                             console.log("START TRANSLATE PAGE!!!" + token);
 
@@ -2956,6 +2970,41 @@ export class Sidebar {
                         e.preventDefault();
                         e.stopPropagation();
                     });
+                }
+
+                const langDropdown = iframeDoc.getElementById('lang-modal-dropdown');
+                const langSelected = iframeDoc.getElementById('lang-modal-dropdown-selected');
+                const langList = iframeDoc.getElementById('lang-modal-dropdown-list');
+                let selectedLang = 'en';
+
+                // Генерируем список языков из массива languages
+                if (langList) {
+                    langList.innerHTML = '';
+                    languages
+                        .filter(l => l.code !== 'auto')
+                        .forEach(l => {
+                            const opt = iframeDoc.createElement('div');
+                            opt.className = 'custom-dropdown-option';
+                            opt.setAttribute('data-value', l.code);
+                            opt.textContent = l.name;
+                            langList.appendChild(opt);
+                        });
+                }
+
+                // Навешиваем обработчики на кастомный dropdown
+                if (langDropdown && langSelected && langList) {
+                    langSelected.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        langDropdown.classList.toggle('open');
+                    });
+                    langList.querySelectorAll('.custom-dropdown-option').forEach(opt => {
+                        opt.addEventListener('click', () => {
+                            selectedLang = opt.getAttribute('data-value') || 'en';
+                            langSelected.textContent = opt.textContent;
+                            langDropdown.classList.remove('open');
+                        });
+                    });
+                    iframeDoc.addEventListener('click', () => langDropdown.classList.remove('open'));
                 }
             }
 
