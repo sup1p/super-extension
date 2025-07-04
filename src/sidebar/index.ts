@@ -3357,12 +3357,32 @@ export function updateUserAvatar(avatarUrl: string | null) {
     }
 }
 
+async function fetchViaBackground(url: string, options: RequestInit): Promise<any> {
+    return new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage(
+            {
+                type: "NOTES_FETCH",
+                url,
+                options,
+            },
+            (response) => {
+                if (!response) {
+                    reject("No response from background");
+                } else if (!response.ok) {
+                    reject(response);
+                } else {
+                    resolve(response.data);
+                }
+            }
+        );
+    });
+}
+
 function loadUserData(doc: Document) {
     AuthService.getToken().then(token => {
         if (token) {
             const API_URL = import.meta.env.VITE_API_URL;
-            fetch(`${API_URL}/me`, { headers: { 'Authorization': `Bearer ${token}` } })
-                .then(response => response.json())
+            fetchViaBackground(`${API_URL}/me`, { headers: { 'Authorization': `Bearer ${token}` } })
                 .then(userData => {
                     const avatarImg = doc.getElementById('user-avatar') as HTMLImageElement | null;
                     if (avatarImg) {

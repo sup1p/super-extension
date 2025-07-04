@@ -3,6 +3,30 @@ interface AuthResponse {
     token_type: string;
 }
 
+async function loginViaBackground(url: string, email: string, password: string): Promise<AuthResponse> {
+    return new Promise<AuthResponse>((resolve, reject) => {
+        chrome.runtime.sendMessage(
+            {
+                type: "AUTH_LOGIN",
+                url,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password }),
+            },
+            (response) => {
+                if (!response) {
+                    reject("No response from background");
+                } else if (!response.ok) {
+                    reject(response);
+                } else if (!response.data || !response.data.access_token) {
+                    reject("No access_token in response");
+                } else {
+                    resolve(response.data as AuthResponse);
+                }
+            }
+        );
+    });
+}
+
 export class AuthService {
     private static readonly TOKEN_KEY = 'auth_token';
     private static readonly API_URL = `${import.meta.env.VITE_API_URL}/auth/login`; // Replace with your actual API endpoint
@@ -10,27 +34,16 @@ export class AuthService {
 
     static async login(email: string, password: string): Promise<boolean> {
         try {
-            const response = await fetch(this.API_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email, password }),
-            });
+            const data = await loginViaBackground(this.API_URL, email, password);
+            console.log('Login response:', data);
 
-            if (!response.ok) {
-                console.log('Login failed:', response.status);
+            if (!data.access_token) {
+                console.error('No access_token in response:', data);
                 return false;
             }
 
-            const data: AuthResponse = await response.json();
-            console.log('Login response:', data);
-
-            // Store token in chrome.storage.local
             await chrome.storage.local.set({ [this.TOKEN_KEY]: data.access_token });
             this.cachedToken = data.access_token;
-
-
             return true;
         } catch (error) {
             console.error('Login error:', error);

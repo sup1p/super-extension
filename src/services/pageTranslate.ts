@@ -11,6 +11,27 @@ if (currentToken) { console.log("jojo") }
 
 const API_URL = import.meta.env.VITE_API_URL;
 
+async function fetchViaBackground(url: string, options: RequestInit): Promise<any> {
+    return new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage(
+            {
+                type: "NOTES_FETCH",
+                url,
+                options,
+            },
+            (response) => {
+                if (!response) {
+                    reject("No response from background");
+                } else if (!response.ok) {
+                    reject(response);
+                } else {
+                    resolve(response.data);
+                }
+            }
+        );
+    });
+}
+
 export class PageTranslateService {
     private observer: IntersectionObserver | null = null;
     private translationQueue: Map<HTMLElement, { originalText: string }> = new Map();
@@ -131,15 +152,14 @@ export class PageTranslateService {
         }
 
         try {
-            const res = await fetch(url, {
-                method: 'POST',
-                headers,
-                body: JSON.stringify({ texts }),
-            });
-
-            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-
-            const data = await res.json();
+            const data = await fetchViaBackground(
+                url,
+                {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({ texts }),
+                }
+            );
             if (!data.translated_texts || !Array.isArray(data.translated_texts)) {
                 throw new Error('Invalid response format');
             }

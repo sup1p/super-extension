@@ -11,75 +11,96 @@ export type Note = {
 
 export class NotesService {
     static async getAllNotes(token: string, doc: Document): Promise<Note[]> {
-        const res = await fetch(`${API_URL}/notes/get/all`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!res.ok) {
+        try {
+            const data = await notesFetchViaBackground(
+                `${API_URL}/notes/get/all`,
+                {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                }
+            );
+            return data;
+        } catch (res: any) {
             if (res.status === 401) {
                 showAuthModal(doc);
             }
             console.log(res);
+            return [];
         }
-        return await res.json();
     }
 
     static async getNote(noteId: number, token: string, doc: Document): Promise<Note> {
-        const res = await fetch(`${API_URL}/notes/get/${noteId}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!res.ok) {
+        try {
+            const data = await notesFetchViaBackground(
+                `${API_URL}/notes/get/${noteId}`,
+                {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                }
+            );
+            return data;
+        } catch (res: any) {
             if (res.status === 401) {
                 showAuthModal(doc);
             }
             throw new Error('Ошибка получения заметки');
         }
-        return await res.json();
     }
 
     static async createNote(title: string, content: string, token: string, doc: Document): Promise<Note | null> {
-        const res = await fetch(`${API_URL}/notes/create`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ title, content })
-        });
-        if (!res.ok) {
+        try {
+            const data = await notesFetchViaBackground(
+                `${API_URL}/notes/create`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ title, content })
+                }
+            );
+            return data;
+        } catch (res: any) {
             if (res.status === 401) {
                 showAuthModal(doc);
             }
             console.log(res);
             return null;
         }
-        return await res.json();
     }
 
     static async updateNote(noteId: number, title: string, content: string, token: string, doc: Document): Promise<Note | null> {
-        const res = await fetch(`${API_URL}/notes/update/${noteId}`, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ title, content })
-        });
-        if (!res.ok) {
+        try {
+            const data = await notesFetchViaBackground(
+                `${API_URL}/notes/update/${noteId}`,
+                {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ title, content })
+                }
+            );
+            return data;
+        } catch (res: any) {
             if (res.status === 401) {
                 showAuthModal(doc);
             }
             console.log(res);
             return null;
         }
-        return await res.json();
     }
 
     static async deleteNote(noteId: number, token: string, doc: Document): Promise<void> {
-        const res = await fetch(`${API_URL}/notes/delete/${noteId}`, {
-            method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!res.ok) {
+        try {
+            await notesFetchViaBackground(
+                `${API_URL}/notes/delete/${noteId}`,
+                {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                }
+            );
+        } catch (res: any) {
             if (res.status === 401) {
                 showAuthModal(doc);
             }
@@ -87,4 +108,25 @@ export class NotesService {
             return;
         }
     }
+}
+
+async function notesFetchViaBackground(url: string, options: RequestInit): Promise<any> {
+    return new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage(
+            {
+                type: "NOTES_FETCH",
+                url,
+                options,
+            },
+            (response) => {
+                if (!response) {
+                    reject("No response from background");
+                } else if (!response.ok) {
+                    reject(response);
+                } else {
+                    resolve(response.data);
+                }
+            }
+        );
+    });
 } 

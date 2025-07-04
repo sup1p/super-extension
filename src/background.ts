@@ -17,6 +17,30 @@ chrome.tabs.onRemoved.addListener(logAllTabs);
 chrome.tabs.onUpdated.addListener(logAllTabs);
 chrome.tabs.onActivated.addListener(logAllTabs);
 
+
+chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
+    if (request.type === "AUTH_LOGIN" || request.type === "NOTES_FETCH") {
+        fetch(request.url, request.options || {
+            method: request.method || "POST",
+            headers: request.headers,
+            body: request.body,
+        })
+            .then(async (res) => {
+                let data = null;
+                try {
+                    data = await res.json();
+                } catch (e) {
+                    data = null;
+                }
+                sendResponse({ ok: res.ok, status: res.status, data });
+            })
+            .catch((error) => {
+                sendResponse({ ok: false, error: error.toString() });
+            });
+        return true; // async response
+    }
+});
+
 chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
     if (request.type === 'GET_TABS') {
         chrome.tabs.query({}, (tabs) => {

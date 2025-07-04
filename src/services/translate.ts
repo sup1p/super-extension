@@ -93,6 +93,27 @@ export const languages: Language[] = [
     ].sort((a, b) => a.name.localeCompare(b.name))
 ];
 
+async function translateFetchViaBackground(url: string, options: RequestInit): Promise<any> {
+    return new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage(
+            {
+                type: "NOTES_FETCH",
+                url,
+                options,
+            },
+            (response) => {
+                if (!response) {
+                    reject("No response from background");
+                } else if (!response.ok) {
+                    reject(response);
+                } else {
+                    resolve(response.data);
+                }
+            }
+        );
+    });
+}
+
 export class TranslateService {
     static fillLanguageSelect(select: HTMLSelectElement, includeAuto = false): void {
         select.innerHTML = '';
@@ -152,15 +173,22 @@ export class TranslateService {
 
         const params = new URLSearchParams({ text, src, dest });
         const API_URL = import.meta.env.VITE_API_URL;
-        const res = await fetch(`${API_URL}/translate?${params}`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`
+        try {
+            const data = await translateFetchViaBackground(
+                `${API_URL}/translate?${params}`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                }
+            );
+            return data.translated_text;
+        } catch (err: any) {
+            if (err && err.data && err.data.message) {
+                throw new Error(err.data.message);
             }
-        });
-
-        if (!res.ok) throw new Error(await res.text());
-        const data = await res.json();
-        return data.translated_text;
+            throw new Error(typeof err === 'string' ? err : 'Translation failed');
+        }
     }
 }

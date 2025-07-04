@@ -1,6 +1,27 @@
 import { NotesService } from '../../services/notes';
 import { NotesComponent } from './notes';
 
+async function fetchViaBackground(url: string, options: RequestInit): Promise<any> {
+    return new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage(
+            {
+                type: "NOTES_FETCH",
+                url,
+                options,
+            },
+            (response) => {
+                if (!response) {
+                    reject("No response from background");
+                } else if (!response.ok) {
+                    reject(response);
+                } else {
+                    resolve(response.data);
+                }
+            }
+        );
+    });
+}
+
 export class ToolsComponent {
     static initTools(doc: Document): void {
         const overlay = doc.getElementById('tools-modal') as HTMLElement;
@@ -93,18 +114,20 @@ export class ToolsComponent {
                         }
                         let summary = '';
                         try {
-                            const res = await fetch(`${API_URL}/tool/summarize`, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'accept': 'application/json',
-                                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-                                },
-                                body: JSON.stringify({ text: fullText })
-                            });
-                            summary = await res.text();
+                            const data = await fetchViaBackground(
+                                `${API_URL}/tool/summarize`,
+                                {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'accept': 'application/json',
+                                        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                                    },
+                                    body: JSON.stringify({ text: fullText })
+                                }
+                            );
+                            summary = typeof data === 'string' ? data : (data.summary || JSON.stringify(data));
                             summary = summary.replace(/\n/g, "\\n");
-
                         } catch (e) {
                             summary = 'Error: ' + (e instanceof Error ? e.message : e);
                         }

@@ -7,6 +7,27 @@ export type ChatMessage = { id: number; role: 'user' | 'assistant'; content: str
 const API_URL = import.meta.env.VITE_API_URL;
 const WS_URL = import.meta.env.VITE_WS_URL || API_URL.replace(/^http(s?):\/\//, 'ws://');
 
+async function fetchViaBackground(url: string, options: RequestInit): Promise<any> {
+    return new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage(
+            {
+                type: "NOTES_FETCH",
+                url,
+                options,
+            },
+            (response) => {
+                if (!response) {
+                    reject("No response from background");
+                } else if (!response.ok) {
+                    reject(response);
+                } else {
+                    resolve(response.data);
+                }
+            }
+        );
+    });
+}
+
 export class ChatService {
     private static ws: WebSocket | null = null;
     private static token: string | null = null;
@@ -86,32 +107,46 @@ export class ChatService {
     }
 
     static async getChatSessions(token: string, doc: Document): Promise<ChatSession[]> {
-        const res = await fetch(`${API_URL}/chat/all`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!res.ok) {
+        try {
+            const data = await fetchViaBackground(
+                `${API_URL}/chat/all`,
+                {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                }
+            );
+            return data;
+        } catch (res: any) {
             if (res.status === 401) {
                 showAuthModal(doc);
             }
             throw new Error('Ошибка получения истории чатов');
         }
-        return await res.json();
     }
 
     static async getChatMessages(sessionId: number, token: string): Promise<ChatMessage[]> {
-        const res = await fetch(`${API_URL}/chat/messages/${sessionId}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!res.ok) throw new Error('Ошибка получения сообщений чата');
-        return await res.json();
+        try {
+            const data = await fetchViaBackground(
+                `${API_URL}/chat/messages/${sessionId}`,
+                {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                }
+            );
+            return data;
+        } catch (res: any) {
+            throw new Error('Ошибка получения сообщений чата');
+        }
     }
 
     static async deleteChatSession(sessionId: number, token: string, doc: Document): Promise<void> {
-        const res = await fetch(`${API_URL}/chat/delete?chat_id=${sessionId}`, {
-            method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!res.ok) {
+        try {
+            await fetchViaBackground(
+                `${API_URL}/chat/delete?chat_id=${sessionId}`,
+                {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                }
+            );
+        } catch (res: any) {
             if (res.status === 401) {
                 showAuthModal(doc);
             }
