@@ -25,8 +25,16 @@ export class ChatComponent {
                 }
                 await ChatService.connect(token, (event: ChatEvent) => {
                     if ('text' in event) {
+                        // Удалить "раздумье" если оно есть
+                        const thinking = chatContainer.querySelector('.ai-thinking-animation');
+                        if (thinking) {
+                            if ((thinking as any)._thinkingTimeout) clearTimeout((thinking as any)._thinkingTimeout);
+                            thinking.remove();
+                        }
                         const lastMsg = chatContainer.querySelector('.chat-message.ai:last-child');
-                        if (lastMsg && lastMsg.textContent === '...') {
+                        if (lastMsg && lastMsg.classList.contains('ai-thinking-animation')) {
+                            // уже удалили выше
+                        } else if (lastMsg && lastMsg.textContent === '...') {
                             lastMsg.remove();
                         }
                         ChatComponent.appendMessage(chatContainer, event.text, 'ai');
@@ -258,8 +266,8 @@ export class ChatComponent {
             chatInput.value = '';
             chatInput.style.height = 'auto';
 
-            // Показать placeholder "..." от ИИ
-            ChatComponent.appendMessage(chatContainer, '...', 'ai');
+            // Показать анимацию "раздумья" от ИИ
+            ChatComponent.showThinkingAnimation(chatContainer);
             chatContainer.scrollTop = chatContainer.scrollHeight;
 
             // Отправить сообщение через WebSocket
@@ -342,6 +350,53 @@ export class ChatComponent {
             }
         }
         printNext();
+    }
+
+    // Показать "раздумье" AI — анимация прыгающих трёх точек
+    static showThinkingAnimation(container: HTMLElement) {
+        // Удалить предыдущую анимацию, если есть
+        const prev = container.querySelector('.ai-thinking-animation');
+        if (prev) prev.remove();
+        const anim = document.createElement('div');
+        anim.className = 'chat-message ai ai-thinking-animation';
+        anim.style.alignSelf = 'flex-start';
+        anim.style.background = 'var(--color-bg)';
+        anim.style.color = '#888';
+        anim.style.opacity = '0.7';
+        anim.style.fontStyle = 'italic';
+        anim.style.padding = '10px 16px';
+        anim.style.borderRadius = '16px 16px 16px 4px';
+        anim.style.maxWidth = '100%';
+        anim.style.marginTop = '2px';
+        anim.style.letterSpacing = '0.5px';
+        anim.style.fontSize = '15px';
+        anim.innerHTML = '<span class="dot dot1">.</span><span class="dot dot2">.</span><span class="dot dot3">.</span>';
+        container.appendChild(anim);
+        // Добавим стили для анимации точек
+        if (!document.getElementById('ai-dots-animation-style')) {
+            const style = document.createElement('style');
+            style.id = 'ai-dots-animation-style';
+            style.innerHTML = `
+                .ai-thinking-animation .dot {
+                    opacity: 0.3;
+                    font-size: 22px;
+                    font-weight: bold;
+                    display: inline-block;
+                    transform: translateY(0);
+                    will-change: transform, opacity;
+                    animation: ai-dot-bounce 1.2s cubic-bezier(0.4,0,0.2,1) infinite both;
+                    animation-fill-mode: both;
+                }
+                .ai-thinking-animation .dot1 { animation-delay: 0s; }
+                .ai-thinking-animation .dot2 { animation-delay: 0.2s; }
+                .ai-thinking-animation .dot3 { animation-delay: 0.4s; }
+                @keyframes ai-dot-bounce {
+                    0%, 80%, 100% { opacity: 0.3; transform: translateY(0); }
+                    40% { opacity: 1; transform: translateY(-13px); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
     }
 }
 

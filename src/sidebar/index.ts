@@ -451,7 +451,7 @@ export class Sidebar {
                             }
 
                             textarea {
-                                width: 100%;
+                                width: 390px;
                                 height: 100px;
                                 padding: 10px;
                                 font-size: 14px;
@@ -929,7 +929,7 @@ export class Sidebar {
                             }
                             .translate-btn-inside {
                                 position: absolute;
-                                right: 12px;
+                                right: -32px;
                                 bottom: 12px;
                                 padding: 6px 12px;
                                 font-size: 13px;
@@ -946,7 +946,7 @@ export class Sidebar {
                             }
                             .page-translate-btn {
                                 flex: 0 0 auto;
-                                width: 10rem;
+                                width: 160px;
                                 height: 4%;
                                 background: var(--color-container);
                                 color: var(--color-active);
@@ -1137,7 +1137,7 @@ export class Sidebar {
                                 display: flex;
                                 justify-content: space-between;
                                 align-items: center;
-                                padding: 14px 16px;
+                                padding: 10px 14px;
                                 border-bottom: 1px solid var(--color-border);
                                 font-size: 14px;
                             }
@@ -1154,7 +1154,6 @@ export class Sidebar {
                                 -webkit-appearance: none;
                                 -moz-appearance: none;
                                 appearance: none;
-                                background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%23a0a0a0" viewBox="0 0 16 16"><path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/></svg>');
                                 background-repeat: no-repeat;
                                 background-position: right 4px top 50%;
                                 background-size: .7em auto;
@@ -1392,18 +1391,16 @@ export class Sidebar {
                                 font-size: 15px;
                                 resize: vertical;
                                 overflow-y: auto !important;
-                                scrollbar-width: thin;
-                                scrollbar-color: var(--color-active) var(--color-bg);
+                                scrollbar-width: none !important; /* Firefox */
+                                -ms-overflow-style: none !important; /* IE 10+ */
                             }
                             .notes-detail-body::-webkit-scrollbar {
-                                width: 8px;
-                                background: var(--color-bg);
-                                background-clip: padding-box;
+                                width: 0 !important;
+                                background: transparent !important;
                             }
                             .notes-detail-body::-webkit-scrollbar-thumb {
-                                background: var(--color-active);
+                                background: transparent !important;
                                 border-radius: 8px;
-                                background-clip: padding-box;
                             }
                             .notes-detail-body:focus {
                                 border: 1.5px solid var(--color-active);
@@ -1682,7 +1679,7 @@ export class Sidebar {
                             }
                             .custom-dropdown {
                                 position: relative;
-                                width: 160px;
+                                width: 166px;
                                 user-select: none;
                                 font-size: 15px;
                                 font-weight: 500;
@@ -1706,7 +1703,6 @@ export class Sidebar {
                                 top: 50%;
                                 width: 16px;
                                 height: 16px;
-                                background-image: url('data:image/svg+xml;utf8,<svg fill="none" stroke="%23715CFF" stroke-width="2" viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg"><path d="M6 9l6 6 6-6"/></svg>');
                                 background-size: 16px 16px;
                                 background-repeat: no-repeat;
                                 background-position: center;
@@ -1759,15 +1755,15 @@ export class Sidebar {
                                 overflow: visible !important;
                             }
                             #chat-container {
-                                scrollbar-width: thin;
-                                scrollbar-color: var(--color-active) var(--color-container);
+                                scrollbar-width: none !important; /* Firefox */
+                                -ms-overflow-style: none !important; /* IE 10+ */
                             }
                             #chat-container::-webkit-scrollbar {
-                                width: 7px;
-                                background: var(--color-container);
+                                width: 0 !important;
+                                background: transparent !important;
                             }
                             #chat-container::-webkit-scrollbar-thumb {
-                                background: var(--color-active);
+                                background: transparent !important;
                                 border-radius: 6px;
                             }
                             /* Стили для placeholder-ов */
@@ -1891,30 +1887,37 @@ export class Sidebar {
 
                             <div id="screen-notes" class="screen">
                                 <h1 class="title" data-translate="notes">Notes</h1>
-                                <div class="notes-input-row" style="position: relative; display: flex; align-items: stretch; margin-bottom: 12px;">
-                                    <textarea id="note-input" data-translate="note_placeholder" placeholder="What do you want to save?" class="notes-textarea"></textarea>
-                                    <button id="save-note" class="notes-save-btn" data-translate="save">Save</button>
+                                <div class="notes-screen-things" style="max-width: 390px">
+                                    <div class="notes-input-row" style="position: relative; display: flex; align-items: stretch; margin-bottom: 12px;">
+                                        <textarea id="note-input" data-translate="note_placeholder" placeholder="What do you want to save?" class="notes-textarea"></textarea>
+                                        <button id="save-note" class="notes-save-btn" data-translate="save">Save</button>
+                                    </div>
+                                    <input id="notes-search" type="text" data-translate="search" placeholder="Search" class="notes-search-input" />
+                                    <div id="notes-list"></div>
                                 </div>
-                                <input id="notes-search" type="text" data-translate="search" placeholder="Search" class="notes-search-input" />
-                                <div id="notes-list"></div>
                             </div>
+
 
                             
                             <div id="screen-note-detail" class="screen" style="overflow-y: auto; max-height: 80vh;">
-                                <h1 class="title" data-translate="notes">Notes</h1>
-                                <div class="notes-detail-header">
-                                    <button id="back-to-notes" class="notes-detail-back" data-translate="back">← Back</button>
-                                    <div class="notes-detail-btns">
-                                        <button id="update-note" class="notes-detail-btn" data-translate="save">Save</button>
-                                        <button id="delete-note" class="notes-detail-btn notes-detail-btn-delete" data-translate="delete">Delete</button>
+                                <div style="max-width:390px">
+                                    <h1 class="title" data-translate="notes">Notes</h1>
+                                    <div class="notes-detail-header">
+                                        <button id="back-to-notes" class="notes-detail-back" data-translate="back">← Back</button>
+                                        <div class="notes-detail-btns">
+                                            <button id="update-note" class="notes-detail-btn" data-translate="save">Save</button>
+                                            <button id="delete-note" class="notes-detail-btn notes-detail-btn-delete" data-translate="delete">Delete</button>
+                                        </div>
+                                    </div>
+                                    <div class="notes-detail-container">
+                                        <input id="note-title" data-translate="title" placeholder="Title" class="notes-detail-title">
+                                        <textarea id="note-body" class="notes-detail-body"></textarea>
                                     </div>
                                 </div>
-                                <div class="notes-detail-container">
-                                    <input id="note-title" data-translate="title" placeholder="Title" class="notes-detail-title">
-                                    <textarea id="note-body" class="notes-detail-body"></textarea>
-                                </div>
                             </div>
+
                             <!-- Кастомная модалка подтверждения удаления заметки -->
+
                             <div id="delete-note-modal" class="tools-modal-overlay">
                                 <div class="modal-content tools-modal-content" style="max-width:340px;">
                                     <div class="modal-header">
@@ -1930,15 +1933,15 @@ export class Sidebar {
 
                             <div id="screen-chat" class="screen">
                                 <h1 class="title" data-translate="chat">Chat</h1>
-                                <div id="chat-container" style="flex: 1 1 0; display: flex; flex-direction: column; background: var(--color-bg); border-radius: 8px; overflow-y: auto; gap: 12px; margin-bottom: 16px; min-height: 0; max-height: 80vh; margin-right: 60px; margin-left: 4px;"></div>
+                                <div id="chat-container" style="flex: 1 1 0; display: flex; flex-direction: column; background: var(--color-bg); border-radius: 8px; overflow-y: auto; gap: 12px; margin-bottom: 16px; min-height: 0; max-height: 80vh; margin-right: 40px; margin-left: 4px;"></div>
                                 <form id="chat-form" style="display: flex; flex-direction: column; gap: 0; align-items: stretch; margin-top: auto; width: 100%; position: relative;">
-                                    <div class="chat-actions" style="display: flex; justify-content: flex-end; gap: 4px; margin-bottom: 4px;">
+                                    <div class="chat-actions" style="display: flex; justify-content: flex-end; gap: 4px; margin-bottom: 4px; margin-right: 30px;">
                                         <button type="button" id="chat-new" style="background: none; border: none; border-radius: 0; padding: 0; height: 40px; width: 40px; cursor: pointer; display: flex; align-items: center; justify-content: center;"><img src="${newChatUrl}" alt="New Chat" style="width:24px;height:24px;object-fit:contain;vertical-align:middle;" /></button>
                                         <button type="button" id="chat-history" style="background: none; border: none; border-radius: 0; padding: 0; height: 40px; width: 40px; cursor: pointer; display: flex; align-items: center; justify-content: center;"><img src="${historyUrl}" alt="History" style="width:24px;height:24px;object-fit:contain;vertical-align:middle;" /></button>
                                     </div>
                                     <div style="position: relative; width: 100%; display: flex; align-items: flex-end; gap: 8px;">
-                                        <textarea id="chat-input" data-translate="chat_placeholder" placeholder="Ask whatever you want..." rows="1" style="width: 100%; min-width: 0; flex: 1; resize: none; border-radius: 12px; border: 1.5px solid var(--color-border); background: var(--color-container); color: var(--color-text); padding: 12px 80px 12px 14px; font-size: 15px; transition: border 0.2s; height: 100px; min-height: 100px; margin: 0 0 0 16px;"></textarea>
-                                        <button type="submit" id="chat-send" style="position: absolute; right: 24px; bottom: 18px; background: #715CFF; color: #fff; border: none; border-radius: 10px; padding: 0 18px; height: 40px; font-weight: 600; font-size: 15px; cursor: pointer; z-index: 2;" data-translate="send">Send</button>
+                                        <textarea id="chat-input" data-translate="chat_placeholder" placeholder="Ask whatever you want..." rows="1" style="max-width:380px; min-width: 0; resize: none; border-radius: 12px; border: 1.5px solid var(--color-border); background: var(--color-container); color: var(--color-text); padding: 12px 80px 12px 14px; font-size: 15px; transition: border 0.2s; height: 100px; min-height: 100px; max-height:100px ; margin: 0 0 0 16px; scrollbar-width: thin; scrollbar-color: #232323 #0000;"></textarea>
+                                        <button type="submit" id="chat-send" style="position: absolute; right: 48px; bottom: 18px; background: var(--color-active);; color: #fff; border: none; border-radius: 10px; padding: 0 18px; height: 40px; font-weight: 600; font-size: 15px; cursor: pointer; z-index: 2;" data-translate="send">Send</button>
                                     </div>
                                 </form>
                                 <style>
@@ -1948,11 +1951,11 @@ export class Sidebar {
                                         outline: none;
                                     }
                                     #chat-container::-webkit-scrollbar {
-                                        width: 8px;
-                                        background: #232323;
+                                        width: 0 !important;
+                                        background: transparent !important;
                                     }
                                     #chat-container::-webkit-scrollbar-thumb {
-                                        background: #333;
+                                        background: transparent !important;
                                         border-radius: 8px;
                                     }
                                     .chat-actions {
@@ -1975,6 +1978,18 @@ export class Sidebar {
                                     #chat-input {
                                         padding-right: 80px !important;
                                     }
+                                    /* ... existing chat styles ... */
+                                    #chat-input::-webkit-scrollbar {
+                                        width: 6px;
+                                        background: transparent;
+                                    }
+                                    #chat-input::-webkit-scrollbar-thumb {
+                                        background: #232323;
+                                        border-radius: 6px;
+                                    }
+                                    #chat-input::-webkit-scrollbar-track {
+                                        background: transparent;
+                                    }
                                 </style>
                             </div>
 
@@ -1991,33 +2006,33 @@ export class Sidebar {
                             </div>
 
                             <div id="screen-translate" class="screen">
-                                <div class="translation-header" style="display: flex; align-items: center; justify-content: space-between;"/*  */>
-                                     <h1 id="translate-top-row" data-translate="translate">Translate</h1>
-                                
-                                    <button id="translate-page-btn" class="page-translate-btn" data-translate="translate_webpage"></button>
-                                </div>
-                               
-                                
-                                <div class="translate-block-align">
-                                    <div class="translate-lang-row">
-                                        <div class="custom-dropdown" id="source-lang-dropdown">
-                                            <div class="custom-dropdown-selected" id="source-lang-dropdown-selected">Auto</div>
-                                            <div class="custom-dropdown-list" id="source-lang-dropdown-list"></div>
-                                        </div>
-                                        <span id="swapLangs" title="Swap languages">↔</span>
-                                        <div class="custom-dropdown" id="target-lang-dropdown">
-                                            <div class="custom-dropdown-selected" id="target-lang-dropdown-selected">English</div>
-                                            <div class="custom-dropdown-list" id="target-lang-dropdown-list"></div>
-                                        </div>
-                                        <select id="sourceLanguage" style="display:none"></select>
-                                        <select id="targetLanguage" style="display:none"></select>
+                                <div style="max-width:390px">
+                                    <div class="translation-header" style="display: flex; align-items: center; justify-content: space-between;"/*  */>
+                                        <h1 id="translate-top-row" data-translate="translate">Translate</h1>
+                                        <button id="translate-page-btn" class="page-translate-btn" data-translate="translate_webpage"></button>
                                     </div>
                                     
-                                    <div class="source-wrapper">
-                                        <textarea id="sourceText" data-translate="type_here" placeholder="Type here..."></textarea>
-                                        <button id="translateButton" class="translate-btn translate-btn-inside" data-translate="translate">Translate</button>
+                                    <div class="translate-block-align">
+                                        <div class="translate-lang-row">
+                                            <div class="custom-dropdown" id="source-lang-dropdown">
+                                                <div class="custom-dropdown-selected" id="source-lang-dropdown-selected">Auto</div>
+                                                <div class="custom-dropdown-list" id="source-lang-dropdown-list"></div>
+                                            </div>
+                                            <span id="swapLangs" title="Swap languages">↔</span>
+                                            <div class="custom-dropdown" id="target-lang-dropdown">
+                                                <div class="custom-dropdown-selected" id="target-lang-dropdown-selected">English</div>
+                                                <div class="custom-dropdown-list" id="target-lang-dropdown-list"></div>
+                                            </div>
+                                            <select id="sourceLanguage" style="display:none"></select>
+                                            <select id="targetLanguage" style="display:none"></select>
+                                        </div>
+                                        
+                                        <div class="source-wrapper">
+                                            <textarea id="sourceText" data-translate="type_here" placeholder="Type here..."></textarea>
+                                            <button id="translateButton" class="translate-btn translate-btn-inside" data-translate="translate">Translate</button>
+                                        </div>
+                                        <textarea id="translatedText" readonly data-translate="translation_placeholder" placeholder="Translation will appear here..."></textarea>
                                     </div>
-                                    <textarea id="translatedText" readonly data-translate="translation_placeholder" placeholder="Translation will appear here..."></textarea>
                                 </div>
                             </div>
 
@@ -2075,29 +2090,29 @@ export class Sidebar {
 
                             <div id="screen-account" class="screen">
                                 <h1 class="title" data-translate="settings">Settings</h1>
-                                <div style="padding: 0 32px 32px 32px; max-width: 340px; margin: 0 auto;">
+                                <div style="padding: 0 32px 32px 32px; max-width: 400px; margin: 0 auto;">
                                     <h2 class="section-title" style="margin-bottom: 18px;" data-translate="account">Account</h2>
-                                    <div style="background: var(--color-container); border-radius: 20px; border: 1px solid var(--color-border); padding: 20px 20px 16px 20px; display: flex; align-items: center; gap: 16px; margin-bottom: 28px;">
-                                        <img id="user-avatar" class="account-avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23b0b0b0'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-4 0-7 2-7 4v2h14v-2c0-2-3-4-7-4z'%3E%3C/svg%3E" alt="avatar" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; background: #fff; border: 1px solid var(--color-border);" />
+                                    <div style="background: var(--color-container); border-radius: 12px; border: 1px solid var(--color-border); padding: 20px 20px 16px 20px; display: flex; align-items: center; gap: 16px; margin-bottom: 28px;">
+                                        <img id="user-avatar" class="account-avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23b0b0b0'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-4 0-7 2-7 4v2h14v-2c0-2-3-4-7-4z'/%3E%3C/svg%3E" alt="avatar" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; background: #fff; border: 1px solid var(--color-border);" />
                                         <div style="display: flex; flex-direction: column;">
                                             <div id="user-name" class="account-name" style="font-size: 17px; font-weight: 600; color: var(--color-text); margin-bottom: 2px;"></div>
-                                            <div id="user-email" class="account-email" style="font-size: 14px; color: #b0b0b0;"></div>
+                                            <div id="user-email" class="account-email" style="font-size: 14px; color: #b0b0b0; max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title=""></div>
                                         </div>
                                     </div>
                                     <h2 class="section-title" style="margin-bottom: 18px;" data-translate="pro_plan">Pro plan</h2>
-                                    <div style="background: var(--color-container); border-radius: 20px; border: 1px solid var(--color-border); padding: 20px 20px 16px 20px; margin-bottom: 28px;">
+                                    <div style="background: var(--color-container); border-radius: 12px; border: 1px solid var(--color-border); padding: 20px 20px 16px 20px; margin-bottom: 28px;">
                                         <div style="font-size: 15px; color: #b0b0b0; margin-bottom: 10px;" data-translate="no_pro_plan">You have no pro plan yet!</div>
                                         <button class="account-btn account-btn-pro" style="color: #6F58D5; background: none; border: none; font-size: 15px; font-weight: 300; padding: 0; cursor: pointer; text-align: left;" data-translate="activate">Activate</button>
                                     </div>
                                     <h2 class="section-title" style="margin-bottom: 18px;" data-translate="actions">Actions</h2>
-                                    <div style="background: var(--color-container); border-radius: 20px; border: 1px solid var(--color-border); padding: 0px 20px 0px 20px; margin-bottom: 28px;">
+                                    <div style="background: var(--color-container); border-radius: 12px; border: 1px solid var(--color-border); padding: 0px 20px 0px 20px; margin-bottom: 28px;">
                                         <button id="logout-btn" class="account-btn account-btn-logout" style="max-width: 180px; background: none; color: #ff5252; border: none; border-radius: 20px; padding: 10px 0 10px 0px; font-size: 15px; font-weight: 300; cursor: pointer; text-align: left;" data-translate="logout">Logout</button>
                                     </div>
                                 </div>
                             </div>
 
                             <div id="screen-appereance" class="screen">
-                                <div style="padding: 0 60px; height: 100%;">
+                                <div style="padding: 0 40px; height: 100%;">
                                     <h1 class="title" data-translate="settings">Settings</h1>
                                     <div style="overflow-y: auto; height: calc(100% - 70px); padding-right: 8px; margin-right: -8px;">
                                         <div class="settings-section">
@@ -2318,6 +2333,13 @@ export class Sidebar {
                     if (translateBlock) {
                         (translateBlock as HTMLElement).addEventListener('click', () => {
                             toolsModal.classList.remove('active');
+                            langModal.classList.add('active');
+                        });
+                    }
+                    // Кнопка Translate webpage на экране перевода
+                    const translatePageBtn = iframeDoc.getElementById('translate-page-btn');
+                    if (translatePageBtn) {
+                        translatePageBtn.addEventListener('click', () => {
                             langModal.classList.add('active');
                         });
                     }
@@ -3393,16 +3415,10 @@ export class Sidebar {
     }
 }
 
-export function updateUserAvatar(avatarUrl: string | null) {
+export function updateUserAvatar() {
     const avatarImg = document.getElementById('user-avatar') as HTMLImageElement | null;
-    console.log('Avatar URL:', avatarUrl);
-    console.log('Avatar element:', avatarImg);
-
     if (avatarImg) {
-        avatarImg.src = avatarUrl || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ffffff'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z'/%3E%3C/svg%3E";
-        console.log('New avatar src:', avatarImg.src);
-    } else {
-        console.error('Avatar element not found!');
+        avatarImg.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23b0b0b0'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-4 0-7 2-7 4v2h14v-2c0-2-3-4-7-4z'/%3E%3C/svg%3E";
     }
 }
 
@@ -3435,16 +3451,15 @@ function loadUserData(doc: Document) {
                 .then(userData => {
                     const avatarImg = doc.getElementById('user-avatar') as HTMLImageElement | null;
                     if (avatarImg) {
-                        if (userData.avatar) {
-                            avatarImg.src = userData.avatar;
-                        } else {
-                            avatarImg.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23b0b0b0'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-4 0-7 2-7 4v2h14v-2c0-2-3-4-7-4z'%3E%3C/svg%3E";
-                        }
+                        avatarImg.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23b0b0b0'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-4 0-7 2-7 4v2h14v-2c0-2-3-4-7-4z'/%3E%3C/svg%3E";
                     }
                     const nameDiv = doc.getElementById('user-name');
                     if (nameDiv) nameDiv.textContent = userData.name || '';
                     const emailDiv = doc.getElementById('user-email');
-                    if (emailDiv) emailDiv.textContent = userData.email || '';
+                    if (emailDiv) {
+                        emailDiv.textContent = userData.email || '';
+                        emailDiv.title = userData.email || '';
+                    }
                 });
         }
     });
