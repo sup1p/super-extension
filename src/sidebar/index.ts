@@ -2050,11 +2050,11 @@ export class Sidebar {
                                     <div class="tools-section">
                                         <div class="tools-section-title" data-translate="available_tools">Here is the all available tools</div>
                                         <div class="tools-icons-row">
-                                            <div class="tool-icon-block">
+                                            <div class="tool-icon-block" data-tool="translate">
                                                 <span class="tool-icon"><img src="${translateUrl}" alt="Translate" style="width:32px;height:32px;object-fit:contain;display:block;" /></span>
                                                 <div class="tool-label" data-translate="translate">Translate</div>
                                             </div>
-                                            <div class="tool-icon-block">
+                                            <div class="tool-icon-block" data-tool="summarize">
                                                 <span class="tool-icon"><img src="${summarizerUrl}" alt="Summarize" style="width:32px;height:32px;object-fit:contain;display:block;" /></span>
                                                 <div class="tool-label" data-translate="summarize">Summarize</div>
                                             </div>

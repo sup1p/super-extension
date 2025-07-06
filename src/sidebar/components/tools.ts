@@ -73,9 +73,10 @@ export class ToolsComponent {
 
         items.forEach(el =>
             el.addEventListener('click', async () => {
+                const toolType = el.getAttribute('data-tool');
                 const label = (el.querySelector('.tool-label')?.textContent || '').toLowerCase();
                 overlay.classList.remove('active');
-                if (label === 'translate') {
+                if (label === 'translate' || toolType === 'translate') {
                     translateActive = !translateActive;
                     if (translateActive) {
                         (window as any).PageTranslateService?.enableTranslateMode();
@@ -97,7 +98,7 @@ export class ToolsComponent {
                         alert('Translate mode enabled! Теперь переводятся только видимые элементы на экране.');
                     }
                 }
-                if (label === 'summarize') {
+                if (label === 'summarize' || toolType === 'summarize') {
                     const loader = doc.getElementById('global-page-translate-loader');
                     try {
                         // Собираем текст
