@@ -28,6 +28,46 @@ export class Sidebar {
     private currentScreen: string = 'screen-home'; // <--- добавлено
     private language: 'en' | 'ru' | 'es' = 'en'; // <--- добавлено
 
+    private onboardingSteps = [
+        {
+            screenId: null,
+            title: 'Welcome to Megan!',
+            desc: 'Your AI assistant is ready to help you work smarter and faster. Let\'s take a quick tour!',
+            isWelcome: true
+        },
+        {
+            screenId: 'screen-notes',
+            title: 'Notes',
+            desc: 'Here you can save and organize your notes. Quickly jot down ideas or important information.'
+        },
+        {
+            screenId: 'screen-chat',
+            title: 'Chat',
+            desc: 'Chat with Megan — your AI assistant. Ask questions, brainstorm, or get help with tasks.'
+        },
+        {
+            screenId: 'screen-voice',
+            title: 'Voice',
+            desc: 'Use voice commands to interact with Megan. Just speak and get instant responses.'
+        },
+        {
+            screenId: 'screen-translate',
+            title: 'Translate',
+            desc: 'Translate text between languages quickly and easily.'
+        },
+        {
+            screenId: 'screen-tools',
+            title: 'Tools',
+            desc: 'Access extra tools like summarizer and more. Expand Megan\'s capabilities.',
+            isTools: true
+        },
+        {
+            screenId: 'screen-settings',
+            title: 'Settings',
+            desc: 'Customize appearance, language, and other preferences.'
+        }
+    ];
+
     constructor() {
         chrome.storage.local.get(['sidebarPosition', 'floatingButtonPosition', 'hideIconOn', 'sidebarTheme', 'floatingButtonEnabled', 'sidebarLanguage'], (result) => {
             if (result.sidebarPosition === 'left') {
@@ -2068,21 +2108,6 @@ export class Sidebar {
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="tools-section" style="margin-top:32px;">
-                                        <div class="modal-title" style="font-size:20px;" data-translate="hotbar_tools">Hotbar tools</div>
-                                        <div class="tools-section-title" data-translate="hotbar_tools_desc">Here is tools that is in your hotbar</div>
-                                        <div class="tools-icons-row">
-                                            <div class="tool-icon-block disabled-tool">
-                                                 <span class="tool-icon" style="position: relative; display: flex; align-items: center; justify-content: center;">
-                                                    <img src="${simplifierUrl}" alt="Simplify" style="width:32px;height:32px;object-fit:contain;display:block;opacity:0.4;" />
-                                                    <svg width="32" height="32" style="position:absolute;top:0;left:0;pointer-events:none;" xmlns="http://www.w3.org/2000/svg">
-                                                        <line x1="4" y1="28" x2="28" y2="4" stroke="#ff4444" stroke-width="2.5" stroke-linecap="round" />
-                                                    </svg>
-                                                </span>
-                                                <div class="tool-label" style="color: #888;" data-translate="soon">Soon</div>
-                                            </div>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
 
@@ -3053,6 +3078,29 @@ export class Sidebar {
                     });
                     activateBtn.style.cursor = 'pointer';
                 }
+
+                // --- ONBOARDING ---
+                chrome.storage.local.get(['onboardingShown'], (result) => {
+                    if (!result.onboardingShown) {
+                        this.showOnboarding(iframeDoc);
+                    }
+                });
+
+                // ... existing code ...
+                let overlay = iframeDoc.getElementById('onboarding-overlay') as HTMLElement | null;
+                if (!overlay) {
+                    overlay = iframeDoc.createElement('div');
+                    overlay.id = 'onboarding-overlay';
+                    overlay.style.cssText = `
+                        position: fixed; left: 0; top: 0; width: 100vw; height: 100vh;
+                        background: rgba(0,0,0,0.85); z-index: 2147483647; pointer-events: none; transition: background 0.2s;`;
+                    const dock = iframeDoc.querySelector('.dock');
+                    if (dock && dock.parentNode) {
+                        dock.parentNode.insertBefore(overlay, dock);
+                    } else {
+                        iframeDoc.body.appendChild(overlay);
+                    }
+                }
             }
 
             // Устанавливаем src для загрузки iframe
@@ -3437,6 +3485,172 @@ export class Sidebar {
                 button.click();
             }
         }, this.sidebarOpen ? 0 : 400); // Wait longer if sidebar needs to open
+    }
+
+    private showOnboarding(iframeDoc: Document) {
+        if (iframeDoc.getElementById('onboarding-modal')) return;
+        // Создаём overlay для затемнения
+        let overlay = iframeDoc.getElementById('onboarding-overlay') as HTMLElement | null;
+        if (!overlay) {
+            overlay = iframeDoc.createElement('div');
+            overlay.id = 'onboarding-overlay';
+            overlay.style.cssText = `
+                position: fixed; left: 0; top: 0; width: 100vw; height: 100vh;
+                background: rgba(0,0,0,0.85); z-index: 2147483647; pointer-events: none; transition: background 0.2s;`;
+            iframeDoc.body.appendChild(overlay);
+        }
+        const modal = iframeDoc.createElement('div');
+        modal.id = 'onboarding-modal';
+        modal.style.cssText = `
+            position: fixed; z-index: 2147483648; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: none; display: flex; align-items: center; justify-content: center; pointer-events: none;`;
+        iframeDoc.body.appendChild(modal);
+
+        // Добавим стили для подсветки и dock
+        if (!iframeDoc.getElementById('onboarding-highlight-style')) {
+            const style = iframeDoc.createElement('style');
+            style.id = 'onboarding-highlight-style';
+            style.textContent = `
+                .onboarding-highlight {
+                    box-shadow: 0 0 0 4px #715CFF, 0 4px 16px #715cff99 !important;
+                    z-index: 2147483648 !important;
+                    position: relative;
+                }
+                .onboarding-dock-visible, .onboarding-tools-visible {
+                    z-index: 2147483649 !important;
+                    pointer-events: auto !important;
+                    filter: none !important;
+                }
+            `;
+            iframeDoc.head.appendChild(style);
+        }
+
+        let prevBtn: HTMLElement | null = null;
+        let prevDock: HTMLElement | null = null;
+        let prevToolsBtn: HTMLElement | null = null;
+
+        const renderStep = (stepIdx: number) => {
+            // Убрать подсветку с предыдущей кнопки и dock
+            if (prevBtn) prevBtn.classList.remove('onboarding-highlight');
+            if (prevDock) prevDock.classList.remove('onboarding-dock-visible');
+            if (prevToolsBtn) prevToolsBtn.classList.remove('onboarding-tools-visible');
+            modal.innerHTML = '';
+            modal.style.pointerEvents = 'none';
+            let step = this.onboardingSteps[stepIdx];
+            let content = document.createElement('div');
+            content.style.background = 'var(--color-container,#232323)';
+            content.style.color = 'var(--color-text,#fff)';
+            content.style.borderRadius = '18px';
+            content.style.boxShadow = '0 8px 32px #0008';
+            content.style.padding = '36px 32px 28px 32px';
+            content.style.maxWidth = '340px';
+            content.style.width = '100%';
+            content.style.textAlign = 'center';
+            content.style.border = '1px solid var(--color-border,#ececec)';
+            content.style.position = 'fixed';
+            content.style.zIndex = '2147483648';
+            content.style.margin = '0';
+            content.style.pointerEvents = 'auto';
+
+            if (step.isWelcome) {
+                // Приветствие — по центру
+                overlay.style.background = 'rgba(0,0,0,0.65)';
+                modal.style.justifyContent = 'center';
+                modal.style.alignItems = 'center';
+                content.innerHTML = `
+                    <div style='font-size: 32px; margin-bottom: 12px;'>👋</div>
+                    <h2 style='font-size: 24px; font-weight: 700; margin-bottom: 10px;'>${step.title}</h2>
+                    <div style='font-size: 15px; margin-bottom: 24px; opacity: 0.85;'>${step.desc}</div>
+                    <button id='onboarding-next-btn' style='background: #715CFF; color: #fff; border: none; border-radius: 8px; padding: 12px 0; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%; max-width: 220px;'>Start tour</button>
+                `;
+                content.style.position = 'relative';
+                content.style.left = '0';
+                content.style.top = '0';
+                modal.appendChild(content);
+                const nextBtn = content.querySelector('#onboarding-next-btn');
+                if (nextBtn) {
+                    nextBtn.addEventListener('click', () => renderStep(stepIdx + 1));
+                }
+                prevBtn = null;
+                prevDock = null;
+                prevToolsBtn = null;
+                return;
+            }
+
+            // Для остальных шагов — overlay темнее
+            overlay.style.background = 'rgba(0,0,0,0.85)';
+            modal.style.justifyContent = 'flex-start';
+            modal.style.alignItems = 'flex-start';
+            let btn: HTMLElement | null = null;
+            let dock: HTMLElement | null = null;
+            let toolsBtn: HTMLElement | null = null;
+            dock = iframeDoc.querySelector('.dock') as HTMLElement | null;
+            if (dock) dock.classList.add('onboarding-dock-visible');
+            if (step.isTools) {
+                toolsBtn = iframeDoc.querySelector('.tools_button') as HTMLElement | null;
+                if (toolsBtn) toolsBtn.classList.add('onboarding-tools-visible');
+                btn = toolsBtn;
+            } else {
+                btn = iframeDoc.querySelector(`.dock__btn[data-screen="${step.screenId}"]`) as HTMLElement | null;
+            }
+            if (btn) {
+                btn.classList.add('onboarding-highlight');
+                prevBtn = btn;
+                prevDock = dock;
+                prevToolsBtn = toolsBtn;
+                // Позиционируем модалку справа или слева от кнопки
+                const rect = btn.getBoundingClientRect();
+                const sidebarDock = iframeDoc.querySelector('.dock') as HTMLElement | null;
+                const dockLeft = sidebarDock && sidebarDock.style.left === '0px';
+                const modalWidth = 340;
+                const modalHeight = 220;
+                let top = rect.top + rect.height / 2 - modalHeight / 2;
+                top = Math.max(16, Math.min(window.innerHeight - modalHeight - 16, top));
+                let left;
+                if (dockLeft) {
+                    // dock слева — модалка справа
+                    left = rect.right + 16;
+                } else {
+                    // dock справа — модалка слева
+                    left = rect.left - modalWidth - 16;
+                }
+                // Если не влезает — fallback в центр
+                if (left < 0 || left + modalWidth > window.innerWidth) {
+                    left = Math.max(0, (window.innerWidth - modalWidth) / 2);
+                }
+                content.style.position = 'fixed';
+                content.style.left = left + 'px';
+                content.style.top = top + 'px';
+            } else {
+                // fallback: по центру
+                content.style.position = 'fixed';
+                content.style.left = (window.innerWidth / 2 - 170) + 'px';
+                content.style.top = (window.innerHeight / 2 - 110) + 'px';
+            }
+            content.innerHTML = `
+                <div style='font-size: 32px; margin-bottom: 12px;'>${stepIdx} / ${this.onboardingSteps.length - 1}</div>
+                <h2 style='font-size: 22px; font-weight: 700; margin-bottom: 10px;'>${step.title}</h2>
+                <div style='font-size: 15px; margin-bottom: 24px; opacity: 0.85;'>${step.desc}</div>
+                <button id='onboarding-next-btn' style='background: #715CFF; color: #fff; border: none; border-radius: 8px; padding: 12px 0; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%; max-width: 220px;'>${stepIdx === this.onboardingSteps.length - 1 ? 'Finish' : 'Next'}</button>
+            `;
+            modal.appendChild(content);
+            const nextBtn = content.querySelector('#onboarding-next-btn');
+            if (nextBtn) {
+                nextBtn.addEventListener('click', () => {
+                    if (btn) btn.classList.remove('onboarding-highlight');
+                    if (dock) dock.classList.remove('onboarding-dock-visible');
+                    if (toolsBtn) toolsBtn.classList.remove('onboarding-tools-visible');
+                    if (stepIdx === this.onboardingSteps.length - 1) {
+                        modal.remove();
+                        if (overlay) overlay.remove();
+                        chrome.storage.local.set({ onboardingShown: true });
+                    } else {
+                        renderStep(stepIdx + 1);
+                    }
+                });
+            }
+        };
+        renderStep(0);
     }
 }
 

@@ -89,7 +89,8 @@
         "/public/account-white.png",
         "/public/appereance-white.png",
         "/public/account-white-active.png",
-        "/public/appereance-white-active.png"
+        "/public/appereance-white-active.png",
+        "/public/gifex.mp4"
       ],
       "matches": [
         "<all_urls>"
