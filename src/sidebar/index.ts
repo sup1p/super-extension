@@ -921,7 +921,6 @@ export class Sidebar {
                                 opacity: 1;
                                 padding: 10px;
                                 border: 1px solid var(--color-border);
-                                margin-top: 20px;
                             }
 
                             /* контейнер исходного текста для размещения кнопки */

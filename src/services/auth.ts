@@ -35,8 +35,6 @@ export class AuthService {
     static async login(email: string, password: string): Promise<boolean> {
         try {
             const data = await loginViaBackground(this.API_URL, email, password);
-            console.log('Login response:', data);
-
             if (!data.access_token) {
                 console.error('No access_token in response:', data);
                 return false;

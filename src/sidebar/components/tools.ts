@@ -58,16 +58,6 @@ export class ToolsComponent {
 
         // --- Translate Mode ---
         let translateActive = false;
-        const updateTranslateUI = () => {
-            const allBlocks = Array.from(document.querySelectorAll('.tool-icon-block'));
-            allBlocks.forEach(block => {
-                const label = block.querySelector('.tool-label')?.textContent?.toLowerCase();
-                if (label === 'translate') {
-                    if (translateActive) block.classList.add('active');
-                    else block.classList.remove('active');
-                }
-            });
-        };
 
         const API_URL = import.meta.env.VITE_API_URL;
 
@@ -77,25 +67,36 @@ export class ToolsComponent {
                 const label = (el.querySelector('.tool-label')?.textContent || '').toLowerCase();
                 overlay.classList.remove('active');
                 if (label === 'translate' || toolType === 'translate') {
-                    translateActive = !translateActive;
-                    if (translateActive) {
-                        (window as any).PageTranslateService?.enableTranslateMode();
-                        // Получить выбранный язык (по умолчанию en)
-                        let lang = 'en';
-                        const select = document.getElementById('page-translate-lang-select') as HTMLSelectElement;
-                        if (select && select.value) lang = select.value;
-                        // Получить токен из глобального AuthService
-                        let token = '';
-                        if ((window as any).AuthService) {
-                            token = await (window as any).AuthService.getToken();
+                    // Вместо мгновенного запуска перевода открываем модалку выбора языка
+                    const langModal = doc.getElementById('page-translate-lang-modal');
+                    if (langModal) {
+                        langModal.classList.add('active');
+                        // Найдём confirm-кнопку и повесим обработчик (один раз)
+                        const confirmBtn = doc.getElementById('page-translate-confirm');
+                        if (confirmBtn && !(confirmBtn as any)._listenerAdded) {
+                            (confirmBtn as any)._listenerAdded = true;
+                            confirmBtn.addEventListener('click', async () => {
+                                // Получить выбранный язык
+                                let lang = 'en';
+                                const langList = doc.getElementById('lang-modal-dropdown-list');
+                                const langSelected = doc.getElementById('lang-modal-dropdown-selected');
+                                if (langSelected && langList) {
+                                    // Найти выбранный язык по тексту
+                                    const selectedText = langSelected.textContent;
+                                    const selectedOpt = Array.from(langList.children).find(opt => opt.textContent === selectedText);
+                                    if (selectedOpt) {
+                                        lang = selectedOpt.getAttribute('data-value') || 'en';
+                                    }
+                                }
+                                // Получить токен
+                                let token = '';
+                                if ((window as any).AuthService) {
+                                    token = await (window as any).AuthService.getToken();
+                                }
+                                (window as any).PageTranslateService?.startTranslation(lang, token);
+                                langModal.classList.remove('active');
+                            });
                         }
-                        await (window as any).PageTranslateService?.translatePage(lang, token);
-                    } else {
-                        (window as any).PageTranslateService?.disableTranslateMode();
-                    }
-                    updateTranslateUI();
-                    if (translateActive) {
-                        alert('Translate mode enabled! Теперь переводятся только видимые элементы на экране.');
                     }
                 }
                 if (label === 'summarize' || toolType === 'summarize') {
