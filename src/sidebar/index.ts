@@ -3087,20 +3087,7 @@ export class Sidebar {
                 });
 
                 // ... existing code ...
-                let overlay = iframeDoc.getElementById('onboarding-overlay') as HTMLElement | null;
-                if (!overlay) {
-                    overlay = iframeDoc.createElement('div');
-                    overlay.id = 'onboarding-overlay';
-                    overlay.style.cssText = `
-                        position: fixed; left: 0; top: 0; width: 100vw; height: 100vh;
-                        background: rgba(0,0,0,0.85); z-index: 2147483647; pointer-events: none; transition: background 0.2s;`;
-                    const dock = iframeDoc.querySelector('.dock');
-                    if (dock && dock.parentNode) {
-                        dock.parentNode.insertBefore(overlay, dock);
-                    } else {
-                        iframeDoc.body.appendChild(overlay);
-                    }
-                }
+
             }
 
             // Устанавливаем src для загрузки iframe
