@@ -19,7 +19,7 @@ chrome.tabs.onActivated.addListener(logAllTabs);
 
 
 chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
-    if (request.type === "AUTH_LOGIN" || request.type === "NOTES_FETCH") {
+    if (request.type === "AUTH_LOGIN" || request.type === "NOTES_FETCH" || request.type === "CHAT_SYSTEM" || request.type === "PAGE_TRANSLATE" || request.type === "TRANSLATE" || request.type === "TOOLS_LOGIC") {
         fetch(request.url, request.options || {
             method: request.method || "POST",
             headers: request.headers,

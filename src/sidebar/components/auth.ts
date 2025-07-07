@@ -1,4 +1,5 @@
 import { AuthService } from '../../services/auth';
+import { TranslationService } from '../../services/translations';
 
 export class AuthComponent {
     static initAuth(doc: Document): void {
@@ -168,7 +169,7 @@ export function showAuthModal(doc: Document) {
     `;
 
     const title = doc.createElement('div');
-    title.textContent = 'Требуется авторизация';
+    title.textContent = TranslationService.translate('auth_required');
     title.style.cssText = `
         font-size: 24px; 
         font-weight: 700; 
@@ -178,7 +179,7 @@ export function showAuthModal(doc: Document) {
     `;
 
     const subtitle = doc.createElement('div');
-    subtitle.textContent = 'Войдите в свой аккаунт для продолжения';
+    subtitle.textContent = TranslationService.translate('auth_subtitle');
     subtitle.style.cssText = `
         font-size: 14px;
         color: ${isDarkTheme ? '#a0a0a0' : '#666666'};
@@ -193,7 +194,7 @@ export function showAuthModal(doc: Document) {
 
     const emailInput = doc.createElement('input');
     emailInput.type = 'email';
-    emailInput.placeholder = 'Email';
+    emailInput.placeholder = TranslationService.translate('email');
     emailInput.required = true;
     emailInput.style.cssText = `
         padding: 14px 16px; 
@@ -209,7 +210,7 @@ export function showAuthModal(doc: Document) {
 
     const passInput = doc.createElement('input');
     passInput.type = 'password';
-    passInput.placeholder = 'Пароль';
+    passInput.placeholder = TranslationService.translate('password');
     passInput.required = true;
     passInput.style.cssText = emailInput.style.cssText;
 
@@ -245,7 +246,7 @@ export function showAuthModal(doc: Document) {
 
     const loginBtn = doc.createElement('button');
     loginBtn.type = 'submit';
-    loginBtn.textContent = 'Войти';
+    loginBtn.textContent = TranslationService.translate('login');
     loginBtn.style.cssText = `
         margin: 8px 0 0 0; 
         width: 100%; 
@@ -279,7 +280,7 @@ export function showAuthModal(doc: Document) {
     form.onsubmit = async (e) => {
         e.preventDefault();
         loginBtn.disabled = true;
-        loginBtn.textContent = 'Вход...';
+        loginBtn.textContent = TranslationService.translate('logging_in');
         loginBtn.style.background = 'linear-gradient(135deg, #5a4bb8 0%, #7a6ad8 100%)';
         errorDiv.textContent = '';
 
@@ -301,7 +302,7 @@ export function showAuthModal(doc: Document) {
             errorDiv.textContent = 'Ошибка авторизации';
         } finally {
             loginBtn.disabled = false;
-            loginBtn.textContent = 'Войти';
+            loginBtn.textContent = TranslationService.translate('login');
             loginBtn.style.background = 'linear-gradient(135deg, #6F58D5 0%, #8B7AE6 100%)';
         }
     };
@@ -313,7 +314,7 @@ export function showAuthModal(doc: Document) {
     // Добавляю кнопку регистрации
     const registerBtn = doc.createElement('button');
     registerBtn.type = 'button';
-    registerBtn.textContent = 'Нет аккаунта? Зарегистрироваться';
+    registerBtn.textContent = TranslationService.translate('register');
     registerBtn.style.cssText = `
         margin-top: 24px; 
         background: none; 
@@ -333,9 +334,9 @@ export function showAuthModal(doc: Document) {
         registerBtn.style.color = '#6F58D5';
     });
 
-    registerBtn.onclick = () => {
-        window.open('https://www.youtube.com/watch?v=dQw4w9WgXcQ', '_blank');
-    };
+    registerBtn.addEventListener('click', () => {
+        window.open('https://yourmegan.me/auth', '_blank');
+    });
 
     box.appendChild(registerBtn);
 

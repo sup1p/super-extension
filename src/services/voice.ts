@@ -1,5 +1,4 @@
 import { AuthService } from './auth';
-import { NotesService } from './notes';
 import { TranslationService } from './translations';
 
 export class VoiceService {
@@ -82,21 +81,9 @@ export class VoiceService {
                 console.log('[voice.ts - WebSocket] Raw message data from server:', data); // LOG: Raw server data
 
                 // --- Обработка команды создания заметки по тексту ---
-                if (data.command && data.command.action === 'create_note' && data.command.title && data.command.text) {
-                    console.log('[voice.ts - WebSocket] Handling create_note command from server.', data.command); // LOG: Command detail
-                    // Создать заметку через NotesService
-                    try {
-                        const note = await NotesService.createNote(data.command.title, data.command.text, token, doc);
-                        if (note) {
-                            statusBubble.textContent = TranslationService.translate('note_created');
-                            // Можно добавить открытие заметки или обновление UI
-                        } else {
-                            statusBubble.textContent = TranslationService.translate('failed_create_note');
-                        }
-                    } catch (e) {
-                        statusBubble.textContent = TranslationService.translate('error_creating_note');
-                    }
-                }
+                // if (data.command && data.command.action === 'create_note' && data.command.title && data.command.text) {
+                //     handleServerCommand(data.command);
+                // }
                 // --- /Обработка команды создания заметки ---
 
                 // --- Обработка других команд от сервера ---

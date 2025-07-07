@@ -415,6 +415,42 @@ export const translations: Translations = {
         en: 'Translate Webpage •',
         ru: 'Перевести страницу •',
         es: 'Traducir página •'
+    },
+    // Auth modal
+    'auth_required': {
+        en: 'Authorization required',
+        ru: 'Требуется авторизация',
+        es: 'Se requiere autorización'
+    },
+    'auth_subtitle': {
+        en: 'Sign in to your account to continue',
+        ru: 'Войдите в свой аккаунт для продолжения',
+        es: 'Inicia sesión en tu cuenta para continuar'
+    },
+    'email': {
+        en: 'Email',
+        ru: 'Email',
+        es: 'Correo electrónico'
+    },
+    'password': {
+        en: 'Password',
+        ru: 'Пароль',
+        es: 'Contraseña'
+    },
+    'login': {
+        en: 'Sign in',
+        ru: 'Войти',
+        es: 'Iniciar sesión'
+    },
+    'logging_in': {
+        en: 'Signing in...',
+        ru: 'Вход...',
+        es: 'Iniciando sesión...'
+    },
+    'register': {
+        en: 'No account? Register',
+        ru: 'Нет аккаунта? Зарегистрироваться',
+        es: '¿No tienes cuenta? Regístrate'
     }
 };
 

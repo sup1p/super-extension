@@ -15,7 +15,7 @@ async function fetchViaBackground(url: string, options: RequestInit): Promise<an
     return new Promise((resolve, reject) => {
         chrome.runtime.sendMessage(
             {
-                type: "NOTES_FETCH",
+                type: "PAGE_TRANSLATE",
                 url,
                 options,
             },
@@ -296,6 +296,16 @@ export class PageTranslateService {
     static getAllVisibleText(): string[] {
         const service = new PageTranslateService('en'); // Временный экземпляр для доступа к collectTextNodes
         return service.collectTextNodes().map(n => n.nodeValue || '');
+    }
+
+    static toggleTranslateMode(targetLang: string, token?: string): void {
+        if (translateMode) {
+            // Если уже включён — выключаем
+            this.disableTranslateMode();
+        } else {
+            // Если выключен — включаем перевод
+            this.startTranslation(targetLang, token);
+        }
     }
 }
 

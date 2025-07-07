@@ -1,19 +1,33 @@
 {
   "manifest_version": 3,
-  "name": "Chrome Extension Starter",
+  "name": "Megan: Your AI assistant",
   "version": "1.0",
-  "description": "A starter template for Chrome extensions",
+  "description": "Megan is an AI-powered voice assistant that helps manage browser, summarize content, take notes, and chat with you.",
   "permissions": [
     "activeTab",
     "scripting",
     "storage",
     "tabs"
   ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self';"
+  },
+  "homepage_url": "https://yourmegan.me",
   "host_permissions": [
     "<all_urls>"
   ],
   "action": {
-    "default_title": "Open Side Panel"
+    "default_title": "Open Side Panel",
+    "default_icon": {
+      "16": "public/icon16.png",
+      "48": "public/icon48.png",
+      "128": "public/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "public/icon16.png",
+    "48": "public/icon48.png",
+    "128": "public/icon128.png"
   },
   "background": {
     "service_worker": "background.js",
@@ -34,8 +48,10 @@
     {
       "resources": [
         "sidebar.html",
-        "public/32.png",
         "/public/icon.png",
+        "/public/icon16.png",
+        "/public/icon48.png",
+        "/public/icon128.png",
         "/public/icon-white-bg.png",
         "/public/icon-black-bg.png",
         "/public/chat.png",

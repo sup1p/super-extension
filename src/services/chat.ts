@@ -11,7 +11,7 @@ async function fetchViaBackground(url: string, options: RequestInit): Promise<an
     return new Promise((resolve, reject) => {
         chrome.runtime.sendMessage(
             {
-                type: "NOTES_FETCH",
+                type: "CHAT_SYSTEM",
                 url,
                 options,
             },

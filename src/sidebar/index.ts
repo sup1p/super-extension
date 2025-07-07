@@ -2286,7 +2286,7 @@ export class Sidebar {
                     langModal.innerHTML = `
                       <div class="modal-content" style="max-width:320px;">
                         <div class="modal-header">
-                          <div class="modal-title">Select language</div>
+                          <div class="modal-title">${TranslationService.translate('select_language')}</div>
                           <button class="modal-close" id="close-lang-modal">×</button>
                         </div>
                         <div style="margin-bottom:18px;">
@@ -2299,7 +2299,7 @@ export class Sidebar {
                             </div>
                           </div>
                         </div>
-                        <button id="page-translate-confirm" style="width:100%;background:#715CFF;color:#fff;padding:10px 0;border:none;border-radius:8px;font-size:16px;cursor:pointer;">Translate</button>
+                        <button id="page-translate-confirm" style="width:100%;background:#715CFF;color:#fff;padding:10px 0;border:none;border-radius:8px;font-size:16px;cursor:pointer;">${TranslationService.translate('translate_webpage')}</button>
                         <div id="page-translate-loader" style="display:none;justify-content:center;align-items:center;margin-top:18px;">
                           <div class="loader-circle" style="width:36px;height:36px;border:4px solid #eee;border-top:4px solid #715CFF;border-radius:50%;animation:spin 1s linear infinite;"></div>
                         </div>
@@ -3029,6 +3029,29 @@ export class Sidebar {
                         });
                     });
                     iframeDoc.addEventListener('click', () => langDropdown.classList.remove('open'));
+                }
+
+                // --- После создания элементов аккаунта ---
+                const userAvatar = iframeDoc.getElementById('user-avatar');
+                const userName = iframeDoc.getElementById('user-name');
+                const userEmail = iframeDoc.getElementById('user-email');
+                const openAccountPage = () => {
+                    window.open('https://yourmegan.me/account', '_blank');
+                };
+                if (userAvatar) userAvatar.style.cursor = 'pointer';
+                if (userName) userName.style.cursor = 'pointer';
+                if (userEmail) userEmail.style.cursor = 'pointer';
+                if (userAvatar) userAvatar.addEventListener('click', openAccountPage);
+                if (userName) userName.addEventListener('click', openAccountPage);
+                if (userEmail) userEmail.addEventListener('click', openAccountPage);
+
+                // Кнопка Activate (Pro)
+                const activateBtn = iframeDoc.querySelector('.account-btn-pro') as HTMLElement | null;
+                if (activateBtn) {
+                    activateBtn.addEventListener('click', () => {
+                        window.open('https://yourmegan.me/', '_blank');
+                    });
+                    activateBtn.style.cursor = 'pointer';
                 }
             }
 

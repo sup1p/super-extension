@@ -97,7 +97,7 @@ async function translateFetchViaBackground(url: string, options: RequestInit): P
     return new Promise((resolve, reject) => {
         chrome.runtime.sendMessage(
             {
-                type: "NOTES_FETCH",
+                type: "TRANSLATE",
                 url,
                 options,
             },
