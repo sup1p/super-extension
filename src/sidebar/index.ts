@@ -2389,7 +2389,7 @@ export class Sidebar {
                             console.log("START TRANSLATE PAGE!!!" + token);
 
                             // Запускаем режим перевода
-                            PageTranslateService.startTranslation(lang, token || undefined);
+                            PageTranslateService.toggleTranslateMode(lang, token || undefined);
 
                             // Скрываем модалку выбора языка
                             if (langModal) {

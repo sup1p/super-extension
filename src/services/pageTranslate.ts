@@ -259,6 +259,7 @@ export class PageTranslateService {
         currentToken = token;
         translateServiceInstance = new PageTranslateService(targetLang, token);
         translateServiceInstance.init(); // Оборачиваем текст, но не запускаем перевод
+        translateServiceInstance.startTranslation(); // Сразу запускаем перевод
     }
 
     static startTranslation(targetLang: string, token?: string): void {

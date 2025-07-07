@@ -102,6 +102,10 @@ export class ToolsComponent {
                 if (label === 'summarize' || toolType === 'summarize') {
                     const loader = doc.getElementById('global-page-translate-loader');
                     try {
+                        // Отключаем перевод страницы перед сбором текста
+                        if ((window as any).PageTranslateService?.disableTranslateMode) {
+                            (window as any).PageTranslateService.disableTranslateMode();
+                        }
                         // Собираем текст
                         const texts = (window as any).PageTranslateService
                             ? (window as any).PageTranslateService.getAllVisibleText()
