@@ -593,7 +593,7 @@ export class Sidebar {
                                 position: absolute;
                                 background: none;
                                 top: 16px;
-                                right: 16px;
+                                right: ${this.sidebarPosition === 'left' ? '435px' : '16px'};
                                 border: none;
                                 display: flex;
                                 font-size: 20px;
@@ -940,7 +940,7 @@ export class Sidebar {
                             }
 
                             .page-translate-btn{
-                                position:absolute; top:40px; right:72px;
+                                position:absolute; top:40px;
                                 background:#262626; color:#ccc; padding:6px 6px;
                                 border-radius:8px; font-size:14px; border:none; cursor:pointer;
                                 color: #A48FFF;
@@ -1915,7 +1915,7 @@ export class Sidebar {
 
                 iframeDoc.body.innerHTML = `
                         <div class="sidebar">
-                            <button class="close-btn" id="close-sidebar">×</button>
+                            <button class="close-btn" id="close-sidebar" style="right: ${this.sidebarPosition === 'left' ? '435px' : '16px'};">×</button>
 
                             <div id="screen-home" class="screen active">
                                 <div class="megan-card" style="box-shadow: 0 8px 32px rgb(84, 57, 202); border-radius: 24px; padding: 40px 36px 32px 36px; max-width: 340px; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 18px; border: 1px solid var(--color-border, #ececec); background: var(--color-bg);">
@@ -1923,13 +1923,17 @@ export class Sidebar {
                                         <img id="home-megan-icon" src="${iconUrl}" alt="Megan Icon" style="width: 48px; height: 48px; object-fit: contain; border-radius: 50%;" />
                                     </div>
                                     <h1 class="title gradient-text" style="font-family: 'Playfair Display', serif; font-size: 44px; font-weight: 700; margin-bottom: 0; text-align: center;">Megan</h1>
-                                    <p class="intro" style="line-height: 1.6; font-size: 16px; color: var(--color-text, #232323); text-align: center; margin-top: 0; margin-bottom: 0; opacity: 0.85;"><span data-translate="megan_intro">Hello! I'm your AI assistant — Megan, here to help you work smarter and faster.</span><br><br><span data-translate="megan_capabilities">I can summarize, rewrite, translate, generate content and assist with research 24/7.</span><br><br><span class="gradient-text" style="font-family: 'Playfair Display', serif; font-weight: 700; font-size: 24px;" data-translate="lets_get_started">Let's get things done!</span></p>
+                                    <p class="intro" style="line-height: 1.6; font-size: 16px; color: var(--color-text, #232323); text-align: center; margin-top: 0; margin-bottom: 0; opacity: 0.85;">
+                                    <span data-translate="megan_intro" style="font-weight: 700;"></span>
+                                    <br><br>
+                                    <span class="gradient-text" style="font-family: 'Playfair Display', serif; font-weight: 700; font-size: 24px;" data-translate="lets_get_started"></span>
+                                    </p>
                                 </div>
                             </div>
 
                             <div id="screen-notes" class="screen">
                                 <h1 class="title" data-translate="notes">Notes</h1>
-                                <div class="notes-screen-things" style="max-width: 390px">
+                                <div class="notes-screen-things" style="max-width: 390px;${this.sidebarPosition === 'left' ? ' margin-left:50px;' : ''}">
                                     <div class="notes-input-row" style="position: relative; display: flex; align-items: stretch; margin-bottom: 12px;">
                                         <textarea id="note-input" data-translate="note_placeholder" placeholder="What do you want to save?" class="notes-textarea"></textarea>
                                         <button id="save-note" class="notes-save-btn" data-translate="save">Save</button>
@@ -1942,7 +1946,7 @@ export class Sidebar {
 
                             
                             <div id="screen-note-detail" class="screen" style="overflow-y: auto; max-height: 80vh;">
-                                <div style="max-width:390px">
+                                <div style="max-width:390px;${this.sidebarPosition === 'left' ? ' margin-left:50px;' : ''}">
                                     <h1 class="title" data-translate="notes">Notes</h1>
                                     <div class="notes-detail-header">
                                         <button id="back-to-notes" class="notes-detail-back" data-translate="back">← Back</button>
@@ -1975,7 +1979,7 @@ export class Sidebar {
 
                             <div id="screen-chat" class="screen">
                                 <h1 class="title" data-translate="chat">Chat</h1>
-                                <div id="chat-container" style="flex: 1 1 0; display: flex; flex-direction: column; background: var(--color-bg); border-radius: 8px; overflow-y: auto; gap: 12px; margin-bottom: 16px; min-height: 0; max-height: 80vh; margin-right: 40px; margin-left: 4px;"></div>
+                                <div id="chat-container" style="flex: 1 1 0; display: flex; flex-direction: column; background: var(--color-bg); border-radius: 8px; overflow-y: auto; gap: 12px; margin-bottom: 16px; min-height: 0; max-height: 80vh;${this.sidebarPosition === 'left' ? ' margin-left: 40px; margin-right: 4px;' : ' margin-right: 40px; margin-left: 4px;'}"></div>
                                 <form id="chat-form" style="display: flex; flex-direction: column; gap: 0; align-items: stretch; margin-top: auto; width: 100%; position: relative;">
                                     <div class="chat-actions" style="display: flex; justify-content: flex-end; gap: 4px; margin-bottom: 4px; margin-right: 30px;">
                                         <button type="button" id="chat-new" style="background: none; border: none; border-radius: 0; padding: 0; height: 40px; width: 40px; cursor: pointer; display: flex; align-items: center; justify-content: center;"><img src="${newChatUrl}" alt="New Chat" style="width:24px;height:24px;object-fit:contain;vertical-align:middle;" /></button>
@@ -2048,10 +2052,10 @@ export class Sidebar {
                             </div>
 
                             <div id="screen-translate" class="screen">
-                                <div style="max-width:390px">
+                                <div style="max-width:390px; ${this.sidebarPosition === 'left' ? ' margin-left:50px;' : ''}">
                                     <div class="translation-header" style="display: flex; align-items: center; justify-content: space-between;"/*  */>
                                         <h1 id="translate-top-row" data-translate="translate">Translate</h1>
-                                        <button id="translate-page-btn" class="page-translate-btn" data-translate="translate_webpage"></button>
+                                        <button id="translate-page-btn" class="page-translate-btn" data-translate="translate_webpage" style="right: ${this.sidebarPosition === 'left' ? '22px' : '72px'};"></button>
                                     </div>
                                     
                                     <div class="translate-block-align">
@@ -3082,7 +3086,11 @@ export class Sidebar {
                 // --- ONBOARDING ---
                 chrome.storage.local.get(['onboardingShown'], (result) => {
                     if (!result.onboardingShown) {
-                        this.showOnboarding(iframeDoc);
+                        AuthService.getToken().then(token => {
+                            if (token) {
+                                this.showOnboarding(iframeDoc);
+                            }
+                        });
                     }
                 });
 
