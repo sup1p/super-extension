@@ -2117,6 +2117,21 @@ export class Sidebar {
 
                             <div id="screen-settings" class="screen">
                                 <h1 class="title" data-translate="settings">Settings</h1>
+                                <div class="settings-description" style="
+                                    background: rgba(160, 150, 255, 0.08);
+                                    border-radius: 16px;
+                                    box-shadow: 0 2px 12px #715cff11;
+                                    padding: 22px 20px 18px 20px;
+                                    margin: 24px 50px 24px 50px;
+                                    max-width: 420px;
+                                    color: var(--color-text);
+                                    font-size: 16px;
+                                    line-height: 1.7;
+                                    text-align: left;
+                                    display: flex;
+                                    align-items: flex-start;
+                                    gap: 14px;
+                                " data-translate="settings_main_info"></div>
                             </div>
 
                             <div id="screen-account" class="screen">

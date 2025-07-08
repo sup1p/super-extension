@@ -451,6 +451,50 @@ export const translations: Translations = {
         en: 'No account? Register',
         ru: 'Нет аккаунта? Зарегистрироваться',
         es: '¿No tienes cuenta? Regístrate'
+    },
+    'settings_main_info': {
+        en: `<div style="display: flex; align-items: flex-start; gap: 18px;">
+    <span style="font-size:32px; margin-top: 2px; color:var(--color-text);"></span>
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      <div>
+        <b style="color:#6F58D5;">Account</b> — manage your account, view your details, log out, or go to the Megan website.
+      </div>
+      <div>
+        <b style="color:#6F58D5;">Appearance</b> — change the sidebar and icon position, and select a theme.
+      </div>
+      <div style="color:var(--color-text); font-size: 16px; margin-top: 8px;">
+        Use the tabs on the left to switch between sections.
+      </div>
+    </div>
+  </div>`,
+        ru: `<div style="display: flex; align-items: flex-start; gap: 18px;">
+    <span style="font-size:32px; margin-top: 2px; color:var(--color-text);</span>
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      <div>
+        <b style="color:var(--color-text);">Аккаунт</b> — управляйте своим аккаунтом, смотрите данные, выходите или переходите на сайт Megan.
+      </div>
+      <div>
+        <b style="color:var(--color-text);">Внешний вид</b> — меняйте положение сайдбара и иконки, выбирайте тему оформления.
+      </div>
+      <div style="color:var(--color-text); font-size: 16px; margin-top: 8px;">
+        Используйте вкладки слева для перехода по разделам.
+      </div>
+    </div>
+  </div>`,
+        es: `<div style="display: flex; align-items: flex-start; gap: 18px;">
+    <span style="font-size:32px; margin-top: 2px; color:var(--color-text);"></span>
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      <div>
+        <b style="color:var(--color-text);">Cuenta</b> — gestiona tu cuenta, consulta tus datos, cierra sesión o visita el sitio de Megan.
+      </div>
+      <div>
+        <b style="color:var(--color-text);">Apariencia</b> — cambia la posición de la barra lateral y el icono, y elige el tema.
+      </div>
+      <div style="color:var(--color-text); font-size: 16px; margin-top: 8px;">
+        Usa las pestañas a la izquierda para cambiar de sección.
+      </div>
+    </div>
+  </div>`
     }
 };
 
@@ -488,6 +532,8 @@ export class TranslationService {
                 const translation = this.translate(key);
                 if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
                     (element as HTMLInputElement | HTMLTextAreaElement).placeholder = translation;
+                } else if (key === 'settings_main_info') {
+                    element.innerHTML = translation;
                 } else {
                     element.textContent = translation;
                 }
