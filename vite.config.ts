@@ -17,7 +17,6 @@ export default defineConfig({
         { src: "src/chrome-extension/public/icon.png", dest: "./public" },
         { src: "src/chrome-extension/public/icon-white-bg.png", dest: "./public" },
         { src: "src/chrome-extension/public/icon-black-bg.png", dest: "./public" },
-        { src: "src/chrome-extension/public/gifex.mp4", dest: "./public" },
 
         { src: "src/chrome-extension/public/notes.png", dest: "./public" },
         { src: "src/chrome-extension/public/chat.png", dest: "./public" },
