@@ -33,28 +33,29 @@ export class ToolsComponent {
 
         /* открыть */
         const open = () => overlay.classList.add('active');
+        /* закрыть */
+        const close = () => overlay.classList.remove('active');
 
-        /* отложенное закрытие (200 мс) */
-        let timer: number | null = null;
-        const scheduleClose = () => {
-            if (timer) clearTimeout(timer);
-            timer = window.setTimeout(() => {
-                // Check if mouse is over either the button or the modal content
-                const isOverButton = button.matches(':hover');
-                const isOverModal = modal.matches(':hover');
-                if (!isOverButton && !isOverModal) {
-                    overlay.classList.remove('active');
-                }
-            }, 200);
-        };
-
-        /* события */
-        button.addEventListener('mouseenter', open);
-        button.addEventListener('mouseleave', scheduleClose);
-        modal.addEventListener('mouseenter', () => {
-            if (timer) clearTimeout(timer);
+        // Удаляем hover-логику, добавляем click
+        button.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (overlay.classList.contains('active')) {
+                close();
+            } else {
+                open();
+            }
         });
-        modal.addEventListener('mouseleave', scheduleClose);
+        // Клик вне модалки — закрыть
+        doc.addEventListener('click', (e) => {
+            if (overlay.classList.contains('active') && !modal.contains(e.target as Node) && e.target !== button) {
+                close();
+            }
+        });
+        // Остановить всплытие внутри модалки
+        modal.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
 
         // --- Translate Mode ---
         let translateActive = false;

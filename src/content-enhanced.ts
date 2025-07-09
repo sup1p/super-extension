@@ -207,11 +207,8 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         const hasMedia = hasVideo || hasAudio || hasPlatformControls;
         sendResponse({ hasVideo: hasMedia });
     } else if (message.type === 'CREATE_NOTE') {
-        console.log('[content-enhanced] Received CREATE_NOTE message:', message); // LOG 1: Message received
-        // Обработка создания заметки по команде от background (например, от voice)
         (async () => {
             try {
-                // Получить токен
                 let token = '';
                 if ((window as any).AuthService) {
                     token = String(await (window as any).AuthService.getToken() || '');
@@ -220,10 +217,8 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                 }
                 if (!token) {
                     alert('Login required to save note.');
-                    console.log('[content-enhanced] Login required, returning.');
                     return;
                 }
-                // Импортировать NotesService динамически, если нужно
                 let NotesService;
                 if ((window as any).NotesService) {
                     NotesService = (window as any).NotesService;
@@ -231,53 +226,232 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                     NotesService = (await import('./services/notes')).NotesService;
                 }
                 const note = await NotesService.createNote(message.title, message.text, token, document);
-                console.log('[content-enhanced] Note creation attempt, message.answer:', message.answer, 'message.audio_base64:', message.audio_base64); // LOG 2: Check message content
-                // --- Отправляем данные для озвучки и показа в iframe сайдбара ---
-                if (message.answer || message.audio_base64) {
-                    const sidebarIframe = document.getElementById('chrome-extension-sidebar') as HTMLIFrameElement | null;
-                    console.log('[content-enhanced] sidebarIframe found:', !!sidebarIframe, 'contentWindow available:', !!(sidebarIframe?.contentWindow)); // LOG 3: Iframe status
-                    if (sidebarIframe && sidebarIframe.contentWindow) {
-                        sidebarIframe.contentWindow.postMessage({
-                            type: 'VOICE_FEEDBACK', // Новый специфичный тип для iframe communication
-                            answer: message.answer,
-                            audio_base64: message.audio_base64
-                        }, '*'); // TODO: Ограничить origin для безопасности в продакшене
-                        console.log('[content-enhanced] Sent VOICE_FEEDBACK via postMessage.'); // LOG 4: postMessage sent
-                    } else {
-                        // Fallback если sidebar iframe не найден или не готов (показываем alert и воспроизводим аудио на главной странице)
-                        console.log('[content-enhanced] Sidebar iframe not found or not ready, executing fallback.'); // LOG 5: Fallback triggered
-                        if (message.answer) {
-                            console.log('[content-enhanced] Fallback alert shown.'); // LOG 6: Fallback alert
-                        }
-                        if (message.audio_base64) {
-                            try {
-                                const audio = new Audio('data:audio/mp3;base64,' + message.audio_base64);
-                                audio.play();
-                                console.log('[content-enhanced] Fallback audio played.'); // LOG 7: Fallback audio
-                            } catch (e) {
-                                console.error('[content-enhanced] Fallback audio error:', e);
-                            }
-                        }
-                    }
-                }
-                // --- /Отправляем данные в iframe сайдбара ---
                 if (note) {
-                    console.log('[content-enhanced] Note created alert shown.'); // LOG 9: Note created alert
-                    // Открыть детали созданной заметки
-                    let NotesComponent;
-                    if ((window as any).NotesComponent) {
-                        NotesComponent = (window as any).NotesComponent;
+                    if (message.focus) {
+                        if (!(window as any).sidebarInstance.isOpen()) {
+                            await (window as any).sidebarInstance.openSidebar();
+                        }
+                        // Открываем страницу заметок
+                        if ((window as any).sidebarInstance.navigateTo) {
+                            (window as any).sidebarInstance.navigateTo('screen-notes');
+                        }
+                        // Обновляем список заметок всегда
+                        if (typeof (document as any).renderNotes === 'function') {
+                            await (document as any).renderNotes();
+                        }
                     } else {
-                        NotesComponent = (await import('./sidebar/components/notes')).NotesComponent;
+                        // Старое поведение (на всякий случай)
+                        if (!(window as any).sidebarInstance.isOpen()) {
+                            (window as any).sidebarInstance.openSidebar();
+                            setTimeout(async () => {
+                                let NotesComponent;
+                                if ((window as any).NotesComponent) {
+                                    NotesComponent = (window as any).NotesComponent;
+                                } else {
+                                    NotesComponent = (await import('./sidebar/components/notes')).NotesComponent;
+                                }
+                                await NotesComponent.initNoteDetail(document, note.id);
+                            }, 500);
+                        } else {
+                            let NotesComponent;
+                            if ((window as any).NotesComponent) {
+                                NotesComponent = (window as any).NotesComponent;
+                            } else {
+                                NotesComponent = (await import('./sidebar/components/notes')).NotesComponent;
+                            }
+                            await NotesComponent.initNoteDetail(document, note.id);
+                        }
                     }
-                    await NotesComponent.initNoteDetail(document, note.id);
                 } else {
                     alert('Failed to create note.');
-                    console.log('[content-enhanced] Failed to create note alert shown.'); // LOG 10: Failed note alert
                 }
             } catch (e) {
-                console.error('[content-enhanced] Error creating note:', e); // LOG 11: General error
+                console.error('[content-enhanced] Error creating note:', e);
             }
+        })();
+    } else if (message.type === 'SHOW_TRANSLATE_POPUP') {
+        (async () => {
+            // Удалить старый попап если есть
+            const old = document.getElementById('megan-translate-popup');
+            if (old) old.remove();
+            // Создать контейнер
+            const popup = document.createElement('div');
+            popup.id = 'megan-translate-popup';
+            popup.style.cssText = `
+                position: fixed;
+                z-index: 2147483647;
+                top: 50px; right: 50px;
+                background: #232323;
+                color: #fff;
+                border-radius: 16px;
+                box-shadow: 0 8px 32px #0008;
+                padding: 28px 28px 22px 28px;
+                min-width: 340px;
+                max-width: 96vw;
+                font-family: 'Poppins', 'Inter', Arial, sans-serif;
+                border: 1.5px solid #715CFF;
+                display: flex;
+                flex-direction: column;
+                gap: 14px;
+                animation: fadeIn 0.2s;
+                cursor: default;
+            `;
+            // --- Стили для кастомного dropdown (как в translate-screen) ---
+            if (!document.getElementById('megan-translate-popup-style')) {
+                const style = document.createElement('style');
+                style.id = 'megan-translate-popup-style';
+                style.textContent = `
+                    .megan-translate-popup-dark {
+                        background: #232323 !important;
+                        color: #fff !important;
+                        border: 1.5px solid #715CFF !important;
+                    }
+                    .megan-translate-popup-light {
+                        background: #FAFAFA !important;
+                        color: #232323 !important;
+                        border: 1.5px solid #AA97FF !important;
+                    }
+                    .megan-custom-dropdown { position: relative; width: 100%; user-select: none; font-size: 15px; font-weight: 500; }
+                    .megan-custom-dropdown-selected { background: #181818; color: #fff; border: 1.5px solid #715CFF; border-radius: 10px; padding: 10px 38px 10px 14px; cursor: pointer; transition: border 0.2s, box-shadow 0.2s; box-shadow: 0 2px 8px #715cff11; position: relative; }
+                    .megan-custom-dropdown-selected:after { content: ''; position: absolute; right: 16px; top: 50%; width: 16px; height: 16px; background-image: url('data:image/svg+xml;utf8,<svg fill="none" stroke="%23715CFF" stroke-width="2" viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg"><path d="M6 9l6 6 6-6"/></svg>'); background-size: 16px 16px; background-repeat: no-repeat; background-position: center; transform: translateY(-50%); pointer-events: none; }
+                    .megan-custom-dropdown-list { display: none; position: absolute; left: 0; right: 0; top: 110%; background: #181818; border: 1.5px solid #715CFF; border-radius: 10px; box-shadow: 0 8px 32px rgba(111,88,213,0.10); z-index: 99999; animation: fadeInDropdown 0.18s; max-height: 260px; overflow-y: auto; }
+                    .megan-custom-dropdown.open .megan-custom-dropdown-list { display: block; }
+                    .megan-custom-dropdown-option { padding: 12px 18px; cursor: pointer; color: #fff; transition: background 0.15s, color 0.15s; }
+                    .megan-custom-dropdown-option:hover { background: #715CFF; color: #fff; }
+                    @keyframes fadeInDropdown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+                    /* --- Scrollbar styles --- */
+                    .megan-custom-dropdown-list { scrollbar-width: thin; scrollbar-color: #715CFF #181818; }
+                    .megan-custom-dropdown-list::-webkit-scrollbar { width: 7px; background: #181818; }
+                    .megan-custom-dropdown-list::-webkit-scrollbar-thumb { background: #715CFF; border-radius: 6px; }
+                    .megan-custom-dropdown-list::-webkit-scrollbar-track { background: #181818; }
+                    body.theme-light .megan-custom-dropdown-list { scrollbar-color: #AA97FF #F5F5F5; }
+                    body.theme-light .megan-custom-dropdown-list::-webkit-scrollbar { background: #F5F5F5; }
+                    body.theme-light .megan-custom-dropdown-list::-webkit-scrollbar-thumb { background: #AA97FF; }
+                    body.theme-light .megan-custom-dropdown-list::-webkit-scrollbar-track { background: #F5F5F5; }
+                    /* Light theme for dropdown */
+                    body.theme-light .megan-custom-dropdown-selected { background: #fff; color: #232323; border: 1.5px solid #AA97FF; }
+                    body.theme-light .megan-custom-dropdown-selected:after { background-image: url('data:image/svg+xml;utf8,<svg fill="none" stroke="%23AA97FF" stroke-width="2" viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg"><path d="M6 9l6 6 6-6"/></svg>'); }
+                    body.theme-light .megan-custom-dropdown-list { background: #fff; border: 1.5px solid #AA97FF; }
+                    body.theme-light .megan-custom-dropdown-option { color: #232323; }
+                    body.theme-light .megan-custom-dropdown-option:hover { background: #AA97FF; color: #fff; }
+                `;
+                document.head.appendChild(style);
+            }
+            // Кнопка закрытия
+            const closeBtn = document.createElement('button');
+            closeBtn.textContent = '×';
+            closeBtn.style.cssText = 'position:absolute;top:8px;right:12px;background:none;border:none;font-size:22px;color:#aaa;cursor:pointer;z-index:2;';
+            closeBtn.onclick = () => popup.remove();
+            popup.appendChild(closeBtn);
+            // Заголовок
+            const title = document.createElement('div');
+            title.textContent = 'Translate text';
+            title.style.cssText = 'font-size:18px;font-weight:600;margin-bottom:2px;cursor:move;user-select:none;z-index:1;';
+            // Drag events (оставляем как было)
+            let isDragging = false, dragOffsetX = 0, dragOffsetY = 0;
+            title.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                const rect = popup.getBoundingClientRect();
+                dragOffsetX = e.clientX - rect.left;
+                dragOffsetY = e.clientY - rect.top;
+                document.body.style.userSelect = 'none';
+            });
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    popup.style.left = (e.clientX - dragOffsetX) + 'px';
+                    popup.style.top = (e.clientY - dragOffsetY) + 'px';
+                    popup.style.right = '';
+                    popup.style.bottom = '';
+                    popup.style.position = 'fixed';
+                }
+            });
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+                document.body.style.userSelect = '';
+            });
+            popup.appendChild(title);
+            // --- Кастомный dropdown для выбора языка ---
+            const langRow = document.createElement('div');
+            langRow.style.cssText = 'display:flex;gap:8px;align-items:center;';
+            // Кастомный dropdown
+            const dropdown = document.createElement('div');
+            dropdown.className = 'megan-custom-dropdown';
+            const selected = document.createElement('div');
+            selected.className = 'megan-custom-dropdown-selected';
+            selected.textContent = 'English';
+            const list = document.createElement('div');
+            list.className = 'megan-custom-dropdown-list';
+            // Заполняем языки
+            const { languages } = await import('./services/translate');
+            languages.filter(l => l.code !== 'auto').forEach(({ code, name }) => {
+                const opt = document.createElement('div');
+                opt.className = 'megan-custom-dropdown-option';
+                opt.setAttribute('data-value', code);
+                opt.textContent = name;
+                opt.addEventListener('click', () => {
+                    selected.textContent = name;
+                    dropdown.classList.remove('open');
+                    dropdown.setAttribute('data-value', code);
+                });
+                list.appendChild(opt);
+            });
+            dropdown.appendChild(selected);
+            dropdown.appendChild(list);
+            // Открытие/закрытие
+            selected.addEventListener('click', (e) => {
+                e.stopPropagation();
+                dropdown.classList.toggle('open');
+            });
+            document.addEventListener('click', () => dropdown.classList.remove('open'));
+            langRow.appendChild(dropdown);
+            popup.appendChild(langRow);
+            // Кнопка перевода
+            const btn = document.createElement('button');
+            btn.textContent = 'Translate';
+            btn.style.cssText = 'margin-top:8px;padding:10px 0;font-size:15px;font-weight:600;background:#715CFF;color:#fff;border:none;border-radius:8px;cursor:pointer;';
+            popup.appendChild(btn);
+            // Переведённый текст
+            const dstArea = document.createElement('textarea');
+            dstArea.readOnly = true;
+            dstArea.placeholder = 'Translation will appear here...';
+            dstArea.style.cssText = 'width:100%;min-width:220px;max-width:100%;height:70px;padding:8px 10px;font-size:15px;border-radius:8px;border:1px solid #444;background:#181818;color:#fff;resize:vertical;margin-top:8px;';
+            popup.appendChild(dstArea);
+            // Логика перевода
+            btn.onclick = async () => {
+                const { TranslateService } = await import('./services/translate');
+                const text = message.text.trim();
+                if (!text) return;
+                dstArea.value = 'Translating...';
+                try {
+                    const code = dropdown.getAttribute('data-value') || 'en';
+                    const result = await TranslateService["translateText"](text, 'auto', code);
+                    dstArea.value = result;
+                } catch (err) {
+                    dstArea.value = 'Error: ' + (err instanceof Error ? err.message : String(err));
+                }
+            };
+            // Автоматически переводим сразу при открытии
+            btn.click();
+            document.body.appendChild(popup);
+            // Определяем тему
+            function applyPopupTheme() {
+                const isLight = document.body.classList.contains('theme-light');
+                popup.classList.toggle('megan-translate-popup-light', isLight);
+                popup.classList.toggle('megan-translate-popup-dark', !isLight);
+                // textarea и кнопки тоже подстраиваем
+                closeBtn.style.color = isLight ? '#888' : '#aaa';
+                title.style.color = isLight ? '#232323' : '#fff';
+                dstArea.style.background = isLight ? '#fff' : '#181818';
+                dstArea.style.color = isLight ? '#232323' : '#fff';
+                dstArea.style.border = isLight ? '1px solid #AA97FF' : '1px solid #444';
+                btn.style.background = isLight ? '#AA97FF' : '#715CFF';
+                btn.style.color = '#fff';
+                btn.style.border = 'none';
+            }
+            applyPopupTheme();
+            // Следим за сменой темы
+            const observer = new MutationObserver(applyPopupTheme);
+            observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
         })();
     }
 });

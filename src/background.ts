@@ -247,3 +247,69 @@ chrome.action.onClicked.addListener((tab) => {
         chrome.tabs.sendMessage(tab.id, { action: "toggleSidebar" });
     }
 });
+
+// --- CONTEXT MENU: Megan actions ---
+chrome.runtime.onInstalled.addListener(() => {
+    // Удаляем старое меню, если есть
+    chrome.contextMenus.removeAll(() => {
+        // Корневой пункт
+        chrome.contextMenus.create({
+            id: 'megan-actions-root',
+            title: 'Megan actions:',
+            contexts: ['selection'],
+        });
+        // Подменю
+
+        chrome.contextMenus.create({
+            id: 'megan-save',
+            parentId: 'megan-actions-root',
+            title: 'Save',
+            contexts: ['selection'],
+        });
+        chrome.contextMenus.create({
+            id: 'megan-summarize',
+            parentId: 'megan-actions-root',
+            title: 'Summarize',
+            contexts: ['selection'],
+        });
+        chrome.contextMenus.create({
+            id: 'megan-translate',
+            parentId: 'megan-actions-root',
+            title: 'Translate',
+            contexts: ['selection'],
+        });
+        chrome.contextMenus.create({
+            id: 'megan-voice',
+            parentId: 'megan-actions-root',
+            title: 'Megan voice',
+            contexts: ['selection'],
+        });
+    });
+});
+
+// --- CONTEXT MENU CLICK HANDLER ---
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+    if (info.menuItemId === 'megan-save' && info.selectionText && tab?.id) {
+        let domain = '';
+        try {
+            if (info.pageUrl) {
+                const urlObj = new URL(info.pageUrl);
+                domain = urlObj.hostname.replace(/^www\./, '');
+            }
+        } catch {
+            domain = '';
+        }
+        chrome.tabs.sendMessage(tab.id, {
+            type: 'CREATE_NOTE',
+            title: domain,
+            text: info.selectionText,
+            focus: true // явно просим открыть сайдбар и показать заметку
+        });
+    }
+    if (info.menuItemId === 'megan-translate' && info.selectionText && tab?.id) {
+        chrome.tabs.sendMessage(tab.id, {
+            type: 'SHOW_TRANSLATE_POPUP',
+            text: info.selectionText
+        });
+    }
+});

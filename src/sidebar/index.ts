@@ -3030,55 +3030,55 @@ export class Sidebar {
                     });
                 }
 
-                // --- Улучшенная логика открытия tools-модалки по ховеру ---
-                const toolsButtonHoverBtn = iframeDoc.querySelector('.tools_button');
-                const toolsModalHoverModal = iframeDoc.getElementById('tools-modal');
-                let toolsModalHoverFlag = false;
-                let toolsButtonHoverFlag = false;
-                let toolsModalCloseTimeoutId: number | null = null;
-                if (toolsButtonHoverBtn && toolsModalHoverModal) {
-                    toolsButtonHoverBtn.addEventListener('mouseenter', () => {
-                        toolsButtonHoverFlag = true;
-                        if (toolsModalCloseTimeoutId) {
-                            clearTimeout(toolsModalCloseTimeoutId);
-                            toolsModalCloseTimeoutId = null;
-                        }
-                        if (!toolsModalHoverModal.classList.contains('active')) {
-                            toolsModalHoverModal.classList.add('active');
-                        }
-                    });
-                    toolsButtonHoverBtn.addEventListener('mouseleave', () => {
-                        toolsButtonHoverFlag = false;
-                        toolsModalCloseTimeoutId = window.setTimeout(() => {
-                            if (!toolsModalHoverFlag && !toolsButtonHoverFlag) {
-                                toolsModalHoverModal.classList.remove('active');
-                            }
-                        }, 120);
-                    });
-                    toolsModalHoverModal.addEventListener('mouseenter', () => {
-                        toolsModalHoverFlag = true;
-                        if (toolsModalCloseTimeoutId) {
-                            clearTimeout(toolsModalCloseTimeoutId);
-                            toolsModalCloseTimeoutId = null;
-                        }
-                        if (!toolsModalHoverModal.classList.contains('active')) {
-                            toolsModalHoverModal.classList.add('active');
-                        }
-                    });
-                    toolsModalHoverModal.addEventListener('mouseleave', () => {
-                        toolsModalHoverFlag = false;
-                        toolsModalCloseTimeoutId = window.setTimeout(() => {
-                            if (!toolsModalHoverFlag && !toolsButtonHoverFlag) {
-                                toolsModalHoverModal.classList.remove('active');
-                            }
-                        }, 120);
-                    });
-                    // Отключить клик
-                    toolsButtonHoverBtn.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                    });
-                }
+                // // --- Улучшенная логика открытия tools-модалки по ховеру ---
+                // const toolsButtonHoverBtn = iframeDoc.querySelector('.tools_button');
+                // const toolsModalHoverModal = iframeDoc.getElementById('tools-modal');
+                // let toolsModalHoverFlag = false;
+                // let toolsButtonHoverFlag = false;
+                // let toolsModalCloseTimeoutId: number | null = null;
+                // if (toolsButtonHoverBtn && toolsModalHoverModal) {
+                //     toolsButtonHoverBtn.addEventListener('mouseenter', () => {
+                //         toolsButtonHoverFlag = true;
+                //         if (toolsModalCloseTimeoutId) {
+                //             clearTimeout(toolsModalCloseTimeoutId);
+                //             toolsModalCloseTimeoutId = null;
+                //         }
+                //         if (!toolsModalHoverModal.classList.contains('active')) {
+                //             toolsModalHoverModal.classList.add('active');
+                //         }
+                //     });
+                //     toolsButtonHoverBtn.addEventListener('mouseleave', () => {
+                //         toolsButtonHoverFlag = false;
+                //         toolsModalCloseTimeoutId = window.setTimeout(() => {
+                //             if (!toolsModalHoverFlag && !toolsButtonHoverFlag) {
+                //                 toolsModalHoverModal.classList.remove('active');
+                //             }
+                //         }, 120);
+                //     });
+                //     toolsModalHoverModal.addEventListener('mouseenter', () => {
+                //         toolsModalHoverFlag = true;
+                //         if (toolsModalCloseTimeoutId) {
+                //             clearTimeout(toolsModalCloseTimeoutId);
+                //             toolsModalCloseTimeoutId = null;
+                //         }
+                //         if (!toolsModalHoverModal.classList.contains('active')) {
+                //             toolsModalHoverModal.classList.add('active');
+                //         }
+                //     });
+                //     toolsModalHoverModal.addEventListener('mouseleave', () => {
+                //         toolsModalHoverFlag = false;
+                //         toolsModalCloseTimeoutId = window.setTimeout(() => {
+                //             if (!toolsModalHoverFlag && !toolsButtonHoverFlag) {
+                //                 toolsModalHoverModal.classList.remove('active');
+                //             }
+                //         }, 120);
+                //     });
+                //     // Отключить клик
+                //     toolsButtonHoverBtn.addEventListener('click', (e) => {
+                //         e.preventDefault();
+                //         e.stopPropagation();
+                //     });
+                // }
 
                 const langDropdown = iframeDoc.getElementById('lang-modal-dropdown');
                 const langSelected = iframeDoc.getElementById('lang-modal-dropdown-selected');
