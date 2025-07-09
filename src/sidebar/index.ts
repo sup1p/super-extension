@@ -80,10 +80,6 @@ export class Sidebar {
                 this.hideIconOn = result.hideIconOn;
             }
             // Добавляем example.com по умолчанию, если его нет
-            if (!this.hideIconOn.includes('example.com')) {
-                this.hideIconOn.push('example.com');
-                chrome.storage.local.set({ hideIconOn: this.hideIconOn });
-            }
             if (result.sidebarTheme === 'light' || result.sidebarTheme === 'dark') {
                 this.theme = result.sidebarTheme;
             } else {
@@ -138,8 +134,13 @@ export class Sidebar {
         this.floatingButton = document.createElement('div');
         this.floatingButton.id = 'chrome-extension-floating-button';
         const iconUrl = chrome.runtime.getURL('public/icon.png');
+        // Крестик всегда ближе к сайдбару
+        const closeBtnStyle = this.sidebarPosition === 'left'
+            ? 'display:none;position:absolute;top:5px;left:4px;width:22px;height:22px;border:none;border-radius:50%;color:#888;cursor:pointer;z-index:2;font-size:16px;align-items:center;justify-content:center;line-height:1;padding:0;transition:background 0.15s;'
+            : 'display:none;position:absolute;top:5px;right:4px;width:22px;height:22px;border:none;border-radius:50%;color:#888;cursor:pointer;z-index:2;font-size:16px;align-items:center;justify-content:center;line-height:1;padding:0;transition:background 0.15s;';
         this.floatingButton.innerHTML = `
             <img id="floating-btn-avatar-img" src="${iconUrl}" alt="icon" style="width:28px;height:28px;object-fit:cover;display:block;border-radius:50%;margin:auto;" />
+            <button id="floating-btn-close" class="floating-btn-close" style="${closeBtnStyle}">×</button>
         `;
 
         // Create action buttons
@@ -190,6 +191,27 @@ export class Sidebar {
 
         this.floatingContainer.appendChild(actionButtonsContainer);
         this.floatingContainer.appendChild(this.floatingButton);
+
+        // --- Крестик (close button) ---
+        const closeBtn = this.floatingButton.querySelector('#floating-btn-close') as HTMLButtonElement | null;
+        if (closeBtn) {
+            // Показывать крестик при наведении на floating button
+            this.floatingButton.addEventListener('mouseenter', () => {
+                closeBtn.style.display = 'flex';
+            });
+            this.floatingButton.addEventListener('mouseleave', () => {
+                closeBtn.style.display = 'none';
+            });
+            // Клик по крестику — скрыть floating button до перезагрузки
+            closeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (this.floatingContainer) {
+                    this.floatingContainer.remove();
+                    this.floatingContainer = null;
+                    this.floatingButton = null;
+                }
+            });
+        }
 
         this.floatingContainer.addEventListener('mouseenter', () => {
             this.updateVoiceActionButtonState();
@@ -337,6 +359,21 @@ export class Sidebar {
             .chrome-extension-action-btn img {
                 width: 24px;
                 height: 24px;
+            }
+            /* Floating button close (theme support) */
+            body.theme-light .floating-btn-close {
+                background: #FAFAFA;
+                transition: background 0.15s;
+            }
+            body.theme-light .floating-btn-close:hover {
+                background: #e0e0e0;
+            }
+            body.theme-dark .floating-btn-close {
+                background: #151515;
+                transition: background 0.15s;
+            }
+            body.theme-dark .floating-btn-close:hover {
+                background: #232323;
             }
         `;
         document.head.appendChild(styleElement);
@@ -2701,6 +2738,9 @@ export class Sidebar {
                     updateSidebarIcons(theme);
                     updateHomeScreenIcon(theme);
                     this.updateFloatingButtonTheme();
+                    // Синхронизируем тему на основном body для floating button
+                    document.body.classList.remove('theme-light', 'theme-dark');
+                    document.body.classList.add('theme-' + t);
                 };
                 if (themeSelect) {
                     themeSelect.value = this.theme;
