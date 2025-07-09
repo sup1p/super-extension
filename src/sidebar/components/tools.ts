@@ -106,11 +106,6 @@ export class ToolsComponent {
                         if ((window as any).PageTranslateService?.disableTranslateMode) {
                             (window as any).PageTranslateService.disableTranslateMode();
                         }
-                        // Собираем текст
-                        const texts = (window as any).PageTranslateService
-                            ? (window as any).PageTranslateService.getAllVisibleText()
-                            : [];
-                        const fullText = texts.join('\n');
                         // Показываем лоадер
                         if (loader) loader.style.display = 'flex';
                         // Получаем токен
@@ -129,7 +124,7 @@ export class ToolsComponent {
                                         'accept': 'application/json',
                                         ...(token ? { 'Authorization': `Bearer ${token}` } : {})
                                     },
-                                    body: JSON.stringify({ text: fullText })
+                                    body: JSON.stringify({ url: window.location.href })
                                 }
                             );
                             summary = typeof data === 'string' ? data : (data.summary || JSON.stringify(data));
