@@ -306,10 +306,22 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
             focus: true // явно просим открыть сайдбар и показать заметку
         });
     }
+    if (info.menuItemId === 'megan-summarize' && info.selectionText && tab?.id) {
+        chrome.tabs.sendMessage(tab.id, {
+            type: 'SHOW_SUMMARIZE_POPUP',
+            text: info.selectionText
+        });
+    }
     if (info.menuItemId === 'megan-translate' && info.selectionText && tab?.id) {
         chrome.tabs.sendMessage(tab.id, {
             type: 'SHOW_TRANSLATE_POPUP',
             text: info.selectionText
         });
     }
+});
+
+const API_URL = import.meta.env.VITE_API_URL;
+
+chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+    if (msg.type === 'GET_API_URL') sendResponse({ API_URL });
 });
