@@ -117,7 +117,7 @@ export class ToolsComponent {
                         let summary = '';
                         try {
                             const data = await fetchViaBackground(
-                                `${API_URL}/tool/summarize`,
+                                `${API_URL}/tool/summarize/new`,
                                 {
                                     method: 'POST',
                                     headers: {

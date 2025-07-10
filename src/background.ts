@@ -250,39 +250,32 @@ chrome.action.onClicked.addListener((tab) => {
 
 // --- CONTEXT MENU: Megan actions ---
 chrome.runtime.onInstalled.addListener(() => {
-    // Удаляем старое меню, если есть
     chrome.contextMenus.removeAll(() => {
-        // Корневой пункт
-        chrome.contextMenus.create({
-            id: 'megan-actions-root',
-            title: 'Megan actions:',
-            contexts: ['selection'],
-        });
-        // Подменю
-
+        // Все пункты на верхнем уровне
         chrome.contextMenus.create({
             id: 'megan-save',
-            parentId: 'megan-actions-root',
             title: 'Save',
             contexts: ['selection'],
         });
         chrome.contextMenus.create({
             id: 'megan-summarize',
-            parentId: 'megan-actions-root',
             title: 'Summarize',
             contexts: ['selection'],
         });
         chrome.contextMenus.create({
             id: 'megan-translate',
-            parentId: 'megan-actions-root',
             title: 'Translate',
             contexts: ['selection'],
         });
         chrome.contextMenus.create({
             id: 'megan-voice',
-            parentId: 'megan-actions-root',
             title: 'Megan voice',
             contexts: ['selection'],
+        });
+        chrome.contextMenus.create({
+            id: 'megan-simple-chat',
+            title: 'Chat',
+            contexts: ['all'],
         });
     });
 });
@@ -318,10 +311,25 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
             text: info.selectionText
         });
     }
+    if (info.menuItemId === 'megan-voice' && info.selectionText && tab?.id) {
+        chrome.tabs.sendMessage(tab.id, {
+            type: 'SHOW_VOICE_POPUP',
+            text: info.selectionText
+        });
+    }
+    // УДАЛЕНО: if (info.menuItemId === 'megan-chat' ... )
+    if (info.menuItemId === 'megan-simple-chat' && tab?.id) {
+        // Открыть плавающее окно чата (без текста)
+        chrome.tabs.sendMessage(tab.id, { type: 'SHOW_CHAT_POPUP', text: '' });
+    }
 });
 
 const API_URL = import.meta.env.VITE_API_URL;
+const WS_URL = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_WS_URL)
+    ? import.meta.env.VITE_WS_URL
+    : (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/^http(s?):\/\//, 'ws://') : '');
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     if (msg.type === 'GET_API_URL') sendResponse({ API_URL });
+    if (msg.type === 'GET_WS_URL') sendResponse({ WS_URL });
 });

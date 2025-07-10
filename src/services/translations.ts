@@ -495,6 +495,117 @@ export const translations: Translations = {
       </div>
     </div>
   </div>`
+    },
+    // --- Popup UI ---
+    'translate_text': {
+        en: 'Translate text',
+        ru: 'Перевести текст',
+        es: 'Traducir texto'
+    },
+    'summarize_text': {
+        en: 'Summarize text',
+        ru: 'Суммировать текст',
+        es: 'Resumir texto'
+    },
+    'voice_playback': {
+        en: 'Voice playback',
+        ru: 'Воспроизведение голоса',
+        es: 'Reproducción de voz'
+    },
+    'chat_with_megan': {
+        en: 'Chat with Megan',
+        ru: 'Чат с Меган',
+        es: 'Chat con Megan'
+    },
+    'summary_placeholder': {
+        en: 'Summary will appear here...',
+        ru: 'Здесь появится краткое содержание...',
+        es: 'El resumen aparecerá aquí...'
+    },
+    'login_required_translate': {
+        en: 'Login required to use translate.',
+        ru: 'Для перевода требуется вход.',
+        es: 'Se requiere iniciar sesión para traducir.'
+    },
+    'login_required_summarize': {
+        en: 'Login required to use summarize.',
+        ru: 'Для суммирования требуется вход.',
+        es: 'Se requiere iniciar sesión para resumir.'
+    },
+    'login_required_voice': {
+        en: 'Login required to use voice.',
+        ru: 'Для озвучивания требуется вход.',
+        es: 'Se requiere iniciar sesión para usar voz.'
+    },
+    'login_required_chat': {
+        en: 'Login required to use chat.',
+        ru: 'Для чата требуется вход.',
+        es: 'Se requiere iniciar sesión para chatear.'
+    },
+    'translating': {
+        en: 'Translating...',
+        ru: 'Перевод...',
+        es: 'Traduciendo...'
+    },
+    'summarizing': {
+        en: 'Summarizing...',
+        ru: 'Суммирование...',
+        es: 'Resumiendo...'
+    },
+    'synthesizing_voice': {
+        en: 'Synthesizing voice...',
+        ru: 'Синтез голоса...',
+        es: 'Sintetizando voz...'
+    },
+    'text_synthesizing_wait': {
+        en: 'Text synthesizing... Please, wait',
+        ru: 'Синтез текста... Пожалуйста, подождите',
+        es: 'Sintetizando texto... Por favor, espere'
+    },
+    'translation_error': {
+        en: 'Translation error',
+        ru: 'Ошибка перевода',
+        es: 'Error de traducción'
+    },
+    'error': {
+        en: 'Error',
+        ru: 'Ошибка',
+        es: 'Error'
+    },
+    'no_summary': {
+        en: 'No summary.',
+        ru: 'Нет краткого содержания.',
+        es: 'Sin resumen.'
+    },
+    'could_not_synthesize_audio': {
+        en: 'Could not synthesize audio.',
+        ru: 'Не удалось синтезировать аудио.',
+        es: 'No se pudo sintetizar el audio.'
+    },
+    'ai_thinking': {
+        en: 'AI is thinking...',
+        ru: 'ИИ думает...',
+        es: 'La IA está pensando...'
+    },
+    'error_websocket': {
+        en: 'Error: WebSocket error',
+        ru: 'Ошибка: ошибка WebSocket',
+        es: 'Error: error de WebSocket'
+    },
+    'error_ws_not_connected': {
+        en: 'Error: WebSocket not connected',
+        ru: 'Ошибка: WebSocket не подключен',
+        es: 'Error: WebSocket no conectado'
+    },
+    'error_invalid_message_format': {
+        en: 'Error: Invalid message format',
+        ru: 'Ошибка: неверный формат сообщения',
+        es: 'Error: formato de mensaje no válido'
+    },
+    'success_note_saved': {
+        en: 'Note saved successfully!',
+        ru: 'Заметка успешно сохранена!',
+        es: '¡Nota guardada con éxito!'
     }
 };
 

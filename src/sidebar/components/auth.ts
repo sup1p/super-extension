@@ -118,7 +118,8 @@ export class AuthComponent {
 }
 
 export function showAuthModal(doc: Document) {
-    if (doc.getElementById('auth-modal')) return;
+    // Показывать только если это не основной document (т.е. iframe)
+    if (doc === window.document && window.top === window.self) return; // Не показывать на основном сайте
 
     // Detect theme using the same logic as in sidebar
     const getCurrentTheme = (): 'light' | 'dark' => {

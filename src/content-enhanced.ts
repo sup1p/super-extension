@@ -1,5 +1,6 @@
 import { Sidebar } from './sidebar';
 import { AuthService } from './services/auth';
+import { TranslationService } from './services/translations';
 
 // Initialize the sidebar
 const sidebarInstance = new Sidebar();
@@ -216,7 +217,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                     token = String(await (AuthService as any).getToken() || '');
                 }
                 if (!token) {
-                    alert('Login required to save note.');
+                    showNotification(TranslationService.translate('login_required_save_note'), 'error');
                     return;
                 }
                 let NotesService;
@@ -227,6 +228,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                 }
                 const note = await NotesService.createNote(message.title, message.text, token, document);
                 if (note) {
+                    showNotification(TranslationService.translate('success_note_saved'), 'success');
                     if (message.focus) {
                         if (!(window as any).sidebarInstance.isOpen()) {
                             await (window as any).sidebarInstance.openSidebar();
@@ -263,10 +265,11 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                         }
                     }
                 } else {
-                    alert('Failed to create note.');
+                    showNotification(TranslationService.translate('failed_create_note'), 'error');
                 }
             } catch (e) {
                 console.error('[content-enhanced] Error creating note:', e);
+                showNotification(TranslationService.translate('error_creating_note') + ' ' + (e instanceof Error ? e.message : String(e)), 'error');
             }
         })();
     } else if (message.type === 'SHOW_TRANSLATE_POPUP') {
@@ -287,7 +290,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                 box-shadow: 0 8px 32px #0008;
                 padding: 28px 28px 22px 28px;
                 min-width: 340px;
-                max-width: 96vw;
+                max-width: 350px;
                 font-family: 'Poppins', 'Inter', Arial, sans-serif;
                 border: 1.5px solid #715CFF;
                 display: flex;
@@ -345,7 +348,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
             popup.appendChild(closeBtn);
             // Заголовок
             const title = document.createElement('div');
-            title.textContent = 'Translate text';
+            title.textContent = TranslationService.translate('translate_text');
             title.style.cssText = 'font-size:18px;font-weight:600;margin-bottom:2px;cursor:move;user-select:none;z-index:1;';
             // Drag events (оставляем как было)
             let isDragging = false, dragOffsetX = 0, dragOffsetY = 0;
@@ -407,13 +410,13 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
             popup.appendChild(langRow);
             // Кнопка перевода
             const btn = document.createElement('button');
-            btn.textContent = 'Translate';
+            btn.textContent = TranslationService.translate('translate');
             btn.style.cssText = 'margin-top:8px;padding:10px 0;font-size:15px;font-weight:600;background:#715CFF;color:#fff;border:none;border-radius:8px;cursor:pointer;';
             popup.appendChild(btn);
             // Переведённый текст
             const dstArea = document.createElement('textarea');
             dstArea.readOnly = true;
-            dstArea.placeholder = 'Translation will appear here...';
+            dstArea.placeholder = TranslationService.translate('translation_placeholder');
             dstArea.style.cssText = 'width:100%;min-width:220px;max-width:100%;height:70px;padding:8px 10px;font-size:15px;border-radius:8px;border:1px solid #444;background:#181818;color:#fff;resize:vertical;margin-top:8px;overflow-y:auto;';
             // --- Custom scrollbar styles (like dropdown) ---
             if (!document.getElementById('megan-translate-popup-scrollbar-style')) {
@@ -447,6 +450,14 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                     body.theme-light #megan-translate-popup textarea {
                         scrollbar-color: #AA97FF #F5F5F5;
                     }
+                    /* --- Не менять цвет бордера при фокусе --- */
+                    #megan-translate-popup textarea:focus {
+                        outline: none;
+                        border: 1px solid #715CFF !important;
+                    }
+                    body.theme-light #megan-translate-popup textarea:focus {
+                        border: 1px solid #AA97FF !important;
+                    }
                 `;
                 document.head.appendChild(style);
             }
@@ -456,13 +467,31 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                 const { TranslateService } = await import('./services/translate');
                 const text = message.text.trim();
                 if (!text) return;
-                dstArea.value = 'Translating...';
+                dstArea.value = TranslationService.translate('translating');
+                let token = '';
+                if ((window as any).AuthService) {
+                    token = String(await (window as any).AuthService.getToken() || '');
+                } else if (typeof AuthService !== 'undefined') {
+                    token = String(await (AuthService as any).getToken() || '');
+                }
+                if (!token) {
+                    showNotification(TranslationService.translate('login_required_translate'), 'error');
+                    dstArea.value = TranslationService.translate('login_required_translate');
+                    return;
+                }
                 try {
                     const code = dropdown.getAttribute('data-value') || 'en';
                     const result = await TranslateService["translateText"](text, 'auto', code);
                     dstArea.value = result;
                 } catch (err) {
-                    dstArea.value = 'Error: ' + (err instanceof Error ? err.message : String(err));
+                    // Всегда показываем notification если ошибка связана с авторизацией
+                    if (err instanceof Error && err.message && err.message.includes('No auth token')) {
+                        showNotification(TranslationService.translate('login_required_translate'), 'error');
+                        dstArea.value = TranslationService.translate('login_required_translate');
+                    } else {
+                        showNotification(TranslationService.translate('translation_error'), 'error');
+                        dstArea.value = TranslationService.translate('error') + ': ' + (err instanceof Error ? err.message : String(err));
+                    }
                 }
             };
             // Автоматически переводим сразу при открытии
@@ -478,7 +507,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                 title.style.color = isLight ? '#232323' : '#fff';
                 dstArea.style.background = isLight ? '#fff' : '#181818';
                 dstArea.style.color = isLight ? '#232323' : '#fff';
-                dstArea.style.border = isLight ? '1px solid #AA97FF' : '1px solid #444';
+                dstArea.style.border = isLight ? '1px solid #AA97FF' : '1px solid #715CFF';
                 btn.style.background = isLight ? '#AA97FF' : '#715CFF';
                 btn.style.color = '#fff';
                 btn.style.border = 'none';
@@ -504,7 +533,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                 box-shadow: 0 8px 32px #0008;
                 padding: 28px 28px 22px 28px;
                 min-width: 340px;
-                max-width: 96vw;
+                max-width: 350px;
                 font-family: 'Poppins', 'Inter', Arial, sans-serif;
                 display: flex;
                 flex-direction: column;
@@ -561,7 +590,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
             popup.appendChild(closeBtn);
             // Заголовок
             const title = document.createElement('div');
-            title.textContent = 'Summarize text';
+            title.textContent = TranslationService.translate('summarize_text');
             title.style.cssText = 'font-size:18px;font-weight:600;margin-bottom:2px;cursor:move;user-select:none;z-index:1;';
             // Drag events
             let isDragging = false, dragOffsetX = 0, dragOffsetY = 0;
@@ -588,13 +617,13 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
             popup.appendChild(title);
             // Кнопка summarize
             const btn = document.createElement('button');
-            btn.textContent = 'Summarize';
+            btn.textContent = TranslationService.translate('summarize');
             btn.style.cssText = 'margin-top:8px;padding:10px 0;font-size:15px;font-weight:600;background:#715CFF;color:#fff;border:none;border-radius:8px;cursor:pointer;';
             popup.appendChild(btn);
             // Результат
             const dstArea = document.createElement('textarea');
             dstArea.readOnly = true;
-            dstArea.placeholder = 'Summary will appear here...';
+            dstArea.placeholder = TranslationService.translate('summary_placeholder');
             dstArea.style.cssText = 'width:100%;min-width:220px;max-width:100%;height:90px;padding:8px 10px;font-size:15px;border-radius:8px;border:1px solid #444;background:#181818;color:#fff;resize:vertical;margin-top:8px;overflow-y:auto;';
             // --- Custom scrollbar styles (like dropdown) ---
             if (!document.getElementById('megan-summarize-popup-scrollbar-style')) {
@@ -636,13 +665,18 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
             btn.onclick = async () => {
                 const text = message.text.trim();
                 if (!text) return;
-                dstArea.value = 'Summarizing...';
+                dstArea.value = TranslationService.translate('summarizing');
                 try {
                     let token = '';
                     if ((window as any).AuthService) {
                         token = String(await (window as any).AuthService.getToken() || '');
                     } else if (typeof AuthService !== 'undefined') {
                         token = String(await (AuthService as any).getToken() || '');
+                    }
+                    if (!token) {
+                        showNotification(TranslationService.translate('login_required_summarize'), 'error');
+                        dstArea.value = TranslationService.translate('login_required_summarize');
+                        return;
                     }
                     const API_URL = await getApiUrl();
                     const resp = await new Promise((resolve, reject) => {
@@ -664,9 +698,17 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                         });
                     });
                     const data = await (resp as any).json();
-                    dstArea.value = data.summarized_text || 'No summary.';
+                    dstArea.value = data.summarized_text || TranslationService.translate('no_summary');
                 } catch (err) {
-                    dstArea.value = 'Error: ' + (err instanceof Error ? err.message : String(err));
+                    if (
+                        (err && typeof err === 'object' && 'status' in err && err.status === 401) ||
+                        (err instanceof Error && err.message && err.message.toLowerCase().includes('auth'))
+                    ) {
+                        showNotification(TranslationService.translate('login_required_summarize'), 'error');
+                        dstArea.value = TranslationService.translate('login_required_summarize');
+                    } else {
+                        dstArea.value = TranslationService.translate('error') + ': ' + (err instanceof Error ? err.message : String(err));
+                    }
                 }
             };
             // Автоматически summarize сразу при открытии
@@ -681,7 +723,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                 title.style.color = isLight ? '#232323' : '#fff';
                 dstArea.style.background = isLight ? '#fff' : '#181818';
                 dstArea.style.color = isLight ? '#232323' : '#fff';
-                dstArea.style.border = isLight ? '1px solid #AA97FF' : '1px solid #444';
+                dstArea.style.border = isLight ? '1px solid #AA97FF' : '1px solid #715CFF';
                 btn.style.background = isLight ? '#AA97FF' : '#715CFF';
                 btn.style.color = '#fff';
                 btn.style.border = 'none';
@@ -689,6 +731,628 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
             applyPopupTheme();
             const observer = new MutationObserver(applyPopupTheme);
             observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+        })();
+    } else if (message.type === 'SHOW_VOICE_POPUP') {
+        (async () => {
+            // Удалить старый попап если есть
+            const old = document.getElementById('megan-voice-popup');
+            if (old) old.remove();
+            // Показать notification о процессе озвучки
+            showNotification(TranslationService.translate('text_synthesizing_wait'), 'success');
+            // Создать контейнер
+            const popup = document.createElement('div');
+            popup.id = 'megan-voice-popup';
+            popup.style.cssText = `
+                position: fixed;
+                z-index: 2147483647;
+                top: 130px; right: 50px;
+                border-radius: 16px;
+                box-shadow: 0 8px 32px #0008;
+                padding: 28px 28px 22px 28px;
+                min-width: 340px;
+                max-width: 350px;
+                font-family: 'Poppins', 'Inter', Arial, sans-serif;
+                display: flex;
+                flex-direction: column;
+                gap: 14px;
+                animation: fadeIn 0.2s;
+                cursor: default;
+                background: #232323;
+                color: #fff;
+                border: 1.5px solid #715CFF;
+            `;
+            // --- Стили для popup (общие с translate/summarize) ---
+            if (!document.getElementById('megan-voice-popup-style')) {
+                const style = document.createElement('style');
+                style.id = 'megan-voice-popup-style';
+                style.textContent = `
+                    .megan-voice-popup-dark {
+                        background: #232323 !important;
+                        color: #fff !important;
+                        border: 1.5px solid #715CFF !important;
+                    }
+                    .megan-voice-popup-light {
+                        background: #FAFAFA !important;
+                        color: #232323 !important;
+                        border: 1.5px solid #AA97FF !important;
+                    }
+                    body.theme-light #megan-voice-popup {
+                        background: #FAFAFA !important;
+                        color: #232323 !important;
+                        border: 1.5px solid #AA97FF !important;
+                    }
+                    /* --- Кастомные стили для <audio> --- */
+                    #megan-voice-popup audio {
+                        background: #232323;
+                        border-radius: 12px;
+                        box-shadow: 0 2px 8px #0002;
+                        color-scheme: dark;
+                        margin-bottom: 2px;
+                    }
+                    #megan-voice-popup audio::-webkit-media-controls-panel {
+                        background: #292929;
+                        border-radius: 12px;
+                    }
+                    #megan-voice-popup audio::-webkit-media-controls-play-button,
+                    #megan-voice-popup audio::-webkit-media-controls-mute-button,
+                    #megan-voice-popup audio::-webkit-media-controls-volume-slider,
+                    #megan-voice-popup audio::-webkit-media-controls-timeline {
+                        filter: invert(0.8) grayscale(0.2);
+                    }
+                    #megan-voice-popup audio::-webkit-media-controls-current-time-display,
+                    #megan-voice-popup audio::-webkit-media-controls-time-remaining-display {
+                        color: #eee;
+                    }
+                    body.theme-light #megan-voice-popup audio,
+                    body.theme-light #megan-voice-popup audio::-webkit-media-controls-panel {
+                        background: #fff;
+                        color-scheme: light;
+                    }
+                    body.theme-light #megan-voice-popup audio::-webkit-media-controls-current-time-display,
+                    body.theme-light #megan-voice-popup audio::-webkit-media-controls-time-remaining-display {
+                        color: #232323;
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            // Кнопка закрытия
+            const closeBtn = document.createElement('button');
+            closeBtn.textContent = '×';
+            closeBtn.style.cssText = 'position:absolute;top:8px;right:12px;background:none;border:none;font-size:22px;color:#aaa;cursor:pointer;z-index:2;';
+            closeBtn.onclick = () => popup.remove();
+            popup.appendChild(closeBtn);
+            // Заголовок
+            const title = document.createElement('div');
+            title.textContent = TranslationService.translate('voice_playback');
+            title.style.cssText = 'font-size:18px;font-weight:600;margin-bottom:2px;cursor:move;user-select:none;z-index:1;';
+            // Drag events
+            let isDragging = false, dragOffsetX = 0, dragOffsetY = 0;
+            title.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                const rect = popup.getBoundingClientRect();
+                dragOffsetX = e.clientX - rect.left;
+                dragOffsetY = e.clientY - rect.top;
+                document.body.style.userSelect = 'none';
+            });
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    popup.style.left = (e.clientX - dragOffsetX) + 'px';
+                    popup.style.top = (e.clientY - dragOffsetY) + 'px';
+                    popup.style.right = '';
+                    popup.style.bottom = '';
+                    popup.style.position = 'fixed';
+                }
+            });
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+                document.body.style.userSelect = '';
+            });
+            popup.appendChild(title);
+            // Аудиоэлемент
+            const audio = document.createElement('audio');
+            audio.controls = true;
+            audio.style.width = '100%';
+            audio.style.marginTop = '10px';
+            audio.style.background = 'transparent';
+            audio.style.outline = 'none';
+            audio.style.borderRadius = '8px';
+            audio.style.boxShadow = 'none';
+            audio.style.display = 'none'; // Скрываем до загрузки
+            popup.appendChild(audio);
+            // Статус
+            const status = document.createElement('div');
+            status.textContent = TranslationService.translate('synthesizing_voice');
+            status.style.cssText = 'font-size:14px;color:#aaa;margin-top:8px;';
+            popup.appendChild(status);
+            // Добавить popup на страницу
+            document.body.appendChild(popup);
+            // --- Тема ---
+            function applyPopupTheme() {
+                const isLight = document.body.classList.contains('theme-light');
+                popup.classList.toggle('megan-voice-popup-light', isLight);
+                popup.classList.toggle('megan-voice-popup-dark', !isLight);
+                closeBtn.style.color = isLight ? '#888' : '#aaa';
+                title.style.color = isLight ? '#232323' : '#fff';
+                status.style.color = isLight ? '#888' : '#aaa';
+            }
+            applyPopupTheme();
+            const observer = new MutationObserver(applyPopupTheme);
+            observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+            // --- Запрос к API ---
+            try {
+                let token = '';
+                if ((window as any).AuthService) {
+                    token = String(await (window as any).AuthService.getToken() || '');
+                } else if (typeof AuthService !== 'undefined') {
+                    token = String(await (AuthService as any).getToken() || '');
+                }
+                if (!token) {
+                    // Нет токена — явно показываем ошибку
+                    const notif = document.querySelector('.megan-notification');
+                    if (notif) notif.remove();
+                    showNotification(TranslationService.translate('login_required_voice'), 'error');
+                    status.textContent = TranslationService.translate('login_required_voice');
+                    return;
+                }
+                const API_URL = await getApiUrl();
+                const resp = await new Promise((resolve, reject) => {
+                    chrome.runtime.sendMessage({
+                        type: "TOOLS_LOGIC",
+                        url: `${API_URL}/tools/voice/selected`,
+                        options: {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "Authorization": token ? `Bearer ${token}` : ""
+                            },
+                            body: JSON.stringify({ text: message.text })
+                        }
+                    }, (response) => {
+                        if (!response) reject("No response from background");
+                        else if (!response.ok) reject(response);
+                        else resolve({ ok: true, json: () => response.data });
+                    });
+                });
+                const data = await (resp as any).json();
+                // Скрыть notification после получения результата
+                const notif = document.querySelector('.megan-notification');
+                if (notif) notif.remove();
+                if (data.audio_base64) {
+                    audio.src = `data:audio/mp3;base64,${data.audio_base64}`;
+                    audio.style.display = '';
+                    status.textContent = '';
+                    audio.play();
+                } else {
+                    status.textContent = data.text || TranslationService.translate('could_not_synthesize_audio');
+                }
+            } catch (err) {
+                // Скрыть notification при ошибке
+                const notif = document.querySelector('.megan-notification');
+                if (notif) notif.remove();
+                let errorMsg = '';
+                if (err && typeof err === 'object') {
+                    if ('status' in err && err.status === 401) {
+                        errorMsg = TranslationService.translate('login_required_voice');
+                        showNotification(errorMsg, 'error');
+                    } else if ('message' in err && typeof err.message === 'string') {
+                        errorMsg = err.message;
+                    } else {
+                        errorMsg = TranslationService.translate('unknown_error');
+                    }
+                } else if (typeof err === 'string') {
+                    errorMsg = err;
+                } else {
+                    errorMsg = TranslationService.translate('unknown_error');
+                }
+                status.textContent = errorMsg;
+            }
+        })();
+    } else if (message.type === 'SHOW_CHAT_POPUP') {
+        (async () => {
+            // Удалить старый попап если есть
+            const old = document.getElementById('megan-chat-popup');
+            if (old) old.remove();
+            // Создать контейнер
+            const popup = document.createElement('div');
+            popup.id = 'megan-chat-popup';
+            popup.style.cssText = `
+                position: fixed;
+                z-index: 2147483647;
+                top: 70px; right: 50px;
+                left: auto;
+                bottom: auto;
+                border-radius: 16px;
+                box-shadow: 0 8px 32px #0008;
+                padding: 24px 24px 18px 24px;
+                min-width: 340px;
+                max-width: 350px;
+                height: 300px;
+                font-family: 'Poppins', 'Inter', Arial, sans-serif;
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                animation: fadeIn 0.2s;
+                cursor: default;
+                background: #232323;
+                color: #fff;
+                border: 1.5px solid #715CFF;
+            `;
+            // --- Стили для popup ---
+            if (!document.getElementById('megan-chat-popup-style')) {
+                const style = document.createElement('style');
+                style.id = 'megan-chat-popup-style';
+                style.textContent = `
+                    .megan-chat-popup-dark {
+                        background: #232323 !important;
+                        color: #fff !important;
+                        border: 1.5px solid #715CFF !important;
+                    }
+                    .megan-chat-popup-light {
+                        background: #FAFAFA !important;
+                        color: #232323 !important;
+                        border: 1.5px solid #AA97FF !important;
+                    }
+                    body.theme-light #megan-chat-popup {
+                        background: #FAFAFA !important;
+                        color: #232323 !important;
+                        border: 1.5px solid #AA97FF !important;
+                    }
+                    #megan-chat-popup textarea {
+                        width: 100%;
+                        min-width: 220px;
+                        max-width: 100%;
+                        height: 72px;
+                        padding: 8px 10px;
+                        font-size: 15px;
+                        border-radius: 8px;
+                        border: 1px solid #444;
+                        background: #181818;
+                        color: #fff;
+                        resize: none;
+                        margin-top: 8px;
+                        overflow-y: auto;
+                    }
+                    body.theme-light #megan-chat-popup textarea {
+                        background: #fff;
+                        color: #232323;
+                        border: 1px solid #AA97FF;
+                    }
+                    #megan-chat-popup .chat-history {
+                        background: transparent;
+                        color: inherit;
+                        max-height: 220px;
+                        overflow-y: auto;
+                        margin-bottom: 8px;
+                        font-size: 15px;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 8px;
+                    }
+                    #megan-chat-popup .chat-msg-user {
+                        align-self: flex-end;
+                        background: #715CFF;
+                        color: #fff;
+                        border-radius: 10px 10px 2px 10px;
+                        padding: 7px 12px;
+                        max-width: 80%;
+                        word-break: break-word;
+                        border: none;
+                    }
+                    body.theme-light #megan-chat-popup .chat-msg-user {
+                        background: #AA97FF;
+                        color: #fff;
+                    }
+                    #megan-chat-popup .chat-msg-ai {
+                        align-self: flex-start;
+                        background: transparent;
+                        color: var(--color-text);
+                        border-radius: 10px 10px 10px 2px;
+                        padding: 7px 12px;
+                        max-width: 80%;
+                        word-break: break-word;
+                    }
+                    #megan-chat-popup .chat-input-row {
+                        display: flex;
+                        gap: 8px;
+                        align-items: flex-end;
+                    }
+                    #megan-chat-popup .chat-send-btn {
+                        background: #715CFF;
+                        color: #fff;
+                        border: none;
+                        border-radius: 8px;
+                        padding: 8px 16px;
+                        font-size: 15px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        transition: background 0.2s;
+                    }
+                    #megan-chat-popup .chat-send-btn:active {
+                        background: #5a47c7;
+                    }
+                    /* Анимация "раздумья" */
+                    .ai-thinking-animation .dot {
+                        opacity: 0.3;
+                        font-size: 22px;
+                        font-weight: bold;
+                        display: inline-block;
+                        transform: translateY(0);
+                        will-change: transform, opacity;
+                        animation: ai-dot-bounce 1.2s cubic-bezier(0.4,0,0.2,1) infinite both;
+                        animation-fill-mode: both;
+                    }
+                    .ai-thinking-animation .dot1 { animation-delay: 0s; }
+                    .ai-thinking-animation .dot2 { animation-delay: 0.2s; }
+                    .ai-thinking-animation .dot3 { animation-delay: 0.4s; }
+                    @keyframes ai-dot-bounce {
+                        0%, 80%, 100% { opacity: 0.3; transform: translateY(0); }
+                        40% { opacity: 1; transform: translateY(-13px); }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            // --- Кастомный скроллбар для истории чата ---
+            if (!document.getElementById('megan-chat-popup-scrollbar-style')) {
+                const style = document.createElement('style');
+                style.id = 'megan-chat-popup-scrollbar-style';
+                style.textContent = `
+                    #megan-chat-popup .chat-history {
+                        scrollbar-width: thin;
+                        scrollbar-color: #715CFF #232323;
+                    }
+                    #megan-chat-popup .chat-history::-webkit-scrollbar {
+                        width: 7px;
+                        background: #232323;
+                    }
+                    #megan-chat-popup .chat-history::-webkit-scrollbar-thumb {
+                        background: #715CFF;
+                        border-radius: 6px;
+                    }
+                    #megan-chat-popup .chat-history::-webkit-scrollbar-track {
+                        background: #232323;
+                    }
+                    body.theme-light #megan-chat-popup .chat-history {
+                        scrollbar-color: #AA97FF #F5F5F5;
+                    }
+                    body.theme-light #megan-chat-popup .chat-history::-webkit-scrollbar {
+                        background: #F5F5F5;
+                    }
+                    body.theme-light #megan-chat-popup .chat-history::-webkit-scrollbar-thumb {
+                        background: #AA97FF;
+                    }
+                    body.theme-light #megan-chat-popup .chat-history::-webkit-scrollbar-track {
+                        background: #F5F5F5;
+                    }
+                    /* Не менять цвет бордера textarea при фокусе */
+                    #megan-chat-popup textarea:focus {
+                        outline: none;
+                        border: 1px solid #444 !important;
+                    }
+                    body.theme-light #megan-chat-popup textarea:focus {
+                        border: 1px solid #AA97FF !important;
+                    }
+                    /* Скрыть скроллбар в textarea */
+                    #megan-chat-popup textarea::-webkit-scrollbar {
+                        display: none;
+                    }
+                    #megan-chat-popup textarea {
+                        scrollbar-width: none;
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            // Кнопка закрытия
+            const closeBtn = document.createElement('button');
+            closeBtn.textContent = '×';
+            closeBtn.style.cssText = 'position:absolute;top:8px;right:12px;background:none;border:none;font-size:22px;color:#aaa;cursor:pointer;z-index:2;';
+            closeBtn.onclick = () => popup.remove();
+            popup.appendChild(closeBtn);
+            // Заголовок
+            const title = document.createElement('div');
+            title.textContent = TranslationService.translate('chat_with_megan');
+            title.style.cssText = 'font-size:18px;font-weight:600;margin-bottom:2px;cursor:move;user-select:none;z-index:1;';
+            // Drag events
+            let isDragging = false, dragOffsetX = 0, dragOffsetY = 0;
+            title.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                const rect = popup.getBoundingClientRect();
+                dragOffsetX = e.clientX - rect.left;
+                dragOffsetY = e.clientY - rect.top;
+                document.body.style.userSelect = 'none';
+            });
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    popup.style.left = (e.clientX - dragOffsetX) + 'px';
+                    popup.style.top = (e.clientY - dragOffsetY) + 'px';
+                    popup.style.right = '';
+                    popup.style.bottom = '';
+                    popup.style.position = 'fixed';
+                }
+            });
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+                document.body.style.userSelect = '';
+            });
+            popup.appendChild(title);
+            // История чата
+            const historyDiv = document.createElement('div');
+            historyDiv.className = 'chat-history';
+            historyDiv.style.flex = '1 1 0';
+            historyDiv.style.minHeight = '0';
+            popup.appendChild(historyDiv);
+            // Инпут и кнопка
+            const inputRow = document.createElement('div');
+            inputRow.className = 'chat-input-row';
+            inputRow.style.position = 'relative';
+            inputRow.style.width = '100%';
+            inputRow.style.display = 'flex';
+            inputRow.style.alignItems = 'flex-end';
+            const input = document.createElement('textarea');
+            input.rows = 1;
+            input.placeholder = TranslationService.translate('chat_placeholder');
+            input.style.resize = 'none';
+            input.style.width = '100%';
+            input.style.boxSizing = 'border-box';
+            input.style.paddingRight = '70px'; // место для кнопки
+            inputRow.appendChild(input);
+            const sendBtn = document.createElement('button');
+            sendBtn.className = 'chat-send-btn';
+            sendBtn.textContent = TranslationService.translate('send');
+            sendBtn.style.position = 'absolute';
+            sendBtn.style.right = '12px';
+            sendBtn.style.bottom = '9px';
+            sendBtn.style.height = '36px';
+            sendBtn.style.padding = '0 18px';
+            sendBtn.style.fontSize = '15px';
+            sendBtn.style.fontWeight = '600';
+            sendBtn.style.borderRadius = '8px';
+            sendBtn.style.background = '#715CFF';
+            sendBtn.style.color = '#fff';
+            sendBtn.style.border = 'none';
+            sendBtn.style.cursor = 'pointer';
+            sendBtn.style.transition = 'background 0.2s';
+            sendBtn.style.zIndex = '2';
+            inputRow.appendChild(sendBtn);
+            popup.appendChild(inputRow);
+            // Добавить popup на страницу
+            document.body.appendChild(popup);
+            // --- Тема ---
+            function applyPopupTheme() {
+                const isLight = document.body.classList.contains('theme-light');
+                popup.classList.toggle('megan-chat-popup-light', isLight);
+                popup.classList.toggle('megan-chat-popup-dark', !isLight);
+                closeBtn.style.color = isLight ? '#888' : '#aaa';
+                title.style.color = isLight ? '#232323' : '#fff';
+                input.style.background = isLight ? '#fff' : '#181818';
+                input.style.color = isLight ? '#232323' : '#fff';
+                input.style.border = isLight ? '1px solid #AA97FF' : '1px solid #444';
+                sendBtn.style.background = isLight ? '#AA97FF' : '#715CFF';
+                sendBtn.style.color = '#fff';
+                sendBtn.style.border = 'none';
+            }
+            applyPopupTheme();
+            const observer = new MutationObserver(applyPopupTheme);
+            observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+            // --- Логика чата ---
+            let isLoading = false;
+            let token = '';
+            if ((window as any).AuthService) {
+                token = String(await (window as any).AuthService.getToken() || '');
+            } else if (typeof AuthService !== 'undefined') {
+                token = String(await (AuthService as any).getToken() || '');
+            }
+            if (!token) {
+                historyDiv.innerHTML = `<div style="color:#ff5252">${TranslationService.translate('login_required_chat')}</div>`;
+                input.disabled = true;
+                sendBtn.disabled = true;
+                showNotification(TranslationService.translate('login_required_chat'), 'error');
+                return;
+            }
+            // --- Получение WS_URL через background ---
+            async function getWsUrl() {
+                return new Promise((resolve) => {
+                    chrome.runtime.sendMessage({ type: 'GET_WS_URL' }, (resp) => {
+                        resolve(resp?.WS_URL || '');
+                    });
+                });
+            }
+            const wsUrl = await getWsUrl();
+            if (!wsUrl) {
+                appendMsg(TranslationService.translate('error_ws_not_connected'), 'ai');
+                input.disabled = true;
+                sendBtn.disabled = true;
+                return;
+            }
+            const ws = new WebSocket(`${wsUrl}/chat/websocket?token=${token}`);
+            ws.onopen = () => {
+                // ready
+            };
+            ws.onmessage = (event) => {
+                // Удалить анимацию "раздумья"
+                const thinking = historyDiv.querySelector('.ai-thinking-animation');
+                if (thinking) thinking.remove();
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.error) {
+                        const errMsg = String(data.error).toLowerCase();
+                        if (errMsg.includes('token') || errMsg.includes('auth') || errMsg.includes('401')) {
+                            showNotification(TranslationService.translate('login_required_chat'), 'error');
+                            appendMsg(TranslationService.translate('login_required_chat'), 'ai');
+                            input.disabled = true;
+                            sendBtn.disabled = true;
+                        } else {
+                            appendMsg(TranslationService.translate('error') + ': ' + data.error, 'ai');
+                        }
+                    } else if (data.text) {
+                        appendMsg(data.text, 'ai');
+                    }
+                } catch (e) {
+                    appendMsg(TranslationService.translate('error_invalid_message_format'), 'ai');
+                }
+                isLoading = false;
+                sendBtn.disabled = false;
+            };
+            ws.onclose = () => {
+                // optionally show disconnected
+            };
+            ws.onerror = () => {
+                appendMsg(TranslationService.translate('error_websocket'), 'ai');
+                isLoading = false;
+                sendBtn.disabled = false;
+            };
+            // --- Добавление сообщений ---
+            function appendMsg(text: string, who: 'user' | 'ai') {
+                const msgDiv = document.createElement('div');
+                msgDiv.className = who === 'user' ? 'chat-msg-user' : 'chat-msg-ai';
+                msgDiv.textContent = text;
+                historyDiv.appendChild(msgDiv);
+                historyDiv.scrollTop = historyDiv.scrollHeight;
+            }
+            // --- Анимация "раздумья" ---
+            function showThinkingAnimation() {
+                // Удалить предыдущую анимацию, если есть
+                const prev = historyDiv.querySelector('.ai-thinking-animation');
+                if (prev) prev.remove();
+                const anim = document.createElement('div');
+                anim.className = 'chat-msg-ai ai-thinking-animation';
+                anim.style.alignSelf = 'flex-start';
+                anim.style.background = '#353353';
+                anim.style.color = '#888';
+                anim.style.opacity = '0.7';
+                anim.style.fontStyle = 'italic';
+                anim.style.padding = '7px 12px';
+                anim.style.borderRadius = '10px 10px 10px 2px';
+                anim.style.maxWidth = '80%';
+                anim.style.marginTop = '2px';
+                anim.style.letterSpacing = '0.5px';
+                anim.style.fontSize = '15px';
+                anim.innerHTML = '<span class="dot dot1">.</span><span class="dot dot2">.</span><span class="dot dot3">.</span>';
+                historyDiv.appendChild(anim);
+            }
+            // --- Отправка сообщения ---
+            function sendMessage() {
+                const msg = input.value.trim();
+                if (!msg || isLoading) return;
+                input.value = '';
+                appendMsg(msg, 'user');
+                isLoading = true;
+                sendBtn.disabled = true;
+                showThinkingAnimation();
+                if (ws.readyState === WebSocket.OPEN) {
+                    ws.send(msg);
+                } else {
+                    appendMsg(TranslationService.translate('error_ws_not_connected'), 'ai');
+                    isLoading = false;
+                    sendBtn.disabled = false;
+                }
+            }
+            sendBtn.onclick = sendMessage;
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
         })();
     }
 });
@@ -700,4 +1364,79 @@ async function getApiUrl(): Promise<string> {
             resolve(resp?.API_URL || '');
         });
     });
+}
+
+// --- Notification system ---
+function showNotification(message: string, type: 'success' | 'error' = 'success') {
+    // Remove existing notifications
+    const existingNotifications = document.querySelectorAll('.megan-notification');
+    existingNotifications.forEach(notification => notification.remove());
+
+    const notification = document.createElement('div');
+    notification.className = 'megan-notification';
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 2147483647;
+        padding: 12px 16px;
+        border-radius: 8px;
+        font-family: 'Poppins', 'Inter', Arial, sans-serif;
+        font-size: 14px;
+        font-weight: 500;
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        border: 1px solid;
+        animation: meganNotificationSlideIn 0.3s ease-out;
+        max-width: 300px;
+        word-wrap: break-word;
+    `;
+
+    if (type === 'success') {
+        notification.style.background = '#10B981';
+        notification.style.borderColor = '#059669';
+    } else {
+        notification.style.background = '#EF4444';
+        notification.style.borderColor = '#DC2626';
+    }
+
+    notification.textContent = message;
+    document.body.appendChild(notification);
+
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.style.animation = 'meganNotificationSlideOut 0.3s ease-in';
+            setTimeout(() => notification.remove(), 300);
+        }
+    }, 3000);
+}
+
+// Add notification styles
+if (!document.getElementById('megan-notification-styles')) {
+    const style = document.createElement('style');
+    style.id = 'megan-notification-styles';
+    style.textContent = `
+        @keyframes meganNotificationSlideIn {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        @keyframes meganNotificationSlideOut {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+        }
+    `;
+    document.head.appendChild(style);
 }
