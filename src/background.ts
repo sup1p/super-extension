@@ -300,18 +300,42 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
         });
     }
     if (info.menuItemId === 'megan-summarize' && info.selectionText && tab?.id) {
+        if (info.selectionText.length > 3000) {
+            chrome.tabs.sendMessage(tab.id, {
+                type: 'SHOW_NOTIFICATION',
+                message: 'You can summarize up to 3000 characters',
+                notifType: 'error'
+            });
+            return;
+        }
         chrome.tabs.sendMessage(tab.id, {
             type: 'SHOW_SUMMARIZE_POPUP',
             text: info.selectionText
         });
     }
     if (info.menuItemId === 'megan-translate' && info.selectionText && tab?.id) {
+        if (info.selectionText.length > 3000) {
+            chrome.tabs.sendMessage(tab.id, {
+                type: 'SHOW_NOTIFICATION',
+                message: 'You can translate up to 3000 characters',
+                notifType: 'error'
+            });
+            return;
+        }
         chrome.tabs.sendMessage(tab.id, {
             type: 'SHOW_TRANSLATE_POPUP',
             text: info.selectionText
         });
     }
     if (info.menuItemId === 'megan-voice' && info.selectionText && tab?.id) {
+        if (info.selectionText.length > 1000) {
+            chrome.tabs.sendMessage(tab.id, {
+                type: 'SHOW_NOTIFICATION',
+                message: 'You can voice up to 1000 characters',
+                notifType: 'error'
+            });
+            return;
+        }
         chrome.tabs.sendMessage(tab.id, {
             type: 'SHOW_VOICE_POPUP',
             text: info.selectionText

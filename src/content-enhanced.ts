@@ -1354,6 +1354,8 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                 }
             });
         })();
+    } else if (message.type === 'SHOW_NOTIFICATION') {
+        showNotification(message.message, message.notifType || 'success');
     }
 });
 
