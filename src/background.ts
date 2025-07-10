@@ -351,7 +351,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 const API_URL = import.meta.env.VITE_API_URL;
 const WS_URL = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_WS_URL)
     ? import.meta.env.VITE_WS_URL
-    : (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/^http(s?):\/\//, 'ws://') : '');
+    : (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/^http(s?):\/\//, 'wss://') : '');
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     if (msg.type === 'GET_API_URL') sendResponse({ API_URL });
