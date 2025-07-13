@@ -290,7 +290,9 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                 box-shadow: 0 8px 32px #0008;
                 padding: 28px 28px 22px 28px;
                 min-width: 340px;
-                max-width: 350px;
+                min-height: 300px;
+                max-width: 700px;
+                max-height: 700px;
                 font-family: 'Poppins', 'Inter', Arial, sans-serif;
                 border: 1.5px solid #715CFF;
                 display: flex;
@@ -351,7 +353,6 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
             title.textContent = TranslationService.translate('translate_text');
             title.style.cssText = 'font-size:18px;font-weight:600;margin-bottom:2px;cursor:move;user-select:none;z-index:1;';
             // Drag events (оставляем как было)
-            let isDragging = false, dragOffsetX = 0, dragOffsetY = 0;
             title.addEventListener('mousedown', (e) => {
                 isDragging = true;
                 const rect = popup.getBoundingClientRect();
@@ -373,6 +374,112 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                 document.body.style.userSelect = '';
             });
             popup.appendChild(title);
+            // --- Добавляем resizer для изменения размера ---
+            const resizer = document.createElement('div');
+            resizer.className = 'megan-translate-popup-resizer';
+            resizer.style.cssText = `
+                position: absolute;
+                width: 22px;
+                height: 22px;
+                right: 2px;
+                bottom: 2px;
+                cursor: se-resize;
+                z-index: 10;
+                background: none;
+            `;
+            resizer.innerHTML = `<svg width="22" height="22" viewBox="0 0 22 22"><path d="M4 18h14M8 14h10M12 10h6" stroke="#715CFF" stroke-width="2" stroke-linecap="round"/></svg>`;
+            popup.appendChild(resizer);
+            // --- Стили для resizer ---
+            if (!document.getElementById('megan-translate-popup-resizer-style')) {
+                const style = document.createElement('style');
+                style.id = 'megan-translate-popup-resizer-style';
+                style.textContent = `
+                    .megan-translate-popup-resizer { user-select: none; }
+                    .megan-translate-popup-resizer svg { pointer-events: none; opacity: 0.7; }
+                    .megan-translate-popup-resizer:active svg { opacity: 1; }
+                `;
+                document.head.appendChild(style);
+            }
+            // --- Логика изменения размера ---
+            let isResizing = false;
+            let startX = 0, startY = 0, startWidth = 0, startHeight = 0;
+            resizer.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                isResizing = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                const rect = popup.getBoundingClientRect();
+                startWidth = rect.width;
+                startHeight = rect.height;
+                document.body.style.userSelect = 'none';
+                popup.style.cursor = 'se-resize';
+            });
+            document.addEventListener('mousemove', (e) => {
+                if (!isResizing) return;
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+                const minWidth = 320, minHeight = 180, maxWidth = 700, maxHeight = 700;
+                let newWidth = Math.max(minWidth, Math.min(maxWidth, startWidth + dx));
+                let newHeight = Math.max(minHeight, Math.min(maxHeight, startHeight + dy));
+                popup.style.width = newWidth + 'px';
+                popup.style.height = newHeight + 'px';
+                popup.style.maxWidth = maxWidth + 'px';
+                popup.style.maxHeight = maxHeight + 'px';
+            });
+            document.addEventListener('mouseup', () => {
+                if (isResizing) {
+                    isResizing = false;
+                    document.body.style.userSelect = '';
+                    popup.style.cursor = '';
+                }
+            });
+            // --- Drag'n'drop на всё popup, кроме input/textarea/кнопок/dropdown/resizer ---
+            // (Объявляем переменные только один раз)
+            let isDragging = false, dragOffsetX = 0, dragOffsetY = 0;
+            popup.addEventListener('mousedown', (e) => {
+                const target = e.target as HTMLElement;
+                if (
+                    target.closest('input, textarea, button, .megan-custom-dropdown, .megan-translate-popup-resizer')
+                ) return;
+                isDragging = true;
+                const rect = popup.getBoundingClientRect();
+                dragOffsetX = e.clientX - rect.left;
+                dragOffsetY = e.clientY - rect.top;
+                document.body.style.userSelect = 'none';
+                popup.style.cursor = 'move';
+            });
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging && !isResizing) {
+                    popup.style.left = (e.clientX - dragOffsetX) + 'px';
+                    popup.style.top = (e.clientY - dragOffsetY) + 'px';
+                    popup.style.right = '';
+                    popup.style.bottom = '';
+                    popup.style.position = 'fixed';
+                    popup.style.cursor = 'move';
+                }
+            });
+            document.addEventListener('mouseup', () => {
+                if (isDragging) {
+                    isDragging = false;
+                    document.body.style.userSelect = '';
+                    popup.style.cursor = '';
+                }
+            });
+            // Курсор "move" при наведении на popup, кроме интерактивных элементов
+            popup.addEventListener('mousemove', (e) => {
+                const target = e.target as HTMLElement;
+                if (
+                    target.closest('input, textarea, button, .megan-custom-dropdown, .megan-translate-popup-resizer')
+                ) {
+                    popup.style.cursor = '';
+                } else if (!isDragging && !isResizing) {
+                    popup.style.cursor = 'move';
+                }
+            });
+            // Сброс курсора при уходе мыши
+            popup.addEventListener('mouseleave', () => {
+                if (!isDragging && !isResizing) popup.style.cursor = '';
+            });
             // --- Кастомный dropdown для выбора языка ---
             const langRow = document.createElement('div');
             langRow.style.cssText = 'display:flex;gap:8px;align-items:center;';
@@ -417,7 +524,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
             const dstArea = document.createElement('textarea');
             dstArea.readOnly = true;
             dstArea.placeholder = TranslationService.translate('translation_placeholder');
-            dstArea.style.cssText = 'width:100%;min-width:220px;max-width:100%;height:70px;padding:8px 10px;font-size:15px;border-radius:8px;border:1px solid #444;background:#181818;color:#fff;resize:vertical;margin-top:8px;overflow-y:auto;';
+            dstArea.style.cssText = 'width:100%;min-width:0;flex:1 1 auto;height:70px;padding:8px 10px;font-size:15px;border-radius:8px;border:1px solid #444;background:#181818;color:#fff;resize:vertical;margin-top:8px;overflow-y:auto;box-sizing:border-box;';
             // --- Custom scrollbar styles (like dropdown) ---
             if (!document.getElementById('megan-translate-popup-scrollbar-style')) {
                 const style = document.createElement('style');
@@ -615,6 +722,145 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                 document.body.style.userSelect = '';
             });
             popup.appendChild(title);
+            // --- Добавляем resizer для изменения размера ---
+            const resizer = document.createElement('div');
+            resizer.className = 'megan-summarize-popup-resizer';
+            resizer.style.cssText = `
+                position: absolute;
+                width: 22px;
+                height: 22px;
+                right: 2px;
+                bottom: 2px;
+                cursor: se-resize;
+                z-index: 10;
+                background: none;
+            `;
+            resizer.innerHTML = `<svg width="22" height="22" viewBox="0 0 22 22"><path d="M4 18h14M8 14h10M12 10h6" stroke="#715CFF" stroke-width="2" stroke-linecap="round"/></svg>`;
+            popup.appendChild(resizer);
+            // --- Стили для resizer ---
+            if (!document.getElementById('megan-summarize-popup-resizer-style')) {
+                const style = document.createElement('style');
+                style.id = 'megan-summarize-popup-resizer-style';
+                style.textContent = `
+                    .megan-summarize-popup-resizer { user-select: none; }
+                    .megan-summarize-popup-resizer svg { pointer-events: none; opacity: 0.7; }
+                    .megan-summarize-popup-resizer:active svg { opacity: 1; }
+                `;
+                document.head.appendChild(style);
+            }
+            // --- Логика изменения размера ---
+            let isResizing = false;
+            let startX = 0, startY = 0, startWidth = 0, startHeight = 0;
+            resizer.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                isResizing = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                const rect = popup.getBoundingClientRect();
+                startWidth = rect.width;
+                startHeight = rect.height;
+                document.body.style.userSelect = 'none';
+                popup.style.cursor = 'se-resize';
+            });
+            document.addEventListener('mousemove', (e) => {
+                if (!isResizing) return;
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+                const minWidth = 320, minHeight = 180, maxWidth = 700, maxHeight = 700;
+                let newWidth = Math.max(minWidth, Math.min(maxWidth, startWidth + dx));
+                let newHeight = Math.max(minHeight, Math.min(maxHeight, startHeight + dy));
+                popup.style.width = newWidth + 'px';
+                popup.style.height = newHeight + 'px';
+                popup.style.maxWidth = maxWidth + 'px';
+                popup.style.maxHeight = maxHeight + 'px';
+            });
+            document.addEventListener('mouseup', () => {
+                if (isResizing) {
+                    isResizing = false;
+                    document.body.style.userSelect = '';
+                    popup.style.cursor = '';
+                }
+            });
+            // --- Drag'n'drop на всё popup, кроме input/textarea/кнопок/resizer ---
+            popup.addEventListener('mousedown', (e) => {
+                const target = e.target as HTMLElement;
+                if (
+                    target.closest('input, textarea, button, .megan-summarize-popup-resizer')
+                ) return;
+                isDragging = true;
+                const rect = popup.getBoundingClientRect();
+                dragOffsetX = e.clientX - rect.left;
+                dragOffsetY = e.clientY - rect.top;
+                document.body.style.userSelect = 'none';
+                popup.style.cursor = 'move';
+            });
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging && !isResizing) {
+                    popup.style.left = (e.clientX - dragOffsetX) + 'px';
+                    popup.style.top = (e.clientY - dragOffsetY) + 'px';
+                    popup.style.right = '';
+                    popup.style.bottom = '';
+                    popup.style.position = 'fixed';
+                    popup.style.cursor = 'move';
+                }
+            });
+            document.addEventListener('mouseup', () => {
+                if (isDragging) {
+                    isDragging = false;
+                    document.body.style.userSelect = '';
+                    popup.style.cursor = '';
+                }
+            });
+            // Курсор "move" при наведении на popup, кроме интерактивных элементов
+            popup.addEventListener('mousemove', (e) => {
+                const target = e.target as HTMLElement;
+                if (
+                    target.closest('input, textarea, button, .megan-summarize-popup-resizer')
+                ) {
+                    popup.style.cursor = '';
+                } else if (!isDragging && !isResizing) {
+                    popup.style.cursor = 'move';
+                }
+            });
+            // Сброс курсора при уходе мыши
+            popup.addEventListener('mouseleave', () => {
+                if (!isDragging && !isResizing) popup.style.cursor = '';
+            });
+            // --- Кастомный dropdown для выбора языка ---
+            const langRow = document.createElement('div');
+            langRow.style.cssText = 'display:flex;gap:8px;align-items:center;';
+            // Кастомный dropdown
+            const dropdown = document.createElement('div');
+            dropdown.className = 'megan-custom-dropdown';
+            const selected = document.createElement('div');
+            selected.className = 'megan-custom-dropdown-selected';
+            selected.textContent = 'English';
+            const list = document.createElement('div');
+            list.className = 'megan-custom-dropdown-list';
+            // Заполняем языки
+            const { languages } = await import('./services/translate');
+            languages.filter(l => l.code !== 'auto').forEach(({ code, name }) => {
+                const opt = document.createElement('div');
+                opt.className = 'megan-custom-dropdown-option';
+                opt.setAttribute('data-value', code);
+                opt.textContent = name;
+                opt.addEventListener('click', () => {
+                    selected.textContent = name;
+                    dropdown.classList.remove('open');
+                    dropdown.setAttribute('data-value', code);
+                });
+                list.appendChild(opt);
+            });
+            dropdown.appendChild(selected);
+            dropdown.appendChild(list);
+            // Открытие/закрытие
+            selected.addEventListener('click', (e) => {
+                e.stopPropagation();
+                dropdown.classList.toggle('open');
+            });
+            document.addEventListener('click', () => dropdown.classList.remove('open'));
+            langRow.appendChild(dropdown);
+            popup.appendChild(langRow);
             // Кнопка summarize
             const btn = document.createElement('button');
             btn.textContent = TranslationService.translate('summarize');
@@ -624,7 +870,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
             const dstArea = document.createElement('textarea');
             dstArea.readOnly = true;
             dstArea.placeholder = TranslationService.translate('summary_placeholder');
-            dstArea.style.cssText = 'width:100%;min-width:220px;max-width:100%;height:90px;padding:8px 10px;font-size:15px;border-radius:8px;border:1px solid #444;background:#181818;color:#fff;resize:vertical;margin-top:8px;overflow-y:auto;';
+            dstArea.style.cssText = 'width:100%;min-width:0;flex:1 1 auto;height:90px;padding:8px 10px;font-size:15px;border-radius:8px;border:1px solid #444;background:#181818;color:#fff;resize:vertical;margin-top:8px;overflow-y:auto;box-sizing:border-box;';
             // --- Custom scrollbar styles (like dropdown) ---
             if (!document.getElementById('megan-summarize-popup-scrollbar-style')) {
                 const style = document.createElement('style');
@@ -965,8 +1211,9 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                 box-shadow: 0 8px 32px #0008;
                 padding: 24px 24px 18px 24px;
                 min-width: 340px;
-                max-width: 350px;
+                max-width: 1000px;
                 height: 300px;
+                max-height: 700px;
                 font-family: 'Poppins', 'Inter', Arial, sans-serif;
                 display: flex;
                 flex-direction: column;
@@ -975,7 +1222,6 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                 cursor: default;
                 background: #232323;
                 color: #fff;
-                border: 1.5px solid #715CFF;
             `;
             // --- Стили для popup ---
             if (!document.getElementById('megan-chat-popup-style')) {
@@ -1020,7 +1266,6 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                     #megan-chat-popup .chat-history {
                         background: transparent;
                         color: inherit;
-                        max-height: 220px;
                         overflow-y: auto;
                         margin-bottom: 8px;
                         font-size: 15px;
@@ -1141,6 +1386,63 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                 `;
                 document.head.appendChild(style);
             }
+            // --- Добавляем resizer для изменения размера ---
+            const resizer = document.createElement('div');
+            resizer.className = 'megan-chat-popup-resizer';
+            resizer.style.cssText = `
+                position: absolute;
+                width: 22px;
+                height: 22px;
+                right: 2px;
+                bottom: 2px;
+                cursor: se-resize;
+                z-index: 10;
+                background: none;
+            `;
+            resizer.innerHTML = `<svg width="22" height="22" viewBox="0 0 22 22"><path d="M4 18h14M8 14h10M12 10h6" stroke="#715CFF" stroke-width="2" stroke-linecap="round"/></svg>`;
+            popup.appendChild(resizer);
+            // --- Стили для resizer (адаптация под тему) ---
+            if (!document.getElementById('megan-chat-popup-resizer-style')) {
+                const style = document.createElement('style');
+                style.id = 'megan-chat-popup-resizer-style';
+                style.textContent = `
+                    .megan-chat-popup-resizer { user-select: none; }
+                    .megan-chat-popup-resizer svg { pointer-events: none; opacity: 0.7; }
+                    .megan-chat-popup-resizer:active svg { opacity: 1; }
+                `;
+                document.head.appendChild(style);
+            }
+            // --- Логика изменения размера ---
+            let isResizing = false;
+            let startX = 0, startY = 0, startWidth = 0, startHeight = 0;
+            resizer.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                isResizing = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                const rect = popup.getBoundingClientRect();
+                startWidth = rect.width;
+                startHeight = rect.height;
+                document.body.style.userSelect = 'none';
+                popup.style.cursor = 'se-resize';
+            });
+            document.addEventListener('mousemove', (e) => {
+                if (!isResizing) return;
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+                const minWidth = 320, minHeight = 220, maxWidth = 700, maxHeight = 1000;
+                let newWidth = Math.max(minWidth, Math.min(maxWidth, startWidth + dx));
+                let newHeight = Math.max(minHeight, Math.min(maxHeight, startHeight + dy));
+                popup.style.width = newWidth + 'px';
+                popup.style.height = newHeight + 'px';
+            });
+            document.addEventListener('mouseup', () => {
+                if (isResizing) {
+                    isResizing = false;
+                    document.body.style.userSelect = '';
+                    popup.style.cursor = '';
+                }
+            });
             // Кнопка закрытия
             const closeBtn = document.createElement('button');
             closeBtn.textContent = '×';
@@ -1151,14 +1453,20 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
             const title = document.createElement('div');
             title.textContent = TranslationService.translate('chat_with_megan');
             title.style.cssText = 'font-size:18px;font-weight:600;margin-bottom:2px;cursor:move;user-select:none;z-index:1;';
-            // Drag events
+            // Drag events на всё popup, кроме input/textarea/кнопок/resizer
             let isDragging = false, dragOffsetX = 0, dragOffsetY = 0;
-            title.addEventListener('mousedown', (e) => {
+            popup.addEventListener('mousedown', (e) => {
+                // Не начинать drag, если клик по input, textarea, кнопке, chat-history или resizer
+                const target = e.target as HTMLElement;
+                if (
+                    target.closest('input, textarea, button, .chat-history, .megan-chat-popup-resizer')
+                ) return;
                 isDragging = true;
                 const rect = popup.getBoundingClientRect();
                 dragOffsetX = e.clientX - rect.left;
                 dragOffsetY = e.clientY - rect.top;
                 document.body.style.userSelect = 'none';
+                popup.style.cursor = 'move';
             });
             document.addEventListener('mousemove', (e) => {
                 if (isDragging) {
@@ -1170,8 +1478,26 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                 }
             });
             document.addEventListener('mouseup', () => {
-                isDragging = false;
-                document.body.style.userSelect = '';
+                if (isDragging) {
+                    isDragging = false;
+                    document.body.style.userSelect = '';
+                    popup.style.cursor = '';
+                }
+            });
+            // Курсор "move" при наведении на popup, кроме интерактивных элементов
+            popup.addEventListener('mousemove', (e) => {
+                const target = e.target as HTMLElement;
+                if (
+                    target.closest('input, textarea, button, .chat-history, .megan-chat-popup-resizer')
+                ) {
+                    popup.style.cursor = '';
+                } else if (!isDragging) {
+                    popup.style.cursor = 'move';
+                }
+            });
+            // Сброс курсора при уходе мыши
+            popup.addEventListener('mouseleave', () => {
+                if (!isDragging) popup.style.cursor = '';
             });
             popup.appendChild(title);
             // История чата
@@ -1187,6 +1513,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
             inputRow.style.width = '100%';
             inputRow.style.display = 'flex';
             inputRow.style.alignItems = 'flex-end';
+            inputRow.style.marginTop = 'auto';
             const input = document.createElement('textarea');
             input.rows = 1;
             input.placeholder = TranslationService.translate('chat_placeholder');
@@ -1301,10 +1628,57 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                 sendBtn.disabled = false;
             };
             // --- Добавление сообщений ---
+            // Markdown-аниматор (копия из ChatComponent)
+            function animateMessageMarkdown(element: HTMLElement, text: string, speed: number = 4, animate: boolean = true) {
+                function escapeHtml(str: string) {
+                    return str.replace(/[&<>"]'/g, function (tag: string) {
+                        const chars: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+                        return chars[tag] || tag;
+                    });
+                }
+                function markdownToHtml(str: string) {
+                    str = str.replace(/\n\* (.+)/g, '<li>$1</li>');
+                    if (/^<li>/.test(str)) str = '<ul>' + str + '</ul>';
+                    str = str.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+                    str = str.replace(/\*(.+?)\*/g, '<i>$1</i>');
+                    str = str.replace(/\n/g, '<br>');
+                    return str;
+                }
+                if (!animate) {
+                    element.innerHTML = markdownToHtml(escapeHtml(text));
+                    return;
+                }
+                let i = 0;
+                let cursor = document.createElement('span');
+                cursor.className = 'chat-typing-cursor';
+                cursor.textContent = '▍';
+                cursor.style.display = 'inline-block';
+                cursor.style.animation = 'blink-cursor 1s steps(1) infinite';
+                element.innerHTML = '';
+                element.appendChild(cursor);
+                function printNext() {
+                    if (i <= text.length) {
+                        let html = markdownToHtml(escapeHtml(text.slice(0, i)));
+                        element.innerHTML = html;
+                        element.appendChild(cursor);
+                        i++;
+                        element.scrollIntoView({ behavior: 'auto', block: 'end' });
+                        setTimeout(printNext, speed);
+                    } else {
+                        cursor.remove();
+                        element.innerHTML = markdownToHtml(escapeHtml(text));
+                    }
+                }
+                printNext();
+            }
             function appendMsg(text: string, who: 'user' | 'ai') {
                 const msgDiv = document.createElement('div');
                 msgDiv.className = who === 'user' ? 'chat-msg-user' : 'chat-msg-ai';
-                msgDiv.textContent = text;
+                if (who === 'ai') {
+                    animateMessageMarkdown(msgDiv, text, 4, true);
+                } else {
+                    msgDiv.textContent = text;
+                }
                 historyDiv.appendChild(msgDiv);
                 historyDiv.scrollTop = historyDiv.scrollHeight;
             }
@@ -1439,6 +1813,27 @@ if (!document.getElementById('megan-notification-styles')) {
                 transform: translateX(100%);
             }
         }
+    `;
+    document.head.appendChild(style);
+}
+
+// Добавить CSS-анимацию для курсора, если не добавлена
+if (!document.getElementById('chat-typing-cursor-style')) {
+    const style = document.createElement('style');
+    style.id = 'chat-typing-cursor-style';
+    style.innerHTML = `
+    @keyframes blink-cursor {
+        0% { opacity: 1; }
+        50% { opacity: 0; }
+        100% { opacity: 1; }
+    }
+    .chat-typing-cursor {
+        font-weight: bold;
+        font-size: 1.1em;
+        margin-left: 2px;
+        color: #aaa;
+        animation: blink-cursor 1s steps(1) infinite;
+    }
     `;
     document.head.appendChild(style);
 }

@@ -1897,8 +1897,6 @@ export class Sidebar {
 
                 // --- ICON URLS ---
                 const iconUrl = chrome.runtime.getURL('public/icon.png');
-                const iconWhiteUrl = chrome.runtime.getURL('public/icon-white-bg.png');
-                const iconBlackUrl = chrome.runtime.getURL('public/icon-black-bg.png');
 
                 const notesUrl = chrome.runtime.getURL('public/notes.png');
                 const chatUrl = chrome.runtime.getURL('public/chat.png');
@@ -2670,12 +2668,11 @@ export class Sidebar {
                     return theme;
                 };
 
-                const updateHomeScreenIcon = (theme: 'system' | 'light' | 'dark') => {
+                const updateHomeScreenIcon = () => {
                     if (!iframeDoc) return;
                     const homeIcon = iframeDoc.getElementById('home-megan-icon') as HTMLImageElement;
                     if (!homeIcon) return;
-                    const currentTheme = getCurrentTheme(theme);
-                    homeIcon.src = currentTheme === 'light' ? iconWhiteUrl : iconBlackUrl;
+                    homeIcon.src = iconUrl;
                 };
 
                 // Helper to update all dock and settings icons based on theme and active state
@@ -2736,7 +2733,7 @@ export class Sidebar {
                     iframeDoc.body.classList.remove('theme-light', 'theme-dark');
                     iframeDoc.body.classList.add('theme-' + t);
                     updateSidebarIcons(theme);
-                    updateHomeScreenIcon(theme);
+                    updateHomeScreenIcon();
                     this.updateFloatingButtonTheme();
                     // Синхронизируем тему на основном body для floating button
                     document.body.classList.remove('theme-light', 'theme-dark');
