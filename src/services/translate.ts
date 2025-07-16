@@ -1,5 +1,6 @@
 import { Language } from '../types';
 import { AuthService } from './auth'
+import { TranslationService } from './translations';
 
 export const languages: Language[] = [
     { code: 'auto', name: 'Auto' },
@@ -119,7 +120,104 @@ export class TranslateService {
         select.innerHTML = '';
         languages.forEach(({ code, name }) => {
             if (!includeAuto && code === 'auto') return;
-            const opt = new Option(name, code);
+            let displayName = name;
+            if (code !== 'auto') {
+                // Ключ для поиска перевода
+                let key = '';
+                switch (code) {
+                    case 'en': key = 'english'; break;
+                    case 'zh': key = 'chinese'; break;
+                    case 'hi': key = 'hindi'; break;
+                    case 'es': key = 'spanish'; break;
+                    case 'fr': key = 'french'; break;
+                    case 'ar': key = 'arabic'; break;
+                    case 'bn': key = 'bengali'; break;
+                    case 'ru': key = 'russian'; break;
+                    case 'pt': key = 'portuguese'; break;
+                    case 'ur': key = 'urdu'; break;
+                    case 'id': key = 'indonesian'; break;
+                    case 'de': key = 'german'; break;
+                    case 'ja': key = 'japanese'; break;
+                    case 'sw': key = 'swahili'; break;
+                    case 'mr': key = 'marathi'; break;
+                    case 'te': key = 'telugu'; break;
+                    case 'tr': key = 'turkish'; break;
+                    case 'ta': key = 'tamil'; break;
+                    case 'vi': key = 'vietnamese'; break;
+                    case 'ko': key = 'korean'; break;
+                    case 'fa': key = 'persian'; break;
+                    case 'it': key = 'italian'; break;
+                    case 'pl': key = 'polish'; break;
+                    case 'uk': key = 'ukrainian'; break;
+                    case 'ro': key = 'romanian'; break;
+                    case 'nl': key = 'dutch'; break;
+                    case 'th': key = 'thai'; break;
+                    case 'gu': key = 'gujarati'; break;
+                    case 'pa': key = 'punjabi'; break;
+                    case 'ml': key = 'malayalam'; break;
+                    case 'kn': key = 'kannada'; break;
+                    case 'jv': key = 'javanese'; break;
+                    case 'my': key = 'burmese'; break;
+                    case 'el': key = 'greek'; break;
+                    case 'hu': key = 'hungarian'; break;
+                    case 'cs': key = 'czech'; break;
+                    case 'sv': key = 'swedish'; break;
+                    case 'fi': key = 'finnish'; break;
+                    case 'no': key = 'norwegian'; break;
+                    case 'da': key = 'danish'; break;
+                    case 'he': key = 'hebrew'; break;
+                    case 'sr': key = 'serbian'; break;
+                    case 'sk': key = 'slovak'; break;
+                    case 'bg': key = 'bulgarian'; break;
+                    case 'hr': key = 'croatian'; break;
+                    case 'lt': key = 'lithuanian'; break;
+                    case 'sl': key = 'slovenian'; break;
+                    case 'et': key = 'estonian'; break;
+                    case 'lv': key = 'latvian'; break;
+                    case 'fil': key = 'filipino'; break;
+                    case 'kk': key = 'kazakh'; break;
+                    case 'az': key = 'azerbaijani'; break;
+                    case 'uz': key = 'uzbek'; break;
+                    case 'am': key = 'amharic'; break;
+                    case 'ne': key = 'nepali'; break;
+                    case 'si': key = 'sinhala'; break;
+                    case 'km': key = 'khmer'; break;
+                    case 'lo': key = 'lao'; break;
+                    case 'mn': key = 'mongolian'; break;
+                    case 'hy': key = 'armenian'; break;
+                    case 'ka': key = 'georgian'; break;
+                    case 'sq': key = 'albanian'; break;
+                    case 'bs': key = 'bosnian'; break;
+                    case 'mk': key = 'macedonian'; break;
+                    case 'af': key = 'afrikaans'; break;
+                    case 'zu': key = 'zulu'; break;
+                    case 'xh': key = 'xhosa'; break;
+                    case 'st': key = 'sesotho'; break;
+                    case 'yo': key = 'yoruba'; break;
+                    case 'ig': key = 'igbo'; break;
+                    case 'ha': key = 'hausa'; break;
+                    case 'so': key = 'somali'; break;
+                    case 'ps': key = 'pashto'; break;
+                    case 'tg': key = 'tajik'; break;
+                    case 'ky': key = 'kyrgyz'; break;
+                    case 'tt': key = 'tatar'; break;
+                    case 'be': key = 'belarusian'; break;
+                    case 'eu': key = 'basque'; break;
+                    case 'gl': key = 'galician'; break;
+                    case 'ca': key = 'catalan'; break;
+                    case 'is': key = 'icelandic'; break;
+                    case 'ga': key = 'irish'; break;
+                    case 'mt': key = 'maltese'; break;
+                    case 'lb': key = 'luxembourgish'; break;
+                    case 'fo': key = 'faroese'; break;
+                    case 'cy': key = 'welsh'; break;
+                    default: key = '';
+                }
+                if (key) {
+                    displayName = TranslationService.translate(key);
+                }
+            }
+            const opt = new Option(displayName, code);
             select.add(opt);
         });
     }

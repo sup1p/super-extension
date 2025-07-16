@@ -5,7 +5,7 @@ export type ChatSession = { id: number; name: string; created_at: string; };
 export type ChatMessage = { id: number; role: 'user' | 'assistant'; content: string; created_at: string; };
 
 const API_URL = import.meta.env.VITE_API_URL;
-const WS_URL = import.meta.env.VITE_WS_URL || API_URL.replace(/^http(s?):\/\//, 'wss://');
+const WS_URL = import.meta.env.VITE_WS_URL || API_URL.replace(/^http(s?):\/\//, 'ws://');
 
 async function fetchViaBackground(url: string, options: RequestInit): Promise<any> {
     return new Promise((resolve, reject) => {
@@ -62,6 +62,9 @@ export class ChatService {
 
             this.ws.onclose = () => {
                 console.log("WebSocket connection closed");
+                if (this.onMessageCallback) {
+                    this.onMessageCallback({ error: "WebSocket соединение закрыто" });
+                }
             };
 
             this.ws.onerror = (event) => {

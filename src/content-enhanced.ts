@@ -494,12 +494,106 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
             // Заполняем языки
             const { languages } = await import('./services/translate');
             languages.filter(l => l.code !== 'auto').forEach(({ code, name }) => {
+                let displayName = name;
+                let key = '';
+                switch (code) {
+                    case 'en': key = 'english'; break;
+                    case 'zh': key = 'chinese'; break;
+                    case 'hi': key = 'hindi'; break;
+                    case 'es': key = 'spanish'; break;
+                    case 'fr': key = 'french'; break;
+                    case 'ar': key = 'arabic'; break;
+                    case 'bn': key = 'bengali'; break;
+                    case 'ru': key = 'russian'; break;
+                    case 'pt': key = 'portuguese'; break;
+                    case 'ur': key = 'urdu'; break;
+                    case 'id': key = 'indonesian'; break;
+                    case 'de': key = 'german'; break;
+                    case 'ja': key = 'japanese'; break;
+                    case 'sw': key = 'swahili'; break;
+                    case 'mr': key = 'marathi'; break;
+                    case 'te': key = 'telugu'; break;
+                    case 'tr': key = 'turkish'; break;
+                    case 'ta': key = 'tamil'; break;
+                    case 'vi': key = 'vietnamese'; break;
+                    case 'ko': key = 'korean'; break;
+                    case 'fa': key = 'persian'; break;
+                    case 'it': key = 'italian'; break;
+                    case 'pl': key = 'polish'; break;
+                    case 'uk': key = 'ukrainian'; break;
+                    case 'ro': key = 'romanian'; break;
+                    case 'nl': key = 'dutch'; break;
+                    case 'th': key = 'thai'; break;
+                    case 'gu': key = 'gujarati'; break;
+                    case 'pa': key = 'punjabi'; break;
+                    case 'ml': key = 'malayalam'; break;
+                    case 'kn': key = 'kannada'; break;
+                    case 'jv': key = 'javanese'; break;
+                    case 'my': key = 'burmese'; break;
+                    case 'el': key = 'greek'; break;
+                    case 'hu': key = 'hungarian'; break;
+                    case 'cs': key = 'czech'; break;
+                    case 'sv': key = 'swedish'; break;
+                    case 'fi': key = 'finnish'; break;
+                    case 'no': key = 'norwegian'; break;
+                    case 'da': key = 'danish'; break;
+                    case 'he': key = 'hebrew'; break;
+                    case 'sr': key = 'serbian'; break;
+                    case 'sk': key = 'slovak'; break;
+                    case 'bg': key = 'bulgarian'; break;
+                    case 'hr': key = 'croatian'; break;
+                    case 'lt': key = 'lithuanian'; break;
+                    case 'sl': key = 'slovenian'; break;
+                    case 'et': key = 'estonian'; break;
+                    case 'lv': key = 'latvian'; break;
+                    case 'fil': key = 'filipino'; break;
+                    case 'kk': key = 'kazakh'; break;
+                    case 'az': key = 'azerbaijani'; break;
+                    case 'uz': key = 'uzbek'; break;
+                    case 'am': key = 'amharic'; break;
+                    case 'ne': key = 'nepali'; break;
+                    case 'si': key = 'sinhala'; break;
+                    case 'km': key = 'khmer'; break;
+                    case 'lo': key = 'lao'; break;
+                    case 'mn': key = 'mongolian'; break;
+                    case 'hy': key = 'armenian'; break;
+                    case 'ka': key = 'georgian'; break;
+                    case 'sq': key = 'albanian'; break;
+                    case 'bs': key = 'bosnian'; break;
+                    case 'mk': key = 'macedonian'; break;
+                    case 'af': key = 'afrikaans'; break;
+                    case 'zu': key = 'zulu'; break;
+                    case 'xh': key = 'xhosa'; break;
+                    case 'st': key = 'sesotho'; break;
+                    case 'yo': key = 'yoruba'; break;
+                    case 'ig': key = 'igbo'; break;
+                    case 'ha': key = 'hausa'; break;
+                    case 'so': key = 'somali'; break;
+                    case 'ps': key = 'pashto'; break;
+                    case 'tg': key = 'tajik'; break;
+                    case 'ky': key = 'kyrgyz'; break;
+                    case 'tt': key = 'tatar'; break;
+                    case 'be': key = 'belarusian'; break;
+                    case 'eu': key = 'basque'; break;
+                    case 'gl': key = 'galician'; break;
+                    case 'ca': key = 'catalan'; break;
+                    case 'is': key = 'icelandic'; break;
+                    case 'ga': key = 'irish'; break;
+                    case 'mt': key = 'maltese'; break;
+                    case 'lb': key = 'luxembourgish'; break;
+                    case 'fo': key = 'faroese'; break;
+                    case 'cy': key = 'welsh'; break;
+                    default: key = '';
+                }
+                if (key) {
+                    displayName = TranslationService.translate(key);
+                }
                 const opt = document.createElement('div');
                 opt.className = 'megan-custom-dropdown-option';
                 opt.setAttribute('data-value', code);
-                opt.textContent = name;
+                opt.textContent = displayName;
                 opt.addEventListener('click', () => {
-                    selected.textContent = name;
+                    selected.textContent = displayName;
                     dropdown.classList.remove('open');
                     dropdown.setAttribute('data-value', code);
                 });
@@ -826,41 +920,6 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
             popup.addEventListener('mouseleave', () => {
                 if (!isDragging && !isResizing) popup.style.cursor = '';
             });
-            // --- Кастомный dropdown для выбора языка ---
-            const langRow = document.createElement('div');
-            langRow.style.cssText = 'display:flex;gap:8px;align-items:center;';
-            // Кастомный dropdown
-            const dropdown = document.createElement('div');
-            dropdown.className = 'megan-custom-dropdown';
-            const selected = document.createElement('div');
-            selected.className = 'megan-custom-dropdown-selected';
-            selected.textContent = 'English';
-            const list = document.createElement('div');
-            list.className = 'megan-custom-dropdown-list';
-            // Заполняем языки
-            const { languages } = await import('./services/translate');
-            languages.filter(l => l.code !== 'auto').forEach(({ code, name }) => {
-                const opt = document.createElement('div');
-                opt.className = 'megan-custom-dropdown-option';
-                opt.setAttribute('data-value', code);
-                opt.textContent = name;
-                opt.addEventListener('click', () => {
-                    selected.textContent = name;
-                    dropdown.classList.remove('open');
-                    dropdown.setAttribute('data-value', code);
-                });
-                list.appendChild(opt);
-            });
-            dropdown.appendChild(selected);
-            dropdown.appendChild(list);
-            // Открытие/закрытие
-            selected.addEventListener('click', (e) => {
-                e.stopPropagation();
-                dropdown.classList.toggle('open');
-            });
-            document.addEventListener('click', () => dropdown.classList.remove('open'));
-            langRow.appendChild(dropdown);
-            popup.appendChild(langRow);
             // Кнопка summarize
             const btn = document.createElement('button');
             btn.textContent = TranslationService.translate('summarize');
