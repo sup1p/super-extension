@@ -269,20 +269,24 @@ export class TranslateService {
         const token = await AuthService.getToken();
         if (!token) throw new Error('No auth token found');
 
-        const params = new URLSearchParams({ text, src, dest });
         const API_URL = import.meta.env.VITE_API_URL;
         try {
             const data = await translateFetchViaBackground(
-                `${API_URL}/translate?${params}`,
+                `${API_URL}/translate-new`,
                 {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ text, src, dest })
                 }
             );
             return data.translated_text;
         } catch (err: any) {
+            if (err && err.status === 429) {
+                throw new Error('No tokens left for today');
+            }
             if (err && err.data && err.data.message) {
                 throw new Error(err.data.message);
             }
