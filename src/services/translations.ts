@@ -24,6 +24,12 @@ export const translations: Translations = {
         es: "¡Hagamos las cosas!"
     },
 
+    'limit_exceeded': {
+        en: "Your limit to voice assistant is exceeded",
+        ru: "Ваш лимит на голосового ассистента превышен",
+        es: "Se ha excedido el límite de tu asistente de voz",
+    },
+
     // Navigation
     'notes': {
         en: "Notes",

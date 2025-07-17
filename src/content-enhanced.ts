@@ -998,7 +998,14 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                             }
                         }, (response) => {
                             if (!response) reject("No response from background");
-                            else if (!response.ok) reject(response);
+                            else if (!response.ok) {
+                                if (response.status === 429) {
+                                    showNotification('Summarization limit exceeded for today', 'error');
+                                    dstArea.value = 'Summarization limit exceeded';
+                                    return;
+                                }
+                                reject(response);
+                            }
                             else resolve({ ok: true, json: () => response.data });
                         });
                     });
@@ -1214,7 +1221,26 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                         }
                     }, (response) => {
                         if (!response) reject("No response from background");
-                        else if (!response.ok) reject(response);
+                        else if (!response.ok) {
+                            if (response.status === 429) {
+                                // Показать notification о превышении лимита
+                                const notif = document.createElement('div');
+                                notif.className = 'megan-notification';
+                                notif.textContent = 'Voice symbols limit exceeded for today';
+                                notif.style.position = 'fixed';
+                                notif.style.top = '20px';
+                                notif.style.right = '20px';
+                                notif.style.background = '#ff4444';
+                                notif.style.color = '#fff';
+                                notif.style.padding = '12px 24px';
+                                notif.style.borderRadius = '8px';
+                                notif.style.zIndex = '99999';
+                                notif.style.fontSize = '16px';
+                                document.body.appendChild(notif);
+                                setTimeout(() => notif.remove(), 4000);
+                            }
+                            reject(response);
+                        }
                         else resolve({ ok: true, json: () => response.data });
                     });
                 });
@@ -1802,7 +1828,7 @@ async function getApiUrl(): Promise<string> {
 }
 
 // --- Notification system ---
-function showNotification(message: string, type: 'success' | 'error' = 'success') {
+export function showNotification(message: string, type: 'success' | 'error' = 'success') {
     // Remove existing notifications
     const existingNotifications = document.querySelectorAll('.megan-notification');
     existingNotifications.forEach(notification => notification.remove());

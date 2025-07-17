@@ -136,8 +136,8 @@ export class Sidebar {
         const iconUrl = chrome.runtime.getURL('public/icon.png');
         // Крестик всегда ближе к сайдбару
         const closeBtnStyle = this.sidebarPosition === 'left'
-            ? 'display:none;position:absolute;top:5px;left:4px;width:22px;height:22px;border:none;border-radius:50%;color:#888;cursor:pointer;z-index:2;font-size:16px;align-items:center;justify-content:center;line-height:1;padding:0;transition:background 0.15s;'
-            : 'display:none;position:absolute;top:5px;right:4px;width:22px;height:22px;border:none;border-radius:50%;color:#888;cursor:pointer;z-index:2;font-size:16px;align-items:center;justify-content:center;line-height:1;padding:0;transition:background 0.15s;';
+            ? 'display:flex;position:absolute;top:-10px;right:-10px;width:22px;height:22px;border:none;border-radius:50%;color:#888;cursor:pointer;z-index:2;font-size:16px;align-items:center;justify-content:center;line-height:1;padding:0;transition:background 0.15s;'
+            : 'display:flex;position:absolute;top:-10px;left:-10px;width:22px;height:22px;border:none;border-radius:50%;color:#888;cursor:pointer;z-index:2;font-size:16px;align-items:center;justify-content:center;line-height:1;padding:0;transition:background 0.15s;';
         this.floatingButton.innerHTML = `
             <img id="floating-btn-avatar-img" src="${iconUrl}" alt="icon" style="width:28px;height:28px;object-fit:cover;display:block;border-radius:50%;margin:auto;" />
             <button id="floating-btn-close" class="floating-btn-close" style="${closeBtnStyle}">×</button>
@@ -248,12 +248,16 @@ export class Sidebar {
             this.floatingButton.style.cssText = buttonStyles + `
                 border-radius: 0 22px 22px 0;
                 border-left: none;
+                position: relative;
+                overflow: visible !important;
             `;
         } else {
             this.floatingContainer.style.cssText = commonStyles + `right: 0;`;
             this.floatingButton.style.cssText = buttonStyles + `
                 border-radius: 22px 0 0 22px;
                 border-right: none;
+                position: relative;
+                overflow: visible !important;
             `;
         }
 

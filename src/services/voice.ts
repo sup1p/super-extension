@@ -80,6 +80,26 @@ export class VoiceService {
                 const data = JSON.parse(e.data);
                 console.log('[voice.ts - WebSocket] Raw message data from server:', data); // LOG: Raw server data
 
+                // --- ОБРАБОТКА ОШИБОК ОТ СЕРВЕРА (например, лимит превышен) ---
+                if (data.error) {
+                    let errorMsg = '';
+                    if (String(data.error).toLowerCase().includes('limit')) {
+                        errorMsg = TranslationService.translate('limit_exceeded'); // Добавь такой ключ в переводы
+                    } else {
+                        errorMsg = data.error;
+                    }
+                    statusBubble.textContent = errorMsg;
+                    output.textContent = errorMsg;
+                    // Остановить прослушивание, если лимит
+                    if (String(data.error).toLowerCase().includes('limit')) {
+                        isListening = false;
+                        if (rec && rec.state === 'recording') rec.stop();
+                        if (currentAudio) currentAudio.pause();
+                    }
+                    return;
+                }
+                // --- /ОБРАБОТКА ОШИБОК ОТ СЕРВЕРА ---
+
                 // --- Обработка команды создания заметки по тексту ---
                 // if (data.command && data.command.action === 'create_note' && data.command.title && data.command.text) {
                 //     handleServerCommand(data.command);

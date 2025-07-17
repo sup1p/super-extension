@@ -1,5 +1,6 @@
 import { NotesService } from '../../services/notes';
 import { NotesComponent } from './notes';
+import { showNotification } from '../../content-enhanced';
 
 async function fetchViaBackground(url: string, options: RequestInit): Promise<any> {
     return new Promise((resolve, reject) => {
@@ -115,6 +116,7 @@ export class ToolsComponent {
                             token = await (window as any).AuthService.getToken();
                         }
                         let summary = '';
+                        let isLimitError = false;
                         try {
                             const data = await fetchViaBackground(
                                 `${API_URL}/tool/summarize/new`,
@@ -131,7 +133,15 @@ export class ToolsComponent {
                             summary = typeof data === 'string' ? data : (data.summary || JSON.stringify(data));
                             summary = summary.replace(/\n/g, "\\n");
                         } catch (e) {
-                            summary = 'Error: ' + (e instanceof Error ? e.message : e);
+                            if (e && typeof e === 'object' && 'status' in e && e.status === 429) {
+                                isLimitError = true;
+                            } else {
+                                summary = 'Error: ' + (e instanceof Error ? e.message : e);
+                            }
+                        }
+                        if (isLimitError) {
+                            showNotification('Лимит символов для суммаризации превышен', 'error');
+                            return;
                         }
                         // Создаём заметку и открываем детали
                         const noteTitle = window.location.hostname;
