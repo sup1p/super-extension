@@ -545,13 +545,13 @@ export const translations: Translations = {
     </div>
   </div>`,
         ru: `<div style="display: flex; align-items: flex-start; gap: 18px;">
-    <span style="font-size:32px; margin-top: 2px; color:var(--color-text);</span>
+    <span style="font-size:32px; margin-top: 2px; color:var(--color-text);"></span>
     <div style="display: flex; flex-direction: column; gap: 10px;">
       <div>
-        <b style="color:var(--color-text);">Аккаунт</b> — управляйте своим аккаунтом, смотрите данные, выходите или переходите на сайт Megan.
+        <b style="color:#6F58D5;">Аккаунт</b> — управляйте своим аккаунтом, смотрите данные, выходите или переходите на сайт Megan.
       </div>
       <div>
-        <b style="color:var(--color-text);">Внешний вид</b> — меняйте положение сайдбара и иконки, выбирайте тему оформления.
+        <b style="color:#6F58D5;">Внешний вид</b> — меняйте положение сайдбара и иконки, выбирайте тему оформления.
       </div>
       <div style="color:var(--color-text); font-size: 16px; margin-top: 8px;">
         Используйте вкладки слева для перехода по разделам.
@@ -562,10 +562,10 @@ export const translations: Translations = {
     <span style="font-size:32px; margin-top: 2px; color:var(--color-text);"></span>
     <div style="display: flex; flex-direction: column; gap: 10px;">
       <div>
-        <b style="color:var(--color-text);">Cuenta</b> — gestiona tu cuenta, consulta tus datos, cierra sesión o visita el sitio de Megan.
+        <b style="color:#6F58D5;">Cuenta</b> — gestiona tu cuenta, consulta tus datos, cierra sesión o visita el sitio de Megan.
       </div>
       <div>
-        <b style="color:var(--color-text);">Apariencia</b> — cambia la posición de la barra lateral y el icono, y elige el tema.
+        <b style="color:#6F58D5;">Apariencia</b> — cambia la posición de la barra lateral y el icono, y elige el tema.
       </div>
       <div style="color:var(--color-text); font-size: 16px; margin-top: 8px;">
         Usa las pestañas a la izquierda para cambiar de sección.
