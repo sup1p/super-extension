@@ -1,3 +1,11 @@
+chrome.runtime.onInstalled.addListener((details) => {
+    if (details.reason === "install") {
+        chrome.tabs.create({
+            url: "https://yourmegan.me/tutorial" // Укажите ваш URL
+        });
+    }
+});
+
 function logAllTabs() {
     chrome.tabs.query({}, (tabs) => {
         console.log("Актуальный список вкладок:");
