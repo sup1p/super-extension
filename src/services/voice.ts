@@ -1,6 +1,27 @@
 import { AuthService } from './auth';
 import { TranslationService } from './translations';
 
+async function fetchViaBackground(url: string, options: RequestInit): Promise<any> {
+    return new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage(
+            {
+                type: "NOTES_FETCH",
+                url,
+                options,
+            },
+            (response) => {
+                if (!response) {
+                    reject("No response from background");
+                } else if (!response.ok) {
+                    reject(response);
+                } else {
+                    resolve(response.data);
+                }
+            }
+        );
+    });
+}
+
 export class VoiceService {
     private static _startListening: (() => Promise<void>) | null = null;
     private static _stopListening: (() => void) | null = null;
@@ -28,7 +49,7 @@ export class VoiceService {
         console.log(manualClose);
 
         const API_URL = import.meta.env.VITE_API_URL;
-        const WS_URL = import.meta.env.VITE_WS_URL || API_URL.replace(/^http(s?):\/\//, 'ws://');
+        const WS_URL = import.meta.env.VITE_WS_URL || API_URL.replace(/^http(s?):\/\//, 'wss://');
         let wv: WebSocket | null = null;
         let rec: MediaRecorder | null = null;
         let stream: MediaStream | null = null;
@@ -509,6 +530,33 @@ export class VoiceService {
 
     static isListening() {
         return VoiceService._isListening ? VoiceService._isListening() : false;
+    }
+
+    static async readTextAloud(_: string, __?: string, statusBubble?: HTMLElement): Promise<string | undefined> {
+        // Вместо текста используем url текущей страницы
+        try {
+            if (statusBubble) statusBubble.textContent = TranslationService.translate('synthesizing_voice');
+            const API_URL = import.meta.env.VITE_API_URL;
+            const token = await AuthService.getToken();
+            const url = `${API_URL}/tools/voice/website_summary`;
+            const pageUrl = window.location.href;
+            const headers: Record<string, string> = {
+                'Content-Type': 'application/json',
+            };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            const data = await fetchViaBackground(url, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({ url: pageUrl })
+            });
+            if (!data.audio_base64) throw new Error('No audio in TTS response');
+            if (statusBubble) statusBubble.textContent = '';
+            return data.audio_base64;
+        } catch (e) {
+            console.error('TTS error:', e);
+            if (statusBubble) statusBubble.textContent = TranslationService.translate('could_not_synthesize_audio');
+            return undefined;
+        }
     }
 }
 

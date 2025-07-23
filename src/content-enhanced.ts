@@ -1922,3 +1922,9 @@ if (!document.getElementById('chat-typing-cursor-style')) {
     `;
     document.head.appendChild(style);
 }
+
+window.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'SHOW_NOTIFICATION') {
+        showNotification(event.data.message, event.data.notifType);
+    }
+});

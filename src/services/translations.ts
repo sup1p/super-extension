@@ -683,6 +683,26 @@ export const translations: Translations = {
         en: 'Note saved successfully!',
         ru: 'Заметка успешно сохранена!',
         es: '¡Nota guardada con éxito!'
+    },
+    'read_page_aloud': {
+        en: 'Read page aloud',
+        ru: 'Озвучить страницу',
+        es: 'Leer la página en voz alta'
+    },
+    'read_page_aloud_warning': {
+        en: 'This feature is very resource-intensive. You may spend all your tokens allocated for today. However, even if you do not have enough tokens for the full reading, you will get as much audio as your remaining tokens allow.',
+        ru: 'Эта функция очень затратная, возможно вы потратите все свои токены, выделенные вам на сегодня. Однако, даже если вам не хватит токенов для полной озвучки, вы получите озвучку на столько символов, сколько у вас осталось на сегодня.',
+        es: 'Esta función es muy costosa, es posible que gastes todos tus tokens asignados para hoy. Sin embargo, incluso si no tienes suficientes tokens para la lectura completa, recibirás la locución de tantos caracteres como te queden hoy.'
+    },
+    'dont_show_again': {
+        en: "Don't show again",
+        ru: "Больше не показывать",
+        es: "No mostrar de nuevo"
+    },
+    'tokens_exhausted': {
+        en: 'You have run out of tokens for today.',
+        ru: 'У вас закончились токены на сегодня.',
+        es: 'Te has quedado sin tokens para hoy.'
     }
 };
 
