@@ -1167,6 +1167,47 @@ export class Sidebar {
                                 color: #fff;
                             }
 
+                            .screen.active#screen-notes {
+                                display: flex;
+                                flex-direction: column;
+                                height: 100%;
+                                min-height: 0;
+                            }
+                            .notes-screen-things {
+                                display: flex;
+                                flex-direction: column;
+                                height: 100%;
+                                min-height: 0;
+                            }
+
+                            .screen.active#screen-note-detail {
+                                display: flex;
+                                flex-direction: column;
+                                height: 100%;
+                                min-height: 0;
+                            }
+                            .notes-detail-container {
+                                display: flex;
+                                flex-direction: column;
+                                flex: 1 1 0;
+                                min-height: 0;
+                            }
+                            .notes-detail-body {
+                                min-height: 120px;
+                                overflow-y: auto !important;
+                                resize: none;
+                                scrollbar-width: thin;
+                                scrollbar-color: var(--color-active) var(--color-container);
+                            }
+                            .notes-detail-body::-webkit-scrollbar {
+                                width: 8px;
+                                background: var(--color-container);
+                            }
+                            .notes-detail-body::-webkit-scrollbar-thumb {
+                                background: var(--color-active);
+                                border-radius: 6px;
+                            }
+
                             #back-to-notes {
                                 background: var(--color-container);
                                 color: var(--color-text);
@@ -1176,8 +1217,34 @@ export class Sidebar {
 
                             #note-body {
                                 min-height: 120px;
-                                overflow: hidden;
+                                overflow-y: auto !important;
                                 resize: none;
+                                scrollbar-width: thin;
+                                scrollbar-color: #b0b0b0 #f5f5f5;
+                            }
+                            #note-body::-webkit-scrollbar {
+                                width: 8px;
+                                background: #f5f5f5;
+                            }
+                            #note-body::-webkit-scrollbar-thumb {
+                                background: #b0b0b0;
+                                border-radius: 6px;
+                                transition: background 0.2s;
+                            }
+                            #note-body::-webkit-scrollbar-thumb:hover {
+                                background: #888;
+                            }
+                            body.theme-dark #note-body {
+                                scrollbar-color: #444 #232323;
+                            }
+                            body.theme-dark #note-body::-webkit-scrollbar {
+                                background: #232323;
+                            }
+                            body.theme-dark #note-body::-webkit-scrollbar-thumb {
+                                background: #444;
+                            }
+                            body.theme-dark #note-body::-webkit-scrollbar-thumb:hover {
+                                background: #666;
                             }
 
                             #screen-note-detail {
@@ -1477,7 +1544,6 @@ export class Sidebar {
                                 transition: border 0.2s;
                             }
                             .notes-textarea:focus {
-                                border: 1.5px solid var(--color-active);
                                 outline: none;
                             }
                             .notes-save-btn {
@@ -1515,7 +1581,8 @@ export class Sidebar {
                             #notes-list {
                                 border-radius: 12px;
                                 color: var(--color-text);
-                                max-height: 70vh;
+                                flex: 1 1 0;
+                                min-height: 0;
                                 overflow-y: auto;
                                 scrollbar-width: none; /* Firefox */
                             }
@@ -1573,6 +1640,9 @@ export class Sidebar {
                                 padding: 0;
                                 border: 1px solid var(--color-border);
                             }
+                            body.theme-dark .notes-detail-container {
+                                box-shadow: 0 1px 6px #0006;
+                            }
                             .notes-detail-title {
                                 width: 100%;
                                 background: var(--color-bg);
@@ -1590,7 +1660,6 @@ export class Sidebar {
                             .notes-detail-body {
                                 width: 100%;
                                 min-height: 120px;
-                                max-height: 700px !important;
                                 background: var(--color-bg);
                                 color: var(--color-text);
                                 border: 1px solid var(--color-border);
@@ -1599,19 +1668,10 @@ export class Sidebar {
                                 font-size: 15px;
                                 resize: vertical;
                                 overflow-y: auto !important;
-                                scrollbar-width: none !important; /* Firefox */
                                 -ms-overflow-style: none !important; /* IE 10+ */
                             }
-                            .notes-detail-body::-webkit-scrollbar {
-                                width: 0 !important;
-                                background: transparent !important;
-                            }
-                            .notes-detail-body::-webkit-scrollbar-thumb {
-                                background: transparent !important;
-                                border-radius: 8px;
-                            }
                             .notes-detail-body:focus {
-                                border: 1.5px solid var(--color-active);
+                                border: 1px solid var(--color-border) !important;
                                 outline: none;
                             }
 
@@ -2144,7 +2204,7 @@ export class Sidebar {
 
 
                             
-                            <div id="screen-note-detail" class="screen" style="overflow-y: auto; max-height: 80vh;">
+                            <div id="screen-note-detail" class="screen" style="overflow-y: auto;">
                                 <div style="max-width:390px;${this.sidebarPosition === 'left' ? ' margin-left:50px;' : ''}">
                                     <h1 class="title" data-translate="notes">Notes</h1>
                                     <div class="notes-detail-header">

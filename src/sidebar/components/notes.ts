@@ -8,18 +8,27 @@ export class NotesComponent {
         const inputArea = doc.getElementById('note-input') as HTMLTextAreaElement;
         const saveBtn = doc.getElementById('save-note') as HTMLButtonElement;
         const searchInput = doc.getElementById('notes-search') as HTMLInputElement | null;
-        const noteBody = doc.getElementById('note-body');
+        const noteBody = doc.getElementById('note-body') as HTMLTextAreaElement;
 
+
+        function resizeNoteBody(textarea: HTMLTextAreaElement) {
+            textarea.style.height = 'auto';
+            const minHeight = 180;
+            const maxHeight = Math.round(window.innerHeight * 0.7); // 80vh
+            let newHeight = Math.max(Math.min(textarea.scrollHeight, maxHeight), minHeight);
+            textarea.style.height = newHeight + 'px';
+            textarea.style.overflowY = (textarea.scrollHeight > maxHeight) ? 'auto' : 'hidden';
+        }
 
         if (noteBody) {
             // Сразу выставить высоту по содержимому (если заметка длинная)
-            noteBody.style.height = 'auto';
-            noteBody.style.height = noteBody.scrollHeight + 'px';
-
+            resizeNoteBody(noteBody);
             // Автоматически увеличивать высоту при вводе
             noteBody.addEventListener('input', function () {
-                this.style.height = 'auto';
-                this.style.height = this.scrollHeight + 'px';
+                resizeNoteBody(noteBody);
+            });
+            window.addEventListener('resize', function () {
+                resizeNoteBody(noteBody);
             });
         }
 
@@ -134,8 +143,28 @@ export class NotesComponent {
         }
         titleInp.value = note.title;
         bodyArea.value = note.content;
-        bodyArea.style.height = 'auto';
-        bodyArea.style.height = bodyArea.scrollHeight + 'px';
+
+        function resizeNoteBody(textarea: HTMLTextAreaElement) {
+            textarea.style.height = 'auto';
+            const minHeight = 180;
+            const maxHeight = Math.round(window.innerHeight * 0.7); // 80vh
+            let newHeight = Math.max(Math.min(textarea.scrollHeight, maxHeight), minHeight);
+            textarea.style.height = newHeight + 'px';
+            textarea.style.overflowY = (textarea.scrollHeight > maxHeight) ? 'auto' : 'hidden';
+        }
+
+        // После того как .active установлен и value заполнен:
+        resizeNoteBody(bodyArea);
+
+        // При каждом input:
+        bodyArea.addEventListener('input', function () {
+            resizeNoteBody(bodyArea);
+        });
+        // При каждом изменении размера окна:
+        window.addEventListener('resize', function () {
+            resizeNoteBody(bodyArea);
+        });
+
         bodyArea.focus();
         bodyArea.selectionStart = bodyArea.value.length;
 
