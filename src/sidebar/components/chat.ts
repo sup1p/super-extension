@@ -68,6 +68,53 @@ export class ChatComponent {
                 if (modal) modal.remove();
                 modal = doc.createElement('div');
                 modal.id = 'chat-history-modal';
+                // --- Определяем тему ---
+                const getCurrentTheme = (): 'light' | 'dark' => {
+                    const bodyTheme = doc.body.classList.contains('theme-light') ? 'light' :
+                        doc.body.classList.contains('theme-dark') ? 'dark' : null;
+                    if (bodyTheme) return bodyTheme;
+                    if (doc.documentElement.classList.contains('dark')) return 'dark';
+                    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                };
+                const theme = getCurrentTheme();
+                modal.classList.add(theme === 'dark' ? 'theme-dark' : 'theme-light');
+                // --- Добавляем кастомные стили скроллбара ---
+                if (!doc.getElementById('chat-history-scrollbar-style')) {
+                    const style = doc.createElement('style');
+                    style.id = 'chat-history-scrollbar-style';
+                    style.textContent = `
+#chat-history-modal *::-webkit-scrollbar {
+  width: 10px;
+}
+#chat-history-modal *::-webkit-scrollbar-thumb {
+  border-radius: 8px;
+  background: #e0e0e0;
+}
+#chat-history-modal.theme-dark *::-webkit-scrollbar-thumb {
+  background: #333;
+}
+#chat-history-modal *::-webkit-scrollbar-track {
+  background: transparent;
+}
+#chat-history-modal.theme-dark *::-webkit-scrollbar {
+  background: transparent;
+}
+#chat-history-modal.theme-dark *::-webkit-scrollbar-thumb {
+  background: #333;
+}
+#chat-history-modal.theme-light *::-webkit-scrollbar-thumb {
+  background: #e0e0e0;
+}
+#chat-history-modal * {
+  scrollbar-width: thin;
+  scrollbar-color: #e0e0e0 transparent;
+}
+#chat-history-modal.theme-dark * {
+  scrollbar-color: #333 transparent;
+}
+`;
+                    doc.head.appendChild(style);
+                }
                 modal.style.position = 'fixed';
                 modal.style.top = '0';
                 modal.style.left = '0';

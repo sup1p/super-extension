@@ -703,6 +703,22 @@ export const translations: Translations = {
         en: 'You have run out of tokens for today.',
         ru: 'У вас закончились токены на сегодня.',
         es: 'Te has quedado sin tokens para hoy.'
+    },
+    // --- Floating button close popup ---
+    'close_floating_temp': {
+        en: 'Just close',
+        ru: 'Просто закрыть',
+        es: 'Solo cerrar'
+    },
+    'close_floating_site': {
+        en: 'Close on this site',
+        ru: 'Закрыть на этом сайте',
+        es: 'Cerrar en este sitio'
+    },
+    'close_floating_all': {
+        en: 'Close everywhere',
+        ru: 'Закрыть везде',
+        es: 'Cerrar en todas partes'
     }
 };
 

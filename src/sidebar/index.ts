@@ -99,6 +99,21 @@ export class Sidebar {
 
             this.initializeFloatingButton();
         });
+
+        // --- Hide floating button on fullscreen ---
+        document.addEventListener('fullscreenchange', () => {
+            if (document.fullscreenElement) {
+                // Any element is in fullscreen, hide floating button
+                if (this.floatingContainer) {
+                    this.floatingContainer.style.display = 'none';
+                }
+            } else {
+                // No fullscreen, show floating button if it should be visible
+                if (this.floatingContainer && this.floatingButtonVisible) {
+                    this.floatingContainer.style.display = '';
+                }
+            }
+        });
     }
 
     public initializeFloatingButton(): void {
@@ -202,13 +217,124 @@ export class Sidebar {
             this.floatingButton.addEventListener('mouseleave', () => {
                 closeBtn.style.display = 'none';
             });
-            // Клик по крестику — скрыть floating button до перезагрузки
+            // Клик по крестику — показываем popup с вариантами
             closeBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                if (this.floatingContainer) {
-                    this.floatingContainer.remove();
-                    this.floatingContainer = null;
-                    this.floatingButton = null;
+                // Если уже открыт popup — не дублируем
+                if (document.getElementById('floating-btn-close-popup')) return;
+                // Создаём popup
+                const popup = document.createElement('div');
+                popup.id = 'floating-btn-close-popup';
+                // Default dark theme
+                popup.style.cssText = `
+                    position: absolute;
+                    top: 34px;
+                    right: 0;
+                    z-index: 99999;
+                    background: #232323;
+                    color: #fff;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 8px #0004;
+                    padding: 4px 0 2px 0;
+                    min-width: 148px;
+                    font-size: 13px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0;
+                    border: 1px solid #444;
+                    animation: fadeIn .18s;
+                `;
+                // Light theme support
+                if (document.body.classList.contains('theme-light')) {
+                    popup.style.background = '#fff';
+                    popup.style.color = '#232323';
+                    popup.style.border = '1px solid #E9E9E9';
+                }
+                // Dark theme support
+                if (document.body.classList.contains('theme-dark')) {
+                    popup.style.cssText += 'background: #232323; border: 1px solid #444; color: #fff !important;';
+                }
+                // Кнопки
+                const btn1 = document.createElement('button');
+                btn1.textContent = TranslationService.translate('close_floating_temp');
+                btn1.style.cssText = 'background:none;border:none;padding:7px 12px;text-align:left;cursor:pointer;width:100%;font-size:13px;border-radius:6px 6px 0 0;transition:background .15s;line-height:1.2;';
+                const btn2 = document.createElement('button');
+                btn2.textContent = TranslationService.translate('close_floating_site');
+                btn2.style.cssText = 'background:none;border:none;padding:7px 12px;text-align:left;cursor:pointer;width:100%;font-size:13px;transition:background .15s;line-height:1.2;';
+                const btn3 = document.createElement('button');
+                btn3.textContent = TranslationService.translate('close_floating_all');
+                btn3.style.cssText = 'background:none;border:none;padding:7px 12px;text-align:left;cursor:pointer;width:100%;font-size:13px;border-radius:0 0 6px 6px;transition:background .15s;line-height:1.2;';
+                // Dark theme support for popup и кнопок (после объявления кнопок, до append)
+                if (document.body.classList.contains('theme-dark')) {
+                    popup.style.cssText += 'background: #232323; border: 1px solid #444; color: #fff !important;';
+                    btn1.style.setProperty('color', '#fff', 'important');
+                    btn2.style.setProperty('color', '#fff', 'important');
+                    btn3.style.setProperty('color', '#fff', 'important');
+                }
+                // Hover effect
+                [btn1, btn2, btn3].forEach(btn => {
+                    btn.addEventListener('mouseenter', () => btn.style.background = document.body.classList.contains('theme-light') ? '#F5F5F5' : '#333');
+                    btn.addEventListener('mouseleave', () => btn.style.background = 'none');
+                });
+                // 1. До перезагрузки
+                btn1.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    // Удаляем popup и floating button сразу
+                    if (this.floatingContainer) {
+                        this.floatingContainer.remove();
+                        this.floatingContainer = null;
+                        this.floatingButton = null;
+                    }
+                    popup.remove();
+                });
+                // 2. На этом сайте
+                btn2.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    // Удаляем popup и floating button сразу
+                    if (this.floatingContainer) {
+                        this.floatingContainer.remove();
+                        this.floatingContainer = null;
+                        this.floatingButton = null;
+                    }
+                    popup.remove();
+                    let domain = window.location.hostname.replace(/^www\./, '');
+                    chrome.storage.local.get(['hideIconOn'], (result) => {
+                        let arr = Array.isArray(result.hideIconOn) ? result.hideIconOn : [];
+                        if (!arr.includes(domain)) {
+                            arr.push(domain);
+                            chrome.storage.local.set({ hideIconOn: arr });
+                        }
+                    });
+                });
+                // 3. Вообще
+                btn3.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    // Удаляем popup и floating button сразу
+                    if (this.floatingContainer) {
+                        this.floatingContainer.remove();
+                        this.floatingContainer = null;
+                        this.floatingButton = null;
+                    }
+                    popup.remove();
+                    chrome.storage.local.set({ floatingButtonEnabled: false });
+                });
+                // Добавить кнопки
+                popup.appendChild(btn1);
+                popup.appendChild(btn2);
+                popup.appendChild(btn3);
+                // Клик вне popup — закрыть
+                setTimeout(() => {
+                    const closePopup = (ev: MouseEvent) => {
+                        if (!popup.contains(ev.target as Node)) {
+                            popup.remove();
+                            document.removeEventListener('mousedown', closePopup);
+                        }
+                    };
+                    document.addEventListener('mousedown', closePopup);
+                }, 10);
+                // Вставить popup в floatingButton
+                if (this.floatingButton) {
+                    this.floatingButton.appendChild(popup);
                 }
             });
         }
@@ -1896,6 +2022,40 @@ export class Sidebar {
                                     padding-right: 0;
                                 }
                             }
+                            /* Кастомный скролл для sourceText и translatedText */
+                            #sourceText, #translatedText {
+                              scrollbar-width: thin;
+                              scrollbar-color: var(--color-active) var(--color-container);
+                            }
+                            #sourceText::-webkit-scrollbar, #translatedText::-webkit-scrollbar {
+                              width: 8px;
+                              background: var(--color-container);
+                            }
+                            #sourceText::-webkit-scrollbar-thumb, #translatedText::-webkit-scrollbar-thumb {
+                              background: var(--color-active);
+                              border-radius: 6px;
+                            }
+                            #sourceText::-webkit-scrollbar-track, #translatedText::-webkit-scrollbar-track {
+                              background: var(--color-container);
+                            }
+                            body.theme-light #sourceText, body.theme-light #translatedText {
+                              scrollbar-color: #AA97FF #F5F5F5;
+                            }
+                            body.theme-light #sourceText::-webkit-scrollbar-thumb, body.theme-light #translatedText::-webkit-scrollbar-thumb {
+                              background: #AA97FF;
+                            }
+                            body.theme-light #sourceText::-webkit-scrollbar-track, body.theme-light #translatedText::-webkit-scrollbar-track {
+                              background: #F5F5F5;
+                            }
+                            body.theme-dark #sourceText, body.theme-dark #translatedText {
+                              scrollbar-color: #715CFF #232323;
+                            }
+                            body.theme-dark #sourceText::-webkit-scrollbar-thumb, body.theme-dark #translatedText::-webkit-scrollbar-thumb {
+                              background: #715CFF;
+                            }
+                            body.theme-dark #sourceText::-webkit-scrollbar-track, body.theme-dark #translatedText::-webkit-scrollbar-track {
+                              background: #232323;
+                            }
                         </style>
                     `;
 
@@ -2127,10 +2287,10 @@ export class Sidebar {
                                         </div>
                                         
                                         <div class="source-wrapper">
-                                            <textarea id="sourceText" data-translate="type_here" placeholder="Type here..."></textarea>
+                                            <textarea id="sourceText" data-translate="type_here" placeholder="Type here..." style="resize: none; min-height: 44px; max-height: 35vh;min-height: 10vh; overflow-y: auto;"></textarea>
                                             <button id="translateButton" class="translate-btn translate-btn-inside" data-translate="translate">Translate</button>
                                         </div>
-                                        <textarea id="translatedText" readonly data-translate="translation_placeholder" placeholder="Translation will appear here..."></textarea>
+                                        <textarea id="translatedText" readonly data-translate="translation_placeholder" placeholder="Translation will appear here..." style="resize: none; min-height: 10vh; max-height: 35vh; overflow-y: auto;"></textarea>
                                     </div>
                                 </div>
                             </div>
@@ -3231,6 +3391,7 @@ export class Sidebar {
                 // After TranslateService.initTranslate(iframeDoc);, add:
                 const srcTxt = iframeDoc.getElementById('sourceText');
                 const translateBtn = iframeDoc.getElementById('translateButton');
+                const translatedTxt = iframeDoc.getElementById('translatedText');
                 if (srcTxt && translateBtn) {
                     srcTxt.addEventListener('keydown', (e) => {
                         if (e.key === 'Enter' && !e.shiftKey) {
@@ -3238,6 +3399,32 @@ export class Sidebar {
                             (translateBtn as HTMLElement).click();
                         }
                     });
+                    // --- Auto-resize logic (fixed scroll) ---
+                    srcTxt.addEventListener('input', function () {
+                        this.style.height = 'auto';
+                        const minHeight = Math.round(window.innerHeight * 0.10); // 10vh
+                        const maxHeight = Math.round(window.innerHeight * 0.35); // 35vh
+                        let newHeight = Math.max(this.scrollHeight, minHeight);
+                        if (newHeight > maxHeight) newHeight = maxHeight;
+                        this.style.height = newHeight + 'px';
+                        this.style.overflowY = this.scrollHeight > maxHeight ? 'auto' : 'hidden';
+                    });
+                    // Инициализация при старте
+                    srcTxt.dispatchEvent(new Event('input'));
+                }
+                // --- Auto-resize logic for translatedText ---
+                if (translatedTxt) {
+                    translatedTxt.addEventListener('input', function () {
+                        this.style.height = 'auto';
+                        const minHeight = Math.round(window.innerHeight * 0.10); // 10vh
+                        const maxHeight = Math.round(window.innerHeight * 0.35); // 35vh
+                        let newHeight = Math.max(this.scrollHeight, minHeight);
+                        if (newHeight > maxHeight) newHeight = maxHeight;
+                        this.style.height = newHeight + 'px';
+                        this.style.overflowY = this.scrollHeight > maxHeight ? 'auto' : 'hidden';
+                    });
+                    // Инициализация при старте
+                    translatedTxt.dispatchEvent(new Event('input'));
                 }
 
                 // // --- Улучшенная логика открытия tools-модалки по ховеру ---
@@ -3628,6 +3815,62 @@ export class Sidebar {
                             };
                         });
                     });
+                }
+
+                // --- CSS: исправить стили для #translatedText и #translatedText.expanded ---
+                // Найти и заменить:
+                // #translatedText { height: 0; opacity: 0; padding: 0 10px; overflow: hidden; ... }
+                // #translatedText.expanded { height: 100px; opacity: 1; padding: 10px; ... }
+                // на:
+                // #translatedText {
+                //   height: 0;
+                //   opacity: 0;
+                //   padding: 0 10px;
+                //   overflow: hidden;
+                //   transition: height .25s ease, opacity .25s ease, padding .25s ease;
+                //   border: 1px solid var(--color-border);
+                // }
+                // #translatedText.expanded {
+                //   height: auto !important;
+                //   opacity: 1;
+                //   padding: 10px;
+                //   overflow-y: auto;
+                //   min-height: 10vh;
+                //   max-height: 35vh;
+                //   resize: none;
+                // }
+
+                // --- JS: auto-resize для translatedText ---
+                if (translatedTxt) {
+                    function autoResizeTranslated() {
+                        if (!translatedTxt) return;
+                        translatedTxt.style.height = 'auto';
+                        const minHeight = Math.round(window.innerHeight * 0.10); // 10vh
+                        const maxHeight = Math.round(window.innerHeight * 0.35); // 35vh
+                        let newHeight = Math.max(translatedTxt.scrollHeight, minHeight);
+                        if (newHeight > maxHeight) newHeight = maxHeight;
+                        translatedTxt.style.height = newHeight + 'px';
+                        translatedTxt.style.overflowY = 'auto'; // всегда показывать скролл при необходимости
+                    }
+                    translatedTxt.addEventListener('input', autoResizeTranslated);
+                    // auto-resize при каждом изменении value (например, после перевода)
+                    const origSet = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(translatedTxt), 'value')?.set;
+                    if (origSet) {
+                        Object.defineProperty(translatedTxt, 'value', {
+                            set(v) {
+                                origSet.call(this, v);
+                                autoResizeTranslated();
+                            },
+                            get() {
+                                return this.textContent;
+                            }
+                        });
+                    } else {
+                        // fallback: MutationObserver
+                        new MutationObserver(autoResizeTranslated).observe(translatedTxt, { attributes: true, childList: true, subtree: true });
+                    }
+                    // Инициализация при старте
+                    autoResizeTranslated();
                 }
 
             }
