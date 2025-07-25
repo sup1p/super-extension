@@ -63,7 +63,10 @@ export default defineConfig({
         { src: "src/chrome-extension/public/appereance-white.png", dest: "./public" },
 
         { src: "src/chrome-extension/public/account-white-active.png", dest: "./public" },
-        { src: "src/chrome-extension/public/appereance-white-active.png", dest: "./public" }
+        { src: "src/chrome-extension/public/appereance-white-active.png", dest: "./public" },
+
+        { src: "src/chrome-extension/public/save-white.png", dest: "./public" },
+        { src: "src/chrome-extension/public/save-dark.png", dest: "./public" }
       ],
     }),
   ],

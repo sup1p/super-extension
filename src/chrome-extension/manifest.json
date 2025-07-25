@@ -88,7 +88,9 @@
         "/public/account-white.png",
         "/public/appereance-white.png",
         "/public/account-white-active.png",
-        "/public/appereance-white-active.png"
+        "/public/appereance-white-active.png",
+        "/public/save-white.png",
+        "/public/save-dark.png"
       ],
       "matches": [
         "<all_urls>"

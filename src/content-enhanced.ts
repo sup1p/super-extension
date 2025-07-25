@@ -1928,3 +1928,205 @@ window.addEventListener('message', (event) => {
         showNotification(event.data.message, event.data.notifType);
     }
 });
+
+// === ВСПЛЫВАЮЩЕЕ ОКНО ПРИ ВЫДЕЛЕНИИ ТЕКСТА ===
+(function () {
+    let selectionPopup: HTMLElement | null = null;
+    let lastSelection = '';
+    let lastMouseUpEvent: MouseEvent | null = null;
+
+    // Пути к иконкам
+    const ICONS = {
+        avatar: chrome.runtime.getURL('public/icon.png'),
+        save: {
+            light: chrome.runtime.getURL('public/save-white.png'),
+            dark: chrome.runtime.getURL('public/save-dark.png'),
+        },
+        summarize: chrome.runtime.getURL('public/summarizer.png'),
+        translate: {
+            light: chrome.runtime.getURL('public/translate-white.png'),
+            dark: chrome.runtime.getURL('public/translate.png'),
+        },
+        voice: {
+            light: chrome.runtime.getURL('public/voice-white.png'),
+            dark: chrome.runtime.getURL('public/voice.png'),
+        },
+    };
+
+    // Определить тему
+    function isLightTheme() {
+        return document.body.classList.contains('theme-light');
+    }
+
+    // Удалить popup
+    function removePopup() {
+        if (selectionPopup) {
+            selectionPopup.remove();
+            selectionPopup = null;
+        }
+    }
+
+    // Показать popup
+    function showSelectionPopup(text: string, x: number, y: number) {
+        removePopup();
+        const isLight = isLightTheme();
+        selectionPopup = document.createElement('div');
+        selectionPopup.id = 'megan-selection-popup';
+        selectionPopup.style.cssText = `
+            position: absolute;
+            left: ${x}px;
+            top: ${y}px;
+            z-index: 2147483647;
+            background: ${isLight ? '#fff' : '#232323'};
+            color: ${isLight ? '#232323' : '#fff'};
+            border-radius: 16px;
+            box-shadow: 0 2px 12px #0004;
+            padding: 0 18px 0 0;
+            min-width: 180px;
+            min-height: 32px;
+            max-width: 420px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid ${isLight ? '#E9E9E9' : '#444'};
+            font-family: 'Poppins', 'Inter', Arial, sans-serif;
+            font-size: 12px;
+            animation: fadeIn 0.18s;
+            cursor: default;
+        `;
+        // Аватар
+        const avatar = document.createElement('img');
+        avatar.src = ICONS.avatar;
+        avatar.alt = 'icon';
+        avatar.style.cssText = 'width:20px;height:20px;object-fit:cover;display:block;border-radius:50%;margin-left:4px;';
+        selectionPopup.appendChild(avatar);
+        // Кнопки
+        const btns = [
+            {
+                icon: isLight ? ICONS.save.light : ICONS.save.dark,
+                title: 'Save',
+                action: () => {
+                    chrome.runtime.sendMessage({ type: 'CREATE_NOTE', title: window.location.hostname, text, focus: true });
+                    removePopup();
+                },
+            },
+            {
+                icon: ICONS.summarize,
+                title: 'Summarize',
+                action: () => {
+                    chrome.runtime.sendMessage({ type: 'SHOW_SUMMARIZE_POPUP', text });
+                    removePopup();
+                },
+            },
+            {
+                icon: isLight ? ICONS.translate.light : ICONS.translate.dark,
+                title: 'Translate',
+                action: () => {
+                    chrome.runtime.sendMessage({ type: 'SHOW_TRANSLATE_POPUP', text });
+                    removePopup();
+                },
+            },
+            {
+                icon: isLight ? ICONS.voice.light : ICONS.voice.dark,
+                title: 'Voice',
+                action: () => {
+                    chrome.runtime.sendMessage({ type: 'SHOW_VOICE_POPUP', text });
+                    removePopup();
+                },
+            },
+        ];
+        btns.forEach(btn => {
+            const b = document.createElement('button');
+            b.style.cssText = `background:none;border:none;padding:0 2px;cursor:pointer;display:flex;align-items:center;justify-content:center;height:22px;width:22px;border-radius:5px;transition:background 0.15s;`;
+            b.title = btn.title;
+            b.tabIndex = -1;
+            const img = document.createElement('img');
+            img.src = btn.icon;
+            img.alt = btn.title;
+            img.style.cssText = 'width:28px;height:28px;object-fit:contain;display:block;';
+            b.appendChild(img);
+            b.onclick = (e) => { e.stopPropagation(); btn.action(); };
+            b.onmouseenter = () => { b.style.background = isLight ? '#F5F5F5' : '#333'; };
+            b.onmouseleave = () => { b.style.background = 'none'; };
+            selectionPopup!.appendChild(b);
+        });
+        // Крестик
+        const closeBtn = document.createElement('button');
+        closeBtn.innerHTML = '×';
+        closeBtn.setAttribute('aria-label', 'Close');
+        closeBtn.style.cssText = `display:flex;position:absolute;top:60%;right:10px;transform:translateY(-50%);width:22px;height:22px;border:none;border-radius:50%;color:${isLight ? '#888' : '#aaa'};cursor:pointer;z-index:2;font-size:18px;align-items:center;justify-content:center;line-height:1;padding:0;transition:background 0.15s;background:${isLight ? '#FAFAFA' : '#232323'};`;
+        closeBtn.onclick = (e) => { e.stopPropagation(); removePopup(); };
+        closeBtn.onmouseenter = () => { closeBtn.style.background = isLight ? '#e0e0e0' : '#232323'; };
+        closeBtn.onmouseleave = () => { closeBtn.style.background = isLight ? '#FAFAFA' : '#232323'; };
+        selectionPopup.appendChild(closeBtn);
+        document.body.appendChild(selectionPopup);
+        // Позиционирование (если выходит за экран — корректируем)
+        setTimeout(() => {
+            if (selectionPopup) {
+                const rect = selectionPopup.getBoundingClientRect();
+                let nx = x, ny = y;
+                if (rect.right > window.innerWidth) nx -= (rect.right - window.innerWidth + 6);
+                if (rect.bottom > window.innerHeight) ny -= (rect.bottom - window.innerHeight + 6);
+                if (nx < 0) nx = 4;
+                if (ny < 0) ny = 4;
+                selectionPopup.style.left = nx + 'px';
+                selectionPopup.style.top = ny + 'px';
+            }
+        }, 0);
+        // Клик вне — закрыть
+        setTimeout(() => {
+            const closeOnClick = (e: MouseEvent) => {
+                if (selectionPopup && !selectionPopup.contains(e.target as Node)) {
+                    removePopup();
+                    document.removeEventListener('mousedown', closeOnClick, true);
+                }
+            };
+            document.addEventListener('mousedown', closeOnClick, true);
+        }, 10);
+    }
+
+    // Mouseup обработчик
+    document.addEventListener('mouseup', (e) => {
+        setTimeout(() => {
+            const sel = window.getSelection();
+            const text = sel && sel.toString().trim();
+            if (!text || text.length === 0) {
+                removePopup();
+                lastSelection = '';
+                return;
+            }
+            // Только если выделение мышкой (не через input/textarea)
+            const target = e.target as HTMLElement;
+            if (target.closest('input, textarea, [contenteditable]')) {
+                removePopup();
+                lastSelection = '';
+                return;
+            }
+            // Показываем popup рядом с концом выделения
+            let x = e.clientX, y = e.clientY;
+            // Если выделение не под курсором (например, двойной клик), позиционируем по range
+            if (sel && sel.rangeCount > 0) {
+                const range = sel.getRangeAt(0);
+                const rects = range.getClientRects();
+                if (rects.length > 0) {
+                    const rect = rects[rects.length - 1];
+                    x = rect.right;
+                    y = rect.bottom;
+                }
+            }
+            showSelectionPopup(text, x + window.scrollX, y + window.scrollY + 8);
+            lastSelection = text;
+            lastMouseUpEvent = e;
+        }, 0);
+    });
+    // При скролле/resize — скрывать popup
+    window.addEventListener('scroll', removePopup, true);
+    window.addEventListener('resize', removePopup, true);
+    // При смене темы — пересоздать popup
+    const themeObs = new MutationObserver(() => {
+        if (selectionPopup && lastSelection && lastMouseUpEvent) {
+            showSelectionPopup(lastSelection, lastMouseUpEvent.clientX + window.scrollX, lastMouseUpEvent.clientY + window.scrollY + 8);
+        }
+    });
+    themeObs.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+})();
