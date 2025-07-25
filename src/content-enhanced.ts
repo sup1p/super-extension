@@ -352,134 +352,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
             const title = document.createElement('div');
             title.textContent = TranslationService.translate('translate_text');
             title.style.cssText = 'font-size:18px;font-weight:600;margin-bottom:2px;cursor:move;user-select:none;z-index:1;';
-            // Drag events (оставляем как было)
-            title.addEventListener('mousedown', (e) => {
-                isDragging = true;
-                const rect = popup.getBoundingClientRect();
-                dragOffsetX = e.clientX - rect.left;
-                dragOffsetY = e.clientY - rect.top;
-                document.body.style.userSelect = 'none';
-            });
-            document.addEventListener('mousemove', (e) => {
-                if (isDragging) {
-                    popup.style.left = (e.clientX - dragOffsetX) + 'px';
-                    popup.style.top = (e.clientY - dragOffsetY) + 'px';
-                    popup.style.right = '';
-                    popup.style.bottom = '';
-                    popup.style.position = 'fixed';
-                }
-            });
-            document.addEventListener('mouseup', () => {
-                isDragging = false;
-                document.body.style.userSelect = '';
-            });
             popup.appendChild(title);
-            // --- Добавляем resizer для изменения размера ---
-            const resizer = document.createElement('div');
-            resizer.className = 'megan-translate-popup-resizer';
-            resizer.style.cssText = `
-                position: absolute;
-                width: 22px;
-                height: 22px;
-                right: 2px;
-                bottom: 2px;
-                cursor: se-resize;
-                z-index: 10;
-                background: none;
-            `;
-            resizer.innerHTML = `<svg width="22" height="22" viewBox="0 0 22 22"><path d="M4 18h14M8 14h10M12 10h6" stroke="#715CFF" stroke-width="2" stroke-linecap="round"/></svg>`;
-            popup.appendChild(resizer);
-            // --- Стили для resizer ---
-            if (!document.getElementById('megan-translate-popup-resizer-style')) {
-                const style = document.createElement('style');
-                style.id = 'megan-translate-popup-resizer-style';
-                style.textContent = `
-                    .megan-translate-popup-resizer { user-select: none; }
-                    .megan-translate-popup-resizer svg { pointer-events: none; opacity: 0.7; }
-                    .megan-translate-popup-resizer:active svg { opacity: 1; }
-                `;
-                document.head.appendChild(style);
-            }
-            // --- Логика изменения размера ---
-            let isResizing = false;
-            let startX = 0, startY = 0, startWidth = 0, startHeight = 0;
-            resizer.addEventListener('mousedown', (e) => {
-                e.preventDefault();
-                isResizing = true;
-                startX = e.clientX;
-                startY = e.clientY;
-                const rect = popup.getBoundingClientRect();
-                startWidth = rect.width;
-                startHeight = rect.height;
-                document.body.style.userSelect = 'none';
-                popup.style.cursor = 'se-resize';
-            });
-            document.addEventListener('mousemove', (e) => {
-                if (!isResizing) return;
-                const dx = e.clientX - startX;
-                const dy = e.clientY - startY;
-                const minWidth = 320, minHeight = 180, maxWidth = 700, maxHeight = 700;
-                let newWidth = Math.max(minWidth, Math.min(maxWidth, startWidth + dx));
-                let newHeight = Math.max(minHeight, Math.min(maxHeight, startHeight + dy));
-                popup.style.width = newWidth + 'px';
-                popup.style.height = newHeight + 'px';
-                popup.style.maxWidth = maxWidth + 'px';
-                popup.style.maxHeight = maxHeight + 'px';
-            });
-            document.addEventListener('mouseup', () => {
-                if (isResizing) {
-                    isResizing = false;
-                    document.body.style.userSelect = '';
-                    popup.style.cursor = '';
-                }
-            });
-            // --- Drag'n'drop на всё popup, кроме input/textarea/кнопок/dropdown/resizer ---
-            // (Объявляем переменные только один раз)
-            let isDragging = false, dragOffsetX = 0, dragOffsetY = 0;
-            popup.addEventListener('mousedown', (e) => {
-                const target = e.target as HTMLElement;
-                if (
-                    target.closest('input, textarea, button, .megan-custom-dropdown, .megan-translate-popup-resizer')
-                ) return;
-                isDragging = true;
-                const rect = popup.getBoundingClientRect();
-                dragOffsetX = e.clientX - rect.left;
-                dragOffsetY = e.clientY - rect.top;
-                document.body.style.userSelect = 'none';
-                popup.style.cursor = 'move';
-            });
-            document.addEventListener('mousemove', (e) => {
-                if (isDragging && !isResizing) {
-                    popup.style.left = (e.clientX - dragOffsetX) + 'px';
-                    popup.style.top = (e.clientY - dragOffsetY) + 'px';
-                    popup.style.right = '';
-                    popup.style.bottom = '';
-                    popup.style.position = 'fixed';
-                    popup.style.cursor = 'move';
-                }
-            });
-            document.addEventListener('mouseup', () => {
-                if (isDragging) {
-                    isDragging = false;
-                    document.body.style.userSelect = '';
-                    popup.style.cursor = '';
-                }
-            });
-            // Курсор "move" при наведении на popup, кроме интерактивных элементов
-            popup.addEventListener('mousemove', (e) => {
-                const target = e.target as HTMLElement;
-                if (
-                    target.closest('input, textarea, button, .megan-custom-dropdown, .megan-translate-popup-resizer')
-                ) {
-                    popup.style.cursor = '';
-                } else if (!isDragging && !isResizing) {
-                    popup.style.cursor = 'move';
-                }
-            });
-            // Сброс курсора при уходе мыши
-            popup.addEventListener('mouseleave', () => {
-                if (!isDragging && !isResizing) popup.style.cursor = '';
-            });
             // --- Кастомный dropdown для выбора языка ---
             const langRow = document.createElement('div');
             langRow.style.cssText = 'display:flex;gap:8px;align-items:center;';
@@ -666,8 +539,8 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
             // Логика перевода
             btn.onclick = async () => {
                 const { TranslateService } = await import('./services/translate');
-                const text = message.text.trim();
-                if (!text) return;
+                const t = message.text.trim();
+                if (!t) return;
                 dstArea.value = TranslationService.translate('translating');
                 let token = '';
                 if ((window as any).AuthService) {
@@ -682,10 +555,9 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                 }
                 try {
                     const code = dropdown.getAttribute('data-value') || 'en';
-                    const result = await TranslateService["translateText"](text, 'auto', code);
+                    const result = await TranslateService["translateText"](t, 'auto', code);
                     dstArea.value = result;
                 } catch (err) {
-                    // Всегда показываем notification если ошибка связана с авторизацией
                     if (err instanceof Error && err.message && err.message.includes('No auth token')) {
                         showNotification(TranslationService.translate('login_required_translate'), 'error');
                         dstArea.value = TranslationService.translate('login_required_translate');
@@ -714,9 +586,29 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                 btn.style.border = 'none';
             }
             applyPopupTheme();
-            // Следим за сменой темы
             const observer = new MutationObserver(applyPopupTheme);
             observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+            // --- Локальный drag'n'drop только по заголовку ---
+            title.addEventListener('mousedown', (e: MouseEvent) => {
+                const rect = popup.getBoundingClientRect();
+                const dragOffsetX = e.clientX - rect.left;
+                const dragOffsetY = e.clientY - rect.top;
+                function onMouseMove(e: MouseEvent) {
+                    popup.style.left = (e.clientX - dragOffsetX) + 'px';
+                    popup.style.top = (e.clientY - dragOffsetY) + 'px';
+                    popup.style.right = '';
+                    popup.style.bottom = '';
+                    popup.style.position = 'fixed';
+                }
+                function onMouseUp() {
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+                    document.body.style.userSelect = '';
+                }
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+                document.body.style.userSelect = 'none';
+            });
         })();
     } else if (message.type === 'SHOW_SUMMARIZE_POPUP') {
         (async () => {
@@ -747,74 +639,19 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                 const style = document.createElement('style');
                 style.id = 'megan-translate-popup-style';
                 style.textContent = `
-                    .megan-translate-popup-dark {
-                        background: #232323 !important;
-                        color: #fff !important;
-                        border: 1.5px solid #715CFF !important;
-                    }
-                    .megan-translate-popup-light {
-                        background: #FAFAFA !important;
-                        color: #232323 !important;
-                        border: 1.5px solid #AA97FF !important;
-                    }
-                    .megan-custom-dropdown { position: relative; width: 100%; user-select: none; font-size: 15px; font-weight: 500; }
-                    .megan-custom-dropdown-selected { background: #181818; color: #fff; border: 1.5px solid #715CFF; border-radius: 10px; padding: 10px 38px 10px 14px; cursor: pointer; transition: border 0.2s, box-shadow 0.2s; box-shadow: 0 2px 8px #715cff11; position: relative; }
-                    .megan-custom-dropdown-selected:after { content: ''; position: absolute; right: 16px; top: 50%; width: 16px; height: 16px; background-image: url('data:image/svg+xml;utf8,<svg fill=\"none\" stroke=\"%23715CFF\" stroke-width=\"2\" viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M6 9l6 6 6-6\"/></svg>'); background-size: 16px 16px; background-repeat: no-repeat; background-position: center; transform: translateY(-50%); pointer-events: none; }
-                    .megan-custom-dropdown-list { display: none; position: absolute; left: 0; right: 0; top: 110%; background: #181818; border: 1.5px solid #715CFF; border-radius: 10px; box-shadow: 0 8px 32px rgba(111,88,213,0.10); z-index: 99999; animation: fadeInDropdown 0.18s; max-height: 260px; overflow-y: auto; }
-                    .megan-custom-dropdown.open .megan-custom-dropdown-list { display: block; }
-                    .megan-custom-dropdown-option { padding: 12px 18px; cursor: pointer; color: #fff; transition: background 0.15s, color 0.15s; }
-                    .megan-custom-dropdown-option:hover { background: #715CFF; color: #fff; }
-                    @keyframes fadeInDropdown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
-                    /* --- Scrollbar styles --- */
-                    .megan-custom-dropdown-list { scrollbar-width: thin; scrollbar-color: #715CFF #181818; }
-                    .megan-custom-dropdown-list::-webkit-scrollbar { width: 7px; background: #181818; }
-                    .megan-custom-dropdown-list::-webkit-scrollbar-thumb { background: #715CFF; border-radius: 6px; }
-                    .megan-custom-dropdown-list::-webkit-scrollbar-track { background: #181818; }
-                    body.theme-light .megan-custom-dropdown-list { scrollbar-color: #AA97FF #F5F5F5; }
-                    body.theme-light .megan-custom-dropdown-list::-webkit-scrollbar { background: #F5F5F5; }
-                    body.theme-light .megan-custom-dropdown-list::-webkit-scrollbar-thumb { background: #AA97FF; }
-                    body.theme-light .megan-custom-dropdown-list::-webkit-scrollbar-track { background: #F5F5F5; }
-                    /* Light theme for dropdown */
-                    body.theme-light .megan-custom-dropdown-selected { background: #fff; color: #232323; border: 1.5px solid #AA97FF; }
-                    body.theme-light .megan-custom-dropdown-selected:after { background-image: url('data:image/svg+xml;utf8,<svg fill=\"none\" stroke=\"%23AA97FF\" stroke-width=\"2\" viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M6 9l6 6 6-6\"/></svg>'); }
-                    body.theme-light .megan-custom-dropdown-list { background: #fff; border: 1.5px solid #AA97FF; }
-                    body.theme-light .megan-custom-dropdown-option { color: #232323; }
-                    body.theme-light .megan-custom-dropdown-option:hover { background: #AA97FF; color: #fff; }
+                    .megan-translate-popup-dark { background: #232323 !important; color: #fff !important; border: 1.5px solid #715CFF !important; }
+                    .megan-translate-popup-light { background: #FAFAFA !important; color: #232323 !important; border: 1.5px solid #AA97FF !important; }
                 `;
                 document.head.appendChild(style);
             }
-            // Кнопка закрытия
             const closeBtn = document.createElement('button');
             closeBtn.textContent = '×';
             closeBtn.style.cssText = 'position:absolute;top:8px;right:12px;background:none;border:none;font-size:22px;cursor:pointer;z-index:2;';
             closeBtn.onclick = () => popup.remove();
             popup.appendChild(closeBtn);
-            // Заголовок
             const title = document.createElement('div');
             title.textContent = TranslationService.translate('summarize_text');
             title.style.cssText = 'font-size:18px;font-weight:600;margin-bottom:2px;cursor:move;user-select:none;z-index:1;';
-            // Drag events
-            let isDragging = false, dragOffsetX = 0, dragOffsetY = 0;
-            title.addEventListener('mousedown', (e) => {
-                isDragging = true;
-                const rect = popup.getBoundingClientRect();
-                dragOffsetX = e.clientX - rect.left;
-                dragOffsetY = e.clientY - rect.top;
-                document.body.style.userSelect = 'none';
-            });
-            document.addEventListener('mousemove', (e) => {
-                if (isDragging) {
-                    popup.style.left = (e.clientX - dragOffsetX) + 'px';
-                    popup.style.top = (e.clientY - dragOffsetY) + 'px';
-                    popup.style.right = '';
-                    popup.style.bottom = '';
-                    popup.style.position = 'fixed';
-                }
-            });
-            document.addEventListener('mouseup', () => {
-                isDragging = false;
-                document.body.style.userSelect = '';
-            });
             popup.appendChild(title);
             // --- Добавляем resizer для изменения размера ---
             const resizer = document.createElement('div');
@@ -876,6 +713,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                 }
             });
             // --- Drag'n'drop на всё popup, кроме input/textarea/кнопок/resizer ---
+            let isDragging = false, dragOffsetX = 0, dragOffsetY = 0;
             popup.addEventListener('mousedown', (e) => {
                 const target = e.target as HTMLElement;
                 if (
@@ -968,8 +806,8 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
             popup.appendChild(dstArea);
             // Логика summarize
             btn.onclick = async () => {
-                const text = message.text.trim();
-                if (!text) return;
+                const t = message.text.trim();
+                if (!t) return;
                 dstArea.value = TranslationService.translate('summarizing');
                 try {
                     let token = '';
@@ -994,7 +832,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                                     "Content-Type": "application/json",
                                     "Authorization": token ? `Bearer ${token}` : ""
                                 },
-                                body: JSON.stringify({ text })
+                                body: JSON.stringify({ text: t })
                             }
                         }, (response) => {
                             if (!response) reject("No response from background");
@@ -1137,29 +975,28 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
             const title = document.createElement('div');
             title.textContent = TranslationService.translate('voice_playback');
             title.style.cssText = 'font-size:18px;font-weight:600;margin-bottom:2px;cursor:move;user-select:none;z-index:1;';
-            // Drag events
-            let isDragging = false, dragOffsetX = 0, dragOffsetY = 0;
-            title.addEventListener('mousedown', (e) => {
-                isDragging = true;
+            popup.appendChild(title);
+            // --- Локальный drag'n'drop только по заголовку ---
+            title.addEventListener('mousedown', (e: MouseEvent) => {
                 const rect = popup.getBoundingClientRect();
-                dragOffsetX = e.clientX - rect.left;
-                dragOffsetY = e.clientY - rect.top;
-                document.body.style.userSelect = 'none';
-            });
-            document.addEventListener('mousemove', (e) => {
-                if (isDragging) {
+                const dragOffsetX = e.clientX - rect.left;
+                const dragOffsetY = e.clientY - rect.top;
+                function onMouseMove(e: MouseEvent) {
                     popup.style.left = (e.clientX - dragOffsetX) + 'px';
                     popup.style.top = (e.clientY - dragOffsetY) + 'px';
                     popup.style.right = '';
                     popup.style.bottom = '';
                     popup.style.position = 'fixed';
                 }
+                function onMouseUp() {
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+                    document.body.style.userSelect = '';
+                }
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+                document.body.style.userSelect = 'none';
             });
-            document.addEventListener('mouseup', () => {
-                isDragging = false;
-                document.body.style.userSelect = '';
-            });
-            popup.appendChild(title);
             // Аудиоэлемент
             const audio = document.createElement('audio');
             audio.controls = true;
@@ -1249,7 +1086,13 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
                 const notif = document.querySelector('.megan-notification');
                 if (notif) notif.remove();
                 if (data.audio_base64) {
-                    audio.src = `data:audio/mp3;base64,${data.audio_base64}`;
+                    console.log('audio_base64 length:', data.audio_base64.length);
+                    console.log('audio_base64:', data.audio_base64);
+                    audio.src = `data:audio/mpeg;base64,${data.audio_base64}`;
+                    audio.onerror = (e) => {
+                        console.error('Audio error:', e, audio.error);
+                        status.textContent = 'Ошибка загрузки аудио';
+                    };
                     audio.style.display = '';
                     status.textContent = '';
                     audio.play();
@@ -1959,12 +1802,14 @@ window.addEventListener('message', (event) => {
     }
 
     // Удалить popup
-    function removePopup() {
+    let handleKeydown: ((e: KeyboardEvent) => void) | null = null;
+    let removePopup = function () {
         if (selectionPopup) {
             selectionPopup.remove();
             selectionPopup = null;
         }
-    }
+        if (handleKeydown) window.removeEventListener('keydown', handleKeydown, true);
+    };
 
     // Показать popup
     function showSelectionPopup(text: string, x: number, y: number) {
@@ -1987,7 +1832,7 @@ window.addEventListener('message', (event) => {
             max-width: 420px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 12px;
             border: 1px solid ${isLight ? '#E9E9E9' : '#444'};
             font-family: 'Poppins', 'Inter', Arial, sans-serif;
             font-size: 12px;
@@ -2005,34 +1850,22 @@ window.addEventListener('message', (event) => {
             {
                 icon: isLight ? ICONS.save.light : ICONS.save.dark,
                 title: 'Save',
-                action: () => {
-                    chrome.runtime.sendMessage({ type: 'CREATE_NOTE', title: window.location.hostname, text, focus: true });
-                    removePopup();
-                },
+                action: () => { handleSaveNote(window.location.hostname, text, true); removePopup(); },
             },
             {
                 icon: ICONS.summarize,
                 title: 'Summarize',
-                action: () => {
-                    chrome.runtime.sendMessage({ type: 'SHOW_SUMMARIZE_POPUP', text });
-                    removePopup();
-                },
+                action: () => { handleSummarize(text); removePopup(); },
             },
             {
                 icon: isLight ? ICONS.translate.light : ICONS.translate.dark,
                 title: 'Translate',
-                action: () => {
-                    chrome.runtime.sendMessage({ type: 'SHOW_TRANSLATE_POPUP', text });
-                    removePopup();
-                },
+                action: () => { handleTranslate(text); removePopup(); },
             },
             {
                 icon: isLight ? ICONS.voice.light : ICONS.voice.dark,
                 title: 'Voice',
-                action: () => {
-                    chrome.runtime.sendMessage({ type: 'SHOW_VOICE_POPUP', text });
-                    removePopup();
-                },
+                action: () => { handleVoice(text); removePopup(); },
             },
         ];
         btns.forEach(btn => {
@@ -2043,7 +1876,7 @@ window.addEventListener('message', (event) => {
             const img = document.createElement('img');
             img.src = btn.icon;
             img.alt = btn.title;
-            img.style.cssText = 'width:28px;height:28px;object-fit:contain;display:block;';
+            img.style.cssText = 'width:22px;height:22px;object-fit:contain;display:block;';
             b.appendChild(img);
             b.onclick = (e) => { e.stopPropagation(); btn.action(); };
             b.onmouseenter = () => { b.style.background = isLight ? '#F5F5F5' : '#333'; };
@@ -2083,6 +1916,25 @@ window.addEventListener('message', (event) => {
             };
             document.addEventListener('mousedown', closeOnClick, true);
         }, 10);
+
+        // === Горячие клавиши 1-4 для кнопок ===
+        handleKeydown = function (e: KeyboardEvent) {
+            if (!selectionPopup) return;
+            if (["1", "2", "3", "4"].includes(e.key)) {
+                e.preventDefault();
+                const idx = parseInt(e.key, 10) - 1;
+                if (btns[idx]) btns[idx].action();
+            }
+        };
+        window.addEventListener('keydown', handleKeydown, true);
+        // Удалять обработчик при закрытии popup
+        removePopup = function () {
+            if (selectionPopup) {
+                selectionPopup.remove();
+                selectionPopup = null;
+            }
+            if (handleKeydown) window.removeEventListener('keydown', handleKeydown, true);
+        };
     }
 
     // Mouseup обработчик
@@ -2130,3 +1982,889 @@ window.addEventListener('message', (event) => {
     });
     themeObs.observe(document.body, { attributes: true, attributeFilter: ['class'] });
 })();
+
+// === ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ POPUP ===
+async function handleSaveNote(title: string, text: string, focus = true) {
+    try {
+        let token = '';
+        if ((window as any).AuthService) {
+            token = String(await (window as any).AuthService.getToken() || '');
+        } else if (typeof AuthService !== 'undefined') {
+            token = String(await (AuthService as any).getToken() || '');
+        }
+        if (!token) {
+            showNotification(TranslationService.translate('login_required_save_note'), 'error');
+            return;
+        }
+        let NotesService;
+        if ((window as any).NotesService) {
+            NotesService = (window as any).NotesService;
+        } else {
+            NotesService = (await import('./services/notes')).NotesService;
+        }
+        const note = await NotesService.createNote(title, text, token, document);
+        if (note) {
+            showNotification(TranslationService.translate('success_note_saved'), 'success');
+            if (focus) {
+                if (!(window as any).sidebarInstance.isOpen()) {
+                    await (window as any).sidebarInstance.openSidebar();
+                }
+                if ((window as any).sidebarInstance.navigateTo) {
+                    (window as any).sidebarInstance.navigateTo('screen-notes');
+                }
+                if (typeof (document as any).renderNotes === 'function') {
+                    await (document as any).renderNotes();
+                }
+            }
+        } else {
+            showNotification(TranslationService.translate('failed_create_note'), 'error');
+        }
+    } catch (e) {
+        console.error('[content-enhanced] Error creating note:', e);
+        showNotification(TranslationService.translate('error_creating_note') + ' ' + (e instanceof Error ? e.message : String(e)), 'error');
+    }
+}
+
+async function handleSummarize(text: string) {
+    // Взято из блока SHOW_SUMMARIZE_POPUP
+    const old = document.getElementById('megan-summarize-popup');
+    if (old) old.remove();
+    const popup = document.createElement('div');
+    popup.id = 'megan-summarize-popup';
+    popup.style.cssText = `
+        position: fixed;
+        z-index: 2147483647;
+        top: 90px; right: 50px;
+        border-radius: 16px;
+        box-shadow: 0 8px 32px #0008;
+        padding: 28px 28px 22px 28px;
+        min-width: 340px;
+        max-width: 350px;
+        font-family: 'Poppins', 'Inter', Arial, sans-serif;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        animation: fadeIn 0.2s;
+        cursor: default;
+    `;
+    if (!document.getElementById('megan-translate-popup-style')) {
+        const style = document.createElement('style');
+        style.id = 'megan-translate-popup-style';
+        style.textContent = `
+            .megan-translate-popup-dark { background: #232323 !important; color: #fff !important; border: 1.5px solid #715CFF !important; }
+            .megan-translate-popup-light { background: #FAFAFA !important; color: #232323 !important; border: 1.5px solid #AA97FF !important; }
+        `;
+        document.head.appendChild(style);
+    }
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = '×';
+    closeBtn.style.cssText = 'position:absolute;top:8px;right:12px;background:none;border:none;font-size:22px;cursor:pointer;z-index:2;';
+    closeBtn.onclick = () => popup.remove();
+    popup.appendChild(closeBtn);
+    const title = document.createElement('div');
+    title.textContent = TranslationService.translate('summarize_text');
+    title.style.cssText = 'font-size:18px;font-weight:600;margin-bottom:2px;cursor:move;user-select:none;z-index:1;';
+    popup.appendChild(title);
+    // --- Добавляем resizer для изменения размера ---
+    const resizer = document.createElement('div');
+    resizer.className = 'megan-summarize-popup-resizer';
+    resizer.style.cssText = `
+        position: absolute;
+        width: 22px;
+        height: 22px;
+        right: 2px;
+        bottom: 2px;
+        cursor: se-resize;
+        z-index: 10;
+        background: none;
+    `;
+    resizer.innerHTML = `<svg width="22" height="22" viewBox="0 0 22 22"><path d="M4 18h14M8 14h10M12 10h6" stroke="#715CFF" stroke-width="2" stroke-linecap="round"/></svg>`;
+    popup.appendChild(resizer);
+    if (!document.getElementById('megan-summarize-popup-resizer-style')) {
+        const style = document.createElement('style');
+        style.id = 'megan-summarize-popup-resizer-style';
+        style.textContent = `
+            .megan-summarize-popup-resizer { user-select: none; }
+            .megan-summarize-popup-resizer svg { pointer-events: none; opacity: 0.7; }
+            .megan-summarize-popup-resizer:active svg { opacity: 1; }
+        `;
+        document.head.appendChild(style);
+    }
+    let isResizing = false;
+    let startX = 0, startY = 0, startWidth = 0, startHeight = 0;
+    resizer.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        isResizing = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        const rect = popup.getBoundingClientRect();
+        startWidth = rect.width;
+        startHeight = rect.height;
+        document.body.style.userSelect = 'none';
+        popup.style.cursor = 'se-resize';
+    });
+    document.addEventListener('mousemove', (e) => {
+        if (!isResizing) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        const minWidth = 320, minHeight = 180, maxWidth = 700, maxHeight = 700;
+        let newWidth = Math.max(minWidth, Math.min(maxWidth, startWidth + dx));
+        let newHeight = Math.max(minHeight, Math.min(maxHeight, startHeight + dy));
+        popup.style.width = newWidth + 'px';
+        popup.style.height = newHeight + 'px';
+        popup.style.maxWidth = maxWidth + 'px';
+        popup.style.maxHeight = maxHeight + 'px';
+    });
+    document.addEventListener('mouseup', () => {
+        if (isResizing) {
+            isResizing = false;
+            document.body.style.userSelect = '';
+            popup.style.cursor = '';
+        }
+    });
+    // --- Drag'n'drop на всё popup, кроме input/textarea/кнопок/resizer ---
+    let isDragging = false, dragOffsetX = 0, dragOffsetY = 0;
+    popup.addEventListener('mousedown', (e) => {
+        const target = e.target as HTMLElement;
+        if (
+            target.closest('input, textarea, button, .megan-summarize-popup-resizer')
+        ) return;
+        isDragging = true;
+        const rect = popup.getBoundingClientRect();
+        dragOffsetX = e.clientX - rect.left;
+        dragOffsetY = e.clientY - rect.top;
+        document.body.style.userSelect = 'none';
+        popup.style.cursor = 'move';
+    });
+    document.addEventListener('mousemove', (e) => {
+        if (isDragging && !isResizing) {
+            popup.style.left = (e.clientX - dragOffsetX) + 'px';
+            popup.style.top = (e.clientY - dragOffsetY) + 'px';
+            popup.style.right = '';
+            popup.style.bottom = '';
+            popup.style.position = 'fixed';
+            popup.style.cursor = 'move';
+        }
+    });
+    document.addEventListener('mouseup', () => {
+        if (isDragging) {
+            isDragging = false;
+            document.body.style.userSelect = '';
+            popup.style.cursor = '';
+        }
+    });
+    // Курсор "move" при наведении на popup, кроме интерактивных элементов
+    popup.addEventListener('mousemove', (e) => {
+        const target = e.target as HTMLElement;
+        if (
+            target.closest('input, textarea, button, .megan-summarize-popup-resizer')
+        ) {
+            popup.style.cursor = '';
+        } else if (!isDragging && !isResizing) {
+            popup.style.cursor = 'move';
+        }
+    });
+    // Сброс курсора при уходе мыши
+    popup.addEventListener('mouseleave', () => {
+        if (!isDragging && !isResizing) popup.style.cursor = '';
+    });
+    // Кнопка summarize
+    const btn = document.createElement('button');
+    btn.textContent = TranslationService.translate('summarize');
+    btn.style.cssText = 'margin-top:8px;padding:10px 0;font-size:15px;font-weight:600;background:#715CFF;color:#fff;border:none;border-radius:8px;cursor:pointer;';
+    popup.appendChild(btn);
+    // Результат
+    const dstArea = document.createElement('textarea');
+    dstArea.readOnly = true;
+    dstArea.placeholder = TranslationService.translate('summary_placeholder');
+    dstArea.style.cssText = 'width:100%;min-width:0;flex:1 1 auto;height:90px;padding:8px 10px;font-size:15px;border-radius:8px;border:1px solid #444;background:#181818;color:#fff;resize:vertical;margin-top:8px;overflow-y:auto;box-sizing:border-box;';
+    // --- Custom scrollbar styles (like dropdown) ---
+    if (!document.getElementById('megan-summarize-popup-scrollbar-style')) {
+        const style = document.createElement('style');
+        style.id = 'megan-summarize-popup-scrollbar-style';
+        style.textContent = `
+            #megan-summarize-popup textarea::-webkit-scrollbar {
+                width: 7px;
+                background: #181818;
+            }
+            #megan-summarize-popup textarea::-webkit-scrollbar-thumb {
+                background: #715CFF;
+                border-radius: 6px;
+            }
+            #megan-summarize-popup textarea::-webkit-scrollbar-track {
+                background: #181818;
+            }
+            body.theme-light #megan-summarize-popup textarea::-webkit-scrollbar {
+                background: #F5F5F5;
+            }
+            body.theme-light #megan-summarize-popup textarea::-webkit-scrollbar-thumb {
+                background: #AA97FF;
+            }
+            body.theme-light #megan-summarize-popup textarea::-webkit-scrollbar-track {
+                background: #F5F5F5;
+            }
+            #megan-summarize-popup textarea {
+                scrollbar-width: thin;
+                scrollbar-color: #715CFF #181818;
+            }
+            body.theme-light #megan-summarize-popup textarea {
+                scrollbar-color: #AA97FF #F5F5F5;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    popup.appendChild(dstArea);
+    // Логика summarize
+    btn.onclick = async () => {
+        const t = text.trim();
+        if (!t) return;
+        dstArea.value = TranslationService.translate('summarizing');
+        try {
+            let token = '';
+            if ((window as any).AuthService) {
+                token = String(await (window as any).AuthService.getToken() || '');
+            } else if (typeof AuthService !== 'undefined') {
+                token = String(await (AuthService as any).getToken() || '');
+            }
+            if (!token) {
+                showNotification(TranslationService.translate('login_required_summarize'), 'error');
+                dstArea.value = TranslationService.translate('login_required_summarize');
+                return;
+            }
+            const API_URL = await getApiUrl();
+            const resp = await new Promise((resolve, reject) => {
+                chrome.runtime.sendMessage({
+                    type: "TOOLS_LOGIC",
+                    url: `${API_URL}/tools/summarize/selected`,
+                    options: {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": token ? `Bearer ${token}` : ""
+                        },
+                        body: JSON.stringify({ text: t })
+                    }
+                }, (response) => {
+                    if (!response) reject("No response from background");
+                    else if (!response.ok) {
+                        if (response.status === 429) {
+                            showNotification('Summarization limit exceeded for today', 'error');
+                            dstArea.value = 'Summarization limit exceeded';
+                            return;
+                        }
+                        reject(response);
+                    }
+                    else resolve({ ok: true, json: () => response.data });
+                });
+            });
+            const data = await (resp as any).json();
+            dstArea.value = data.summarized_text || TranslationService.translate('no_summary');
+        } catch (err) {
+            if (
+                (err && typeof err === 'object' && 'status' in err && err.status === 401) ||
+                (err instanceof Error && err.message && err.message.toLowerCase().includes('auth'))
+            ) {
+                showNotification(TranslationService.translate('login_required_summarize'), 'error');
+                dstArea.value = TranslationService.translate('login_required_summarize');
+            } else {
+                dstArea.value = TranslationService.translate('error') + ': ' + (err instanceof Error ? err.message : String(err));
+            }
+        }
+    };
+    // Автоматически summarize сразу при открытии
+    btn.click();
+    document.body.appendChild(popup);
+    // --- Тема ---
+    function applyPopupTheme() {
+        const isLight = document.body.classList.contains('theme-light');
+        popup.classList.toggle('megan-translate-popup-light', isLight);
+        popup.classList.toggle('megan-translate-popup-dark', !isLight);
+        closeBtn.style.color = isLight ? '#888' : '#aaa';
+        title.style.color = isLight ? '#232323' : '#fff';
+        dstArea.style.background = isLight ? '#fff' : '#181818';
+        dstArea.style.color = isLight ? '#232323' : '#fff';
+        dstArea.style.border = isLight ? '1px solid #AA97FF' : '1px solid #715CFF';
+        btn.style.background = isLight ? '#AA97FF' : '#715CFF';
+        btn.style.color = '#fff';
+        btn.style.border = 'none';
+    }
+    applyPopupTheme();
+    const observer = new MutationObserver(applyPopupTheme);
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+}
+
+async function handleTranslate(text: string) {
+    // Взято из блока SHOW_TRANSLATE_POPUP
+    const old = document.getElementById('megan-translate-popup');
+    if (old) old.remove();
+    // Создать контейнер
+    const popup = document.createElement('div');
+    popup.id = 'megan-translate-popup';
+    popup.style.cssText = `
+        position: fixed;
+        z-index: 2147483647;
+        top: 50px; right: 50px;
+        background: #232323;
+        color: #fff;
+        border-radius: 16px;
+        box-shadow: 0 8px 32px #0008;
+        padding: 28px 28px 22px 28px;
+        min-width: 340px;
+        min-height: 300px;
+        max-width: 700px;
+        max-height: 700px;
+        font-family: 'Poppins', 'Inter', Arial, sans-serif;
+        border: 1.5px solid #715CFF;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        animation: fadeIn 0.2s;
+        cursor: default;
+    `;
+    // --- Стили для кастомного dropdown (как в translate-screen) ---
+    if (!document.getElementById('megan-translate-popup-style')) {
+        const style = document.createElement('style');
+        style.id = 'megan-translate-popup-style';
+        style.textContent = `
+            .megan-translate-popup-dark {
+                background: #232323 !important;
+                color: #fff !important;
+                border: 1.5px solid #715CFF !important;
+            }
+            .megan-translate-popup-light {
+                background: #FAFAFA !important;
+                color: #232323 !important;
+                border: 1.5px solid #AA97FF !important;
+            }
+            .megan-custom-dropdown { position: relative; width: 100%; user-select: none; font-size: 15px; font-weight: 500; }
+            .megan-custom-dropdown-selected { background: #181818; color: #fff; border: 1.5px solid #715CFF; border-radius: 10px; padding: 10px 38px 10px 14px; cursor: pointer; transition: border 0.2s, box-shadow 0.2s; box-shadow: 0 2px 8px #715cff11; position: relative; }
+            .megan-custom-dropdown-selected:after { content: ''; position: absolute; right: 16px; top: 50%; width: 16px; height: 16px; background-image: url('data:image/svg+xml;utf8,<svg fill="none" stroke="%23715CFF" stroke-width="2" viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg"><path d="M6 9l6 6 6-6"/></svg>'); background-size: 16px 16px; background-repeat: no-repeat; background-position: center; transform: translateY(-50%); pointer-events: none; }
+            .megan-custom-dropdown-list { display: none; position: absolute; left: 0; right: 0; top: 110%; background: #181818; border: 1.5px solid #715CFF; border-radius: 10px; box-shadow: 0 8px 32px rgba(111,88,213,0.10); z-index: 99999; animation: fadeInDropdown 0.18s; max-height: 260px; overflow-y: auto; }
+            .megan-custom-dropdown.open .megan-custom-dropdown-list { display: block; }
+            .megan-custom-dropdown-option { padding: 12px 18px; cursor: pointer; color: #fff; transition: background 0.15s, color 0.15s; }
+            .megan-custom-dropdown-option:hover { background: #715CFF; color: #fff; }
+            @keyframes fadeInDropdown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+            /* --- Scrollbar styles --- */
+            .megan-custom-dropdown-list { scrollbar-width: thin; scrollbar-color: #715CFF #181818; }
+            .megan-custom-dropdown-list::-webkit-scrollbar { width: 7px; background: #181818; }
+            .megan-custom-dropdown-list::-webkit-scrollbar-thumb { background: #715CFF; border-radius: 6px; }
+            .megan-custom-dropdown-list::-webkit-scrollbar-track { background: #181818; }
+            body.theme-light .megan-custom-dropdown-list { scrollbar-color: #AA97FF #F5F5F5; }
+            body.theme-light .megan-custom-dropdown-list::-webkit-scrollbar { background: #F5F5F5; }
+            body.theme-light .megan-custom-dropdown-list::-webkit-scrollbar-thumb { background: #AA97FF; }
+            body.theme-light .megan-custom-dropdown-list::-webkit-scrollbar-track { background: #F5F5F5; }
+            /* Light theme for dropdown */
+            body.theme-light .megan-custom-dropdown-selected { background: #fff; color: #232323; border: 1.5px solid #AA97FF; }
+            body.theme-light .megan-custom-dropdown-selected:after { background-image: url('data:image/svg+xml;utf8,<svg fill="none" stroke="%23AA97FF" stroke-width="2" viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg"><path d="M6 9l6 6 6-6"/></svg>'); }
+            body.theme-light .megan-custom-dropdown-list { background: #fff; border: 1.5px solid #AA97FF; }
+            body.theme-light .megan-custom-dropdown-option { color: #232323; }
+            body.theme-light .megan-custom-dropdown-option:hover { background: #AA97FF; color: #fff; }
+        `;
+        document.head.appendChild(style);
+    }
+    // Кнопка закрытия
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = '×';
+    closeBtn.style.cssText = 'position:absolute;top:8px;right:12px;background:none;border:none;font-size:22px;color:#aaa;cursor:pointer;z-index:2;';
+    closeBtn.onclick = () => popup.remove();
+    popup.appendChild(closeBtn);
+    // Заголовок
+    const title = document.createElement('div');
+    title.textContent = TranslationService.translate('translate_text');
+    title.style.cssText = 'font-size:18px;font-weight:600;margin-bottom:2px;cursor:move;user-select:none;z-index:1;';
+    popup.appendChild(title);
+    // --- Кастомный dropdown для выбора языка ---
+    const langRow = document.createElement('div');
+    langRow.style.cssText = 'display:flex;gap:8px;align-items:center;';
+    // Кастомный dropdown
+    const dropdown = document.createElement('div');
+    dropdown.className = 'megan-custom-dropdown';
+    const selected = document.createElement('div');
+    selected.className = 'megan-custom-dropdown-selected';
+    selected.textContent = 'English';
+    const list = document.createElement('div');
+    list.className = 'megan-custom-dropdown-list';
+    // Заполняем языки
+    const { languages } = await import('./services/translate');
+    languages.filter(l => l.code !== 'auto').forEach(({ code, name }) => {
+        let displayName = name;
+        let key = '';
+        switch (code) {
+            case 'en': key = 'english'; break;
+            case 'zh': key = 'chinese'; break;
+            case 'hi': key = 'hindi'; break;
+            case 'es': key = 'spanish'; break;
+            case 'fr': key = 'french'; break;
+            case 'ar': key = 'arabic'; break;
+            case 'bn': key = 'bengali'; break;
+            case 'ru': key = 'russian'; break;
+            case 'pt': key = 'portuguese'; break;
+            case 'ur': key = 'urdu'; break;
+            case 'id': key = 'indonesian'; break;
+            case 'de': key = 'german'; break;
+            case 'ja': key = 'japanese'; break;
+            case 'sw': key = 'swahili'; break;
+            case 'mr': key = 'marathi'; break;
+            case 'te': key = 'telugu'; break;
+            case 'tr': key = 'turkish'; break;
+            case 'ta': key = 'tamil'; break;
+            case 'vi': key = 'vietnamese'; break;
+            case 'ko': key = 'korean'; break;
+            case 'fa': key = 'persian'; break;
+            case 'it': key = 'italian'; break;
+            case 'pl': key = 'polish'; break;
+            case 'uk': key = 'ukrainian'; break;
+            case 'ro': key = 'romanian'; break;
+            case 'nl': key = 'dutch'; break;
+            case 'th': key = 'thai'; break;
+            case 'gu': key = 'gujarati'; break;
+            case 'pa': key = 'punjabi'; break;
+            case 'ml': key = 'malayalam'; break;
+            case 'kn': key = 'kannada'; break;
+            case 'jv': key = 'javanese'; break;
+            case 'my': key = 'burmese'; break;
+            case 'el': key = 'greek'; break;
+            case 'hu': key = 'hungarian'; break;
+            case 'cs': key = 'czech'; break;
+            case 'sv': key = 'swedish'; break;
+            case 'fi': key = 'finnish'; break;
+            case 'no': key = 'norwegian'; break;
+            case 'da': key = 'danish'; break;
+            case 'he': key = 'hebrew'; break;
+            case 'sr': key = 'serbian'; break;
+            case 'sk': key = 'slovak'; break;
+            case 'bg': key = 'bulgarian'; break;
+            case 'hr': key = 'croatian'; break;
+            case 'lt': key = 'lithuanian'; break;
+            case 'sl': key = 'slovenian'; break;
+            case 'et': key = 'estonian'; break;
+            case 'lv': key = 'latvian'; break;
+            case 'fil': key = 'filipino'; break;
+            case 'kk': key = 'kazakh'; break;
+            case 'az': key = 'azerbaijani'; break;
+            case 'uz': key = 'uzbek'; break;
+            case 'am': key = 'amharic'; break;
+            case 'ne': key = 'nepali'; break;
+            case 'si': key = 'sinhala'; break;
+            case 'km': key = 'khmer'; break;
+            case 'lo': key = 'lao'; break;
+            case 'mn': key = 'mongolian'; break;
+            case 'hy': key = 'armenian'; break;
+            case 'ka': key = 'georgian'; break;
+            case 'sq': key = 'albanian'; break;
+            case 'bs': key = 'bosnian'; break;
+            case 'mk': key = 'macedonian'; break;
+            case 'af': key = 'afrikaans'; break;
+            case 'zu': key = 'zulu'; break;
+            case 'xh': key = 'xhosa'; break;
+            case 'st': key = 'sesotho'; break;
+            case 'yo': key = 'yoruba'; break;
+            case 'ig': key = 'igbo'; break;
+            case 'ha': key = 'hausa'; break;
+            case 'so': key = 'somali'; break;
+            case 'ps': key = 'pashto'; break;
+            case 'tg': key = 'tajik'; break;
+            case 'ky': key = 'kyrgyz'; break;
+            case 'tt': key = 'tatar'; break;
+            case 'be': key = 'belarusian'; break;
+            case 'eu': key = 'basque'; break;
+            case 'gl': key = 'galician'; break;
+            case 'ca': key = 'catalan'; break;
+            case 'is': key = 'icelandic'; break;
+            case 'ga': key = 'irish'; break;
+            case 'mt': key = 'maltese'; break;
+            case 'lb': key = 'luxembourgish'; break;
+            case 'fo': key = 'faroese'; break;
+            case 'cy': key = 'welsh'; break;
+            default: key = '';
+        }
+        if (key) {
+            displayName = TranslationService.translate(key);
+        }
+        const opt = document.createElement('div');
+        opt.className = 'megan-custom-dropdown-option';
+        opt.setAttribute('data-value', code);
+        opt.textContent = displayName;
+        opt.addEventListener('click', () => {
+            selected.textContent = displayName;
+            dropdown.classList.remove('open');
+            dropdown.setAttribute('data-value', code);
+        });
+        list.appendChild(opt);
+    });
+    dropdown.appendChild(selected);
+    dropdown.appendChild(list);
+    // Открытие/закрытие
+    selected.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdown.classList.toggle('open');
+    });
+    document.addEventListener('click', () => dropdown.classList.remove('open'));
+    langRow.appendChild(dropdown);
+    popup.appendChild(langRow);
+    // Кнопка перевода
+    const btn = document.createElement('button');
+    btn.textContent = TranslationService.translate('translate');
+    btn.style.cssText = 'margin-top:8px;padding:10px 0;font-size:15px;font-weight:600;background:#715CFF;color:#fff;border:none;border-radius:8px;cursor:pointer;';
+    popup.appendChild(btn);
+    // Переведённый текст
+    const dstArea = document.createElement('textarea');
+    dstArea.readOnly = true;
+    dstArea.placeholder = TranslationService.translate('translation_placeholder');
+    dstArea.style.cssText = 'width:100%;min-width:0;flex:1 1 auto;height:70px;padding:8px 10px;font-size:15px;border-radius:8px;border:1px solid #444;background:#181818;color:#fff;resize:vertical;margin-top:8px;overflow-y:auto;box-sizing:border-box;';
+    // --- Custom scrollbar styles (like dropdown) ---
+    if (!document.getElementById('megan-translate-popup-scrollbar-style')) {
+        const style = document.createElement('style');
+        style.id = 'megan-translate-popup-scrollbar-style';
+        style.textContent = `
+            #megan-translate-popup textarea::-webkit-scrollbar {
+                width: 7px;
+                background: #181818;
+            }
+            #megan-translate-popup textarea::-webkit-scrollbar-thumb {
+                background: #715CFF;
+                border-radius: 6px;
+            }
+            #megan-translate-popup textarea::-webkit-scrollbar-track {
+                background: #181818;
+            }
+            body.theme-light #megan-translate-popup textarea::-webkit-scrollbar {
+                background: #F5F5F5;
+            }
+            body.theme-light #megan-translate-popup textarea::-webkit-scrollbar-thumb {
+                background: #AA97FF;
+            }
+            body.theme-light #megan-translate-popup textarea::-webkit-scrollbar-track {
+                background: #F5F5F5;
+            }
+            #megan-translate-popup textarea {
+                scrollbar-width: thin;
+                scrollbar-color: #715CFF #181818;
+            }
+            body.theme-light #megan-translate-popup textarea {
+                scrollbar-color: #AA97FF #F5F5F5;
+            }
+            /* --- Не менять цвет бордера при фокусе --- */
+            #megan-translate-popup textarea:focus {
+                outline: none;
+                border: 1px solid #715CFF !important;
+            }
+            body.theme-light #megan-translate-popup textarea:focus {
+                border: 1px solid #AA97FF !important;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    popup.appendChild(dstArea);
+    // Логика перевода
+    btn.onclick = async () => {
+        const { TranslateService } = await import('./services/translate');
+        const t = text.trim();
+        if (!t) return;
+        dstArea.value = TranslationService.translate('translating');
+        let token = '';
+        if ((window as any).AuthService) {
+            token = String(await (window as any).AuthService.getToken() || '');
+        } else if (typeof AuthService !== 'undefined') {
+            token = String(await (AuthService as any).getToken() || '');
+        }
+        if (!token) {
+            showNotification(TranslationService.translate('login_required_translate'), 'error');
+            dstArea.value = TranslationService.translate('login_required_translate');
+            return;
+        }
+        try {
+            const code = dropdown.getAttribute('data-value') || 'en';
+            const result = await TranslateService["translateText"](t, 'auto', code);
+            dstArea.value = result;
+        } catch (err) {
+            if (err instanceof Error && err.message && err.message.includes('No auth token')) {
+                showNotification(TranslationService.translate('login_required_translate'), 'error');
+                dstArea.value = TranslationService.translate('login_required_translate');
+            } else {
+                showNotification(TranslationService.translate('translation_error'), 'error');
+                dstArea.value = TranslationService.translate('error') + ': ' + (err instanceof Error ? err.message : String(err));
+            }
+        }
+    };
+    // Автоматически переводим сразу при открытии
+    btn.click();
+    document.body.appendChild(popup);
+    // Определяем тему
+    function applyPopupTheme() {
+        const isLight = document.body.classList.contains('theme-light');
+        popup.classList.toggle('megan-translate-popup-light', isLight);
+        popup.classList.toggle('megan-translate-popup-dark', !isLight);
+        // textarea и кнопки тоже подстраиваем
+        closeBtn.style.color = isLight ? '#888' : '#aaa';
+        title.style.color = isLight ? '#232323' : '#fff';
+        dstArea.style.background = isLight ? '#fff' : '#181818';
+        dstArea.style.color = isLight ? '#232323' : '#fff';
+        dstArea.style.border = isLight ? '1px solid #AA97FF' : '1px solid #715CFF';
+        btn.style.background = isLight ? '#AA97FF' : '#715CFF';
+        btn.style.color = '#fff';
+        btn.style.border = 'none';
+    }
+    applyPopupTheme();
+    const observer = new MutationObserver(applyPopupTheme);
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    // --- Локальный drag'n'drop только по заголовку ---
+    title.addEventListener('mousedown', (e: MouseEvent) => {
+        const rect = popup.getBoundingClientRect();
+        const dragOffsetX = e.clientX - rect.left;
+        const dragOffsetY = e.clientY - rect.top;
+        function onMouseMove(e: MouseEvent) {
+            popup.style.left = (e.clientX - dragOffsetX) + 'px';
+            popup.style.top = (e.clientY - dragOffsetY) + 'px';
+            popup.style.right = '';
+            popup.style.bottom = '';
+            popup.style.position = 'fixed';
+        }
+        function onMouseUp() {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+            document.body.style.userSelect = '';
+        }
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+        document.body.style.userSelect = 'none';
+    });
+}
+
+async function handleVoice(text: string) {
+    // Взято из блока SHOW_VOICE_POPUP
+    const old = document.getElementById('megan-voice-popup');
+    if (old) old.remove();
+    showNotification(TranslationService.translate('text_synthesizing_wait'), 'success');
+    // Создать контейнер
+    const popup = document.createElement('div');
+    popup.id = 'megan-voice-popup';
+    popup.style.cssText = `
+        position: fixed;
+        z-index: 2147483647;
+        top: 130px; right: 50px;
+        border-radius: 16px;
+        box-shadow: 0 8px 32px #0008;
+        padding: 28px 28px 22px 28px;
+        min-width: 340px;
+        max-width: 350px;
+        font-family: 'Poppins', 'Inter', Arial, sans-serif;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        animation: fadeIn 0.2s;
+        cursor: default;
+        background: #232323;
+        color: #fff;
+        border: 1.5px solid #715CFF;
+    `;
+    // --- Стили для popup (общие с translate/summarize) ---
+    if (!document.getElementById('megan-voice-popup-style')) {
+        const style = document.createElement('style');
+        style.id = 'megan-voice-popup-style';
+        style.textContent = `
+            .megan-voice-popup-dark {
+                background: #232323 !important;
+                color: #fff !important;
+                border: 1.5px solid #715CFF !important;
+            }
+            .megan-voice-popup-light {
+                background: #FAFAFA !important;
+                color: #232323 !important;
+                border: 1.5px solid #AA97FF !important;
+            }
+            body.theme-light #megan-voice-popup {
+                background: #FAFAFA !important;
+                color: #232323 !important;
+                border: 1.5px solid #AA97FF !important;
+            }
+            /* --- Кастомные стили для <audio> --- */
+            #megan-voice-popup audio {
+                background: #232323;
+                border-radius: 12px;
+                box-shadow: 0 2px 8px #0002;
+                color-scheme: dark;
+                margin-bottom: 2px;
+            }
+            #megan-voice-popup audio::-webkit-media-controls-panel {
+                background: #292929;
+                border-radius: 12px;
+            }
+            #megan-voice-popup audio::-webkit-media-controls-play-button,
+            #megan-voice-popup audio::-webkit-media-controls-mute-button,
+            #megan-voice-popup audio::-webkit-media-controls-volume-slider,
+            #megan-voice-popup audio::-webkit-media-controls-timeline {
+                filter: invert(0.8) grayscale(0.2);
+            }
+            #megan-voice-popup audio::-webkit-media-controls-current-time-display,
+            #megan-voice-popup audio::-webkit-media-controls-time-remaining-display {
+                color: #eee;
+            }
+            body.theme-light #megan-voice-popup audio,
+            body.theme-light #megan-voice-popup audio::-webkit-media-controls-panel {
+                background: #fff;
+                color-scheme: light;
+            }
+            body.theme-light #megan-voice-popup audio::-webkit-media-controls-current-time-display,
+            body.theme-light #megan-voice-popup audio::-webkit-media-controls-time-remaining-display {
+                color: #232323;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    // Кнопка закрытия
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = '×';
+    closeBtn.style.cssText = 'position:absolute;top:8px;right:12px;background:none;border:none;font-size:22px;color:#aaa;cursor:pointer;z-index:2;';
+    closeBtn.onclick = () => popup.remove();
+    popup.appendChild(closeBtn);
+    // Заголовок
+    const title = document.createElement('div');
+    title.textContent = TranslationService.translate('voice_playback');
+    title.style.cssText = 'font-size:18px;font-weight:600;margin-bottom:2px;cursor:move;user-select:none;z-index:1;';
+    popup.appendChild(title);
+    // --- Локальный drag'n'drop только по заголовку ---
+    title.addEventListener('mousedown', (e: MouseEvent) => {
+        const rect = popup.getBoundingClientRect();
+        const dragOffsetX = e.clientX - rect.left;
+        const dragOffsetY = e.clientY - rect.top;
+        function onMouseMove(e: MouseEvent) {
+            popup.style.left = (e.clientX - dragOffsetX) + 'px';
+            popup.style.top = (e.clientY - dragOffsetY) + 'px';
+            popup.style.right = '';
+            popup.style.bottom = '';
+            popup.style.position = 'fixed';
+        }
+        function onMouseUp() {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+            document.body.style.userSelect = '';
+        }
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+        document.body.style.userSelect = 'none';
+    });
+    // Аудиоэлемент
+    const audio = document.createElement('audio');
+    audio.controls = true;
+    audio.style.width = '100%';
+    audio.style.marginTop = '10px';
+    audio.style.background = 'transparent';
+    audio.style.outline = 'none';
+    audio.style.borderRadius = '8px';
+    audio.style.boxShadow = 'none';
+    audio.style.display = 'none'; // Скрываем до загрузки
+    popup.appendChild(audio);
+    // Статус
+    const status = document.createElement('div');
+    status.textContent = TranslationService.translate('synthesizing_voice');
+    status.style.cssText = 'font-size:14px;color:#aaa;margin-top:8px;';
+    popup.appendChild(status);
+    // Добавить popup на страницу
+    document.body.appendChild(popup);
+    // --- Тема ---
+    function applyPopupTheme() {
+        const isLight = document.body.classList.contains('theme-light');
+        popup.classList.toggle('megan-voice-popup-light', isLight);
+        popup.classList.toggle('megan-voice-popup-dark', !isLight);
+        closeBtn.style.color = isLight ? '#888' : '#aaa';
+        title.style.color = isLight ? '#232323' : '#fff';
+        status.style.color = isLight ? '#888' : '#aaa';
+    }
+    applyPopupTheme();
+    const observer = new MutationObserver(applyPopupTheme);
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    // --- Запрос к API ---
+    try {
+        let token = '';
+        if ((window as any).AuthService) {
+            token = String(await (window as any).AuthService.getToken() || '');
+        } else if (typeof AuthService !== 'undefined') {
+            token = String(await (AuthService as any).getToken() || '');
+        }
+        if (!token) {
+            // Нет токена — явно показываем ошибку
+            const notif = document.querySelector('.megan-notification');
+            if (notif) notif.remove();
+            showNotification(TranslationService.translate('login_required_voice'), 'error');
+            status.textContent = TranslationService.translate('login_required_voice');
+            return;
+        }
+        const API_URL = await getApiUrl();
+        const resp = await new Promise((resolve, reject) => {
+            chrome.runtime.sendMessage({
+                type: "TOOLS_LOGIC",
+                url: `${API_URL}/tools/voice/selected`,
+                options: {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": token ? `Bearer ${token}` : ""
+                    },
+                    body: JSON.stringify({ text })
+                }
+            }, (response) => {
+                if (!response) reject("No response from background");
+                else if (!response.ok) {
+                    if (response.status === 429) {
+                        // Показать notification о превышении лимита
+                        const notif = document.createElement('div');
+                        notif.className = 'megan-notification';
+                        notif.textContent = 'Voice symbols limit exceeded for today';
+                        notif.style.position = 'fixed';
+                        notif.style.top = '20px';
+                        notif.style.right = '20px';
+                        notif.style.background = '#ff4444';
+                        notif.style.color = '#fff';
+                        notif.style.padding = '12px 24px';
+                        notif.style.borderRadius = '8px';
+                        notif.style.zIndex = '99999';
+                        notif.style.fontSize = '16px';
+                        document.body.appendChild(notif);
+                        setTimeout(() => notif.remove(), 4000);
+                    }
+                    reject(response);
+                }
+                else resolve({ ok: true, json: () => response.data });
+            });
+        });
+        const data = await (resp as any).json();
+        // Скрыть notification после получения результата
+        const notif = document.querySelector('.megan-notification');
+        if (notif) notif.remove();
+        if (data.audio_base64) {
+            console.log('audio_base64 length:', data.audio_base64.length);
+            console.log('audio_base64:', data.audio_base64);
+            audio.src = `data:audio/mpeg;base64,${data.audio_base64}`;
+            audio.onerror = (e) => {
+                console.error('Audio error:', e, audio.error);
+                status.textContent = 'Ошибка загрузки аудио';
+            };
+            audio.style.display = '';
+            status.textContent = '';
+            audio.play();
+        } else {
+            status.textContent = data.text || TranslationService.translate('could_not_synthesize_audio');
+        }
+    } catch (err) {
+        // Скрыть notification при ошибке
+        const notif = document.querySelector('.megan-notification');
+        if (notif) notif.remove();
+        let errorMsg = '';
+        if (err && typeof err === 'object') {
+            if ('status' in err && err.status === 401) {
+                errorMsg = TranslationService.translate('login_required_voice');
+                showNotification(errorMsg, 'error');
+            } else if ('message' in err && typeof err.message === 'string') {
+                errorMsg = err.message;
+            } else {
+                errorMsg = TranslationService.translate('unknown_error');
+            }
+        } else if (typeof err === 'string') {
+            errorMsg = err;
+        } else {
+            errorMsg = TranslationService.translate('unknown_error');
+        }
+        status.textContent = errorMsg;
+    }
+}
