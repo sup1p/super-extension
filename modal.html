@@ -1,0 +1,54 @@
+<!-- Modal for event creation -->
+<div id="calendar-create-event-modal" class="tools-modal-overlay" style="display: none;">
+    <div class="modal-content tools-modal-content">
+        <div class="modal-header">
+            <div class="modal-title" data-translate="create_new_event"></div>
+            <button id="calendar-modal-close" class="modal-close">&times;</button>
+        </div>
+        <div style="padding: 16px;">
+            <div style="margin-bottom: 12px;">
+                <label style="display: block; margin-bottom: 6px; font-size: 14px;"
+                    data-translate="event_title"></label>
+                <input type="text" id="calendar-event-title"
+                    style="width: 100%; padding: 8px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-bg); color: var(--color-text);">
+            </div>
+            <div style="margin-bottom: 12px;">
+                <label style="display: block; margin-bottom: 6px; font-size: 14px;"
+                    data-translate="event_description"></label>
+                <textarea id="calendar-event-details"
+                    style="width: 100%; padding: 8px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-bg); color: var(--color-text); height: 80px; max-height: 120px; resize: none;"></textarea>
+            </div>
+            <div style="margin-bottom: 12px;">
+                <label style="display: block; margin-bottom: 6px; font-size: 14px;"
+                    data-translate="event_location_optional"></label>
+                <input type="text" id="calendar-event-location"
+                    style="width: 100%; padding: 8px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-bg); color: var(--color-text);">
+            </div>
+            <div style="margin-bottom: 12px;">
+                <label style="display: block; margin-bottom: 6px; font-size: 14px;" data-translate="time_label"></label>
+                <input type="time" id="calendar-event-time" value="12:00"
+                    style="width: 100%; padding: 8px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-bg); color: var(--color-text);">
+            </div>
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 6px; font-size: 14px;"
+                    data-translate="reminder_label"></label>
+                <select id="calendar-event-reminder"
+                    style="width: 100%; padding: 8px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-bg); color: var(--color-text);">
+                    <option value="0" data-translate="no_reminder"></option>
+                    <option value="5" data-translate="reminder_5"></option>
+                    <option value="15" data-translate="reminder_15"></option>
+                    <option value="30" data-translate="reminder_30"></option>
+                    <option value="60" data-translate="reminder_60"></option>
+                </select>
+            </div>
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <button id="calendar-event-cancel-btn"
+                    style="padding: 8px 16px; border: none; border-radius: 6px; background: var(--color-container); color: var(--color-text); cursor: pointer;"
+                    data-translate="cancel"></button>
+                <button id="calendar-event-save-btn"
+                    style="padding: 8px 16px; border: none; border-radius: 6px; background: var(--color-active); color: #fff; cursor: pointer;"
+                    data-translate="save_event"></button>
+            </div>
+        </div>
+    </div>
+</div>

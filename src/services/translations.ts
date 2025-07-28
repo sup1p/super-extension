@@ -734,7 +734,55 @@ export const translations: Translations = {
         en: 'Close everywhere',
         ru: 'Закрыть везде',
         es: 'Cerrar en todas partes'
-    }
+    },
+
+    // Calendar months
+    'january': { en: 'January', ru: 'Январь', es: 'Enero' },
+    'february': { en: 'February', ru: 'Февраль', es: 'Febrero' },
+    'march': { en: 'March', ru: 'Март', es: 'Marzo' },
+    'april': { en: 'April', ru: 'Апрель', es: 'Abril' },
+    'may_month': { en: 'May', ru: 'Май', es: 'Mayo' },
+    'june': { en: 'June', ru: 'Июнь', es: 'Junio' },
+    'july': { en: 'July', ru: 'Июль', es: 'Julio' },
+    'august': { en: 'August', ru: 'Август', es: 'Agosto' },
+    'september': { en: 'September', ru: 'Сентябрь', es: 'Septiembre' },
+    'october': { en: 'October', ru: 'Октябрь', es: 'Octubre' },
+    'november': { en: 'November', ru: 'Ноябрь', es: 'Noviembre' },
+    'december': { en: 'December', ru: 'Декабрь', es: 'Diciembre' },
+
+    // Calendar weekdays (short)
+    'mon': { en: 'Mon', ru: 'Пн', es: 'Lun' },
+    'tue': { en: 'Tue', ru: 'Вт', es: 'Mar' },
+    'wed': { en: 'Wed', ru: 'Ср', es: 'Mié' },
+    'thu': { en: 'Thu', ru: 'Чт', es: 'Jue' },
+    'fri': { en: 'Fri', ru: 'Пт', es: 'Vie' },
+    'sat': { en: 'Sat', ru: 'Сб', es: 'Sáb' },
+    'sun': { en: 'Sun', ru: 'Вс', es: 'Dom' },
+
+    // Calendar UI
+    'upcoming_events': { en: 'Upcoming Events', ru: 'Предстоящие события', es: 'Próximos eventos' },
+    'no_upcoming_events': { en: 'No upcoming events', ru: 'Нет предстоящих событий', es: 'No hay eventos próximos' },
+    'details_for': { en: 'Details for', ru: 'События на', es: 'Detalles para' },
+    'no_events_for_date': { en: 'No events for this date.', ru: 'Нет событий на эту дату.', es: 'No hay eventos para esta fecha.' },
+    'create_event': { en: 'Create Event', ru: 'Создать событие', es: 'Crear evento' },
+    'create_new_event': { en: 'Create New Event', ru: 'Создать новое событие', es: 'Crear nuevo evento' },
+    'event_title': { en: 'Event title', ru: 'Название события', es: 'Título del evento' },
+    'event_description': { en: 'Event description', ru: 'Описание события', es: 'Descripción del evento' },
+    'event_location_optional': { en: 'Location (optional)', ru: 'Место (необязательно)', es: 'Ubicación (opcional)' },
+    'time_label': { en: 'Time:', ru: 'Время:', es: 'Hora:' },
+    'reminder_label': { en: 'Reminder:', ru: 'Напоминание:', es: 'Recordatorio:' },
+    'save_event': { en: 'Save Event', ru: 'Сохранить событие', es: 'Guardar evento' },
+    'delete_event_confirm': { en: 'Delete event?', ru: 'Удалить событие?', es: '¿Eliminar evento?' },
+    'delete_event_message': { en: 'Are you sure you want to delete this event? This action cannot be undone.', ru: 'Вы уверены, что хотите удалить это событие? Это действие нельзя отменить.', es: '¿Está seguro de que desea eliminar este evento? Esta acción no se puede deshacer.' },
+    // Reminder options
+    'no_reminder': { en: 'No reminder', ru: 'Без напоминания', es: 'Sin recordatorio' },
+    'reminder_5': { en: '5 minutes before', ru: 'За 5 минут', es: '5 minutos antes' },
+    'reminder_15': { en: '15 minutes before', ru: 'За 15 минут', es: '15 minutos antes' },
+    'reminder_30': { en: '30 minutes before', ru: 'За 30 минут', es: '30 minutos antes' },
+    'reminder_60': { en: '1 hour before', ru: 'За 1 час', es: '1 hora antes' },
+    // Search events
+    'search_events': { en: 'Search events...', ru: 'Поиск событий...', es: 'Buscar eventos...' },
+    'no_search_results': { en: 'No events found', ru: 'События не найдены', es: 'No se encontraron eventos' }
 };
 
 export type Language = 'en' | 'ru' | 'es';

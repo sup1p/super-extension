@@ -1627,6 +1627,20 @@ export class Sidebar {
                             #notes-list::-webkit-scrollbar {
                                 display: none; /* Chrome, Safari, Opera */
                             }
+                            #calendar-date-events::-webkit-scrollbar {
+                                display: none; /* Chrome, Safari, Opera */
+                            }
+                            #calendar-upcoming-events::-webkit-scrollbar {
+                                width: 6px;
+                                background: transparent;
+                            }
+                            #calendar-upcoming-events::-webkit-scrollbar-thumb {
+                                background: #888;
+                                border-radius: 6px;
+                            }
+                            #calendar-upcoming-events::-webkit-scrollbar-track {
+                                background: transparent;
+                            }
                             .notes-detail-header {
                                 display: flex;
                                 align-items: center;
@@ -2374,8 +2388,7 @@ export class Sidebar {
                                 </div>
                             </div>
 
-
-                            
+                            <!-- Экран детального просмотра заметки -->
                             <div id="screen-note-detail" class="screen" style="overflow-y: auto;">
                                 <div style="max-width:390px;${this.sidebarPosition === 'left' ? ' margin-left:50px;' : ''}">
                                     <h1 class="title" data-translate="notes">Notes</h1>
@@ -2390,6 +2403,39 @@ export class Sidebar {
                                         <input id="note-title" data-translate="title" placeholder="Title" class="notes-detail-title">
                                         <textarea id="note-body" class="notes-detail-body"></textarea>
                                     </div>
+                                </div>
+                            </div>
+
+                            <!-- Новый экран календаря -->
+                            <div id="screen-calendar" class="screen">
+                                <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
+                                    <button id="back-to-notes-from-calendar" style="background: var(--color-container); color: var(--color-text); border: 1px solid var(--color-border); border-radius: 8px; padding: 8px 14px; font-size: 14px; cursor: pointer; transition: all 0.2s ease;" data-translate="back"></button>
+                                    <h1 class="title" style="margin: 0; color: var(--color-text);" data-translate="calendar"></h1>
+                                </div>
+                                <div id="calendar-widget" style="background: var(--color-container); border-radius: 12px; padding: 18px; margin-bottom: 24px; max-width: 390px; border: 1px solid var(--color-border); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);${this.sidebarPosition === 'left' ? ' margin-left: 40px;' : ' margin-right: 40px;'}">
+                                    <!-- Навигация по месяцам -->
+                                    <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 18px; gap: 8px;">
+                                        <button id="calendar-prev-month" style="background: none; border: none; font-size: 18px; cursor: pointer; color: var(--color-text); transition: color 0.2s ease; padding: 4px; border-radius: 4px; min-width: 28px; display: flex; align-items: center; justify-content: center;">&lt;</button>
+                                        <div id="calendar-current-month" style="font-weight: 600; font-size: 16px; color: var(--color-text); min-width: 120px; text-align: center;"></div>
+                                        <button id="calendar-next-month" style="background: none; border: none; font-size: 18px; cursor: pointer; color: var(--color-text); transition: color 0.2s ease; padding: 4px; border-radius: 4px; min-width: 28px; display: flex; align-items: center; justify-content: center;">&gt;</button>
+                                    </div>
+                                    <!-- Простой календарь (сетка дней) -->
+                                    <div id="calendar-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; font-size: 15px; margin-bottom: 18px;"></div>
+                                </div>
+                                <div id="calendar-events-section" style="${this.sidebarPosition === 'left' ? 'margin-left: 40px;' : 'margin-right: 40px;'}">
+                                    <h2 style="font-size: 17px; margin-bottom: 10px; color: var(--color-text);" data-translate="upcoming_events"></h2>
+                                    <input type="text" id="calendar-events-search" style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-bg); color: var(--color-text); font-size: 14px; margin-bottom: 12px;" data-translate="search_events" placeholder="Search events...">
+                                    <ul id="calendar-upcoming-events" style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; max-height: 300px; overflow-y: auto;"></ul>
+                                </div>
+                                <div id="calendar-date-details" style="display: none; margin-top: 24px;${this.sidebarPosition === 'left' ? ' margin-left: 40px;' : ' margin-right: 40px;'}">
+                                    <h2 style="font-size: 17px; margin-bottom: 10px; color: var(--color-text);">
+                                        <span data-translate="details_for"></span>
+                                        <span id="calendar-selected-date"></span>
+                                    </h2>
+                                    <div id="calendar-date-events" style="max-height: 300px; overflow-y: auto; scrollbar-width: none; margin-bottom: 12px; color: var(--color-text);">
+                                        <div data-translate="no_events_for_date"></div>
+                                    </div>
+                                    <button id="calendar-create-event-btn" style="background: var(--color-active); color: #fff; border: none; border-radius: 8px; padding: 8px 14px; font-size: 14px; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);" data-translate="create_event"></button>
                                 </div>
                             </div>
 
@@ -2763,6 +2809,7 @@ export class Sidebar {
                 NavigationComponent.initNavigation(iframeDoc);
                 NotesComponent.initNotes(iframeDoc);
                 // NotesComponent.initNoteDetail(iframeDoc);
+                NotesComponent.initCalendar(iframeDoc).catch(console.error);
                 TranslateService.initTranslate(iframeDoc);
                 VoiceService.initVoice(iframeDoc);
                 ToolsComponent.initTools(iframeDoc);
@@ -2834,6 +2881,55 @@ export class Sidebar {
                         <style>@keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }</style>
                     `;
                     iframeDoc.body.appendChild(loaderOverlay);
+                }
+
+                // --- Модальное окно для создания события ---
+                if (!iframeDoc.getElementById('calendar-create-event-modal')) {
+                    const eventModal = iframeDoc.createElement('div');
+                    eventModal.id = 'calendar-create-event-modal';
+                    eventModal.className = 'tools-modal-overlay';
+                    eventModal.style.display = 'none';
+                    eventModal.innerHTML = `
+                        <div class="modal-content tools-modal-content" style="max-width: 400px;">
+                            <div class="modal-header">
+                                <div class="modal-title" data-translate="create_new_event"></div>
+                                <button id="calendar-modal-close" class="modal-close">&times;</button>
+                            </div>
+                            <div style="padding: 16px;">
+                                <div style="margin-bottom: 12px;">
+                                    <label style="display: block; margin-bottom: 6px; font-size: 14px;" data-translate="event_title"></label>
+                                    <input type="text" id="calendar-event-title" style="width: 100%; padding: 8px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-bg); color: var(--color-text);">
+                                </div>
+                                <div style="margin-bottom: 12px;">
+                                    <label style="display: block; margin-bottom: 6px; font-size: 14px;" data-translate="event_description"></label>
+                                    <textarea id="calendar-event-details" style="width: 100%; padding: 8px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-bg); color: var(--color-text); height: 80px; max-height: 120px; resize: none;"></textarea>
+                                </div>
+                                <div style="margin-bottom: 12px;">
+                                    <label style="display: block; margin-bottom: 6px; font-size: 14px;" data-translate="event_location_optional"></label>
+                                    <input type="text" id="calendar-event-location" style="width: 100%; padding: 8px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-bg); color: var(--color-text);">
+                                </div>
+                                <div style="margin-bottom: 12px;">
+                                    <label style="display: block; margin-bottom: 6px; font-size: 14px;" data-translate="time_label"></label>
+                                    <input type="time" id="calendar-event-time" value="12:00" style="width: 100%; padding: 8px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-bg); color: var(--color-text);">
+                                </div>
+                                <div style="margin-bottom: 16px;">
+                                    <label style="display: block; margin-bottom: 6px; font-size: 14px;" data-translate="reminder_label"></label>
+                                    <select id="calendar-event-reminder" style="width: 100%; padding: 8px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-bg); color: var(--color-text);">
+                                        <option value="0" data-translate="no_reminder"></option>
+                                        <option value="5" data-translate="reminder_5"></option>
+                                        <option value="15" data-translate="reminder_15"></option>
+                                        <option value="30" data-translate="reminder_30"></option>
+                                        <option value="60" data-translate="reminder_60"></option>
+                                    </select>
+                                </div>
+                                <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                                    <button id="calendar-event-cancel-btn" style="padding: 8px 16px; border: none; border-radius: 6px; background: var(--color-container); color: var(--color-text); cursor: pointer;" data-translate="cancel"></button>
+                                    <button id="calendar-event-save-btn" style="padding: 8px 16px; border: none; border-radius: 6px; background: var(--color-active); color: #fff; cursor: pointer;" data-translate="save_event"></button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    iframeDoc.body.appendChild(eventModal);
                 }
 
                 // Логика показа/скрытия и запуска перевода

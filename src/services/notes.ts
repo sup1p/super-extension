@@ -9,6 +9,33 @@ export type Note = {
     user_id: number;
 };
 
+export type Event = {
+    id: number;
+    title: string;
+    description: string;
+    user_id: number;
+    start_date: string;
+    location: string;
+    reminder: number;
+    created_at: string;
+};
+
+export type EventCreate = {
+    title: string;
+    description: string;
+    start_date: string | null;
+    location: string;
+    reminder: number;
+};
+
+export type EventUpdate = {
+    title?: string;
+    description?: string;
+    start_date?: string | null;
+    location?: string;
+    reminder?: number;
+};
+
 export class NotesService {
     static async getAllNotes(token: string, doc: Document): Promise<Note[]> {
         try {
@@ -95,6 +122,107 @@ export class NotesService {
         try {
             await notesFetchViaBackground(
                 `${API_URL}/notes/delete/${noteId}`,
+                {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                }
+            );
+        } catch (res: any) {
+            if (res.status === 401) {
+                showAuthModal(doc);
+            }
+            console.log(res);
+            return;
+        }
+    }
+}
+
+export class EventService {
+    static async getAllEvents(token: string, doc: Document): Promise<Event[]> {
+        try {
+            const data = await notesFetchViaBackground(
+                `${API_URL}/calendar/get/all`,
+                {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                }
+            );
+            return data;
+        } catch (res: any) {
+            if (res.status === 401) {
+                showAuthModal(doc);
+            }
+            console.log(res);
+            return [];
+        }
+    }
+
+    static async getEvent(eventId: number, token: string, doc: Document): Promise<Event> {
+        try {
+            const data = await notesFetchViaBackground(
+                `${API_URL}/calendar/get/${eventId}`,
+                {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                }
+            );
+            return data;
+        } catch (res: any) {
+            if (res.status === 401) {
+                showAuthModal(doc);
+            }
+            throw new Error('Ошибка получения события');
+        }
+    }
+
+    static async createEvent(eventData: EventCreate, token: string, doc: Document): Promise<Event | null> {
+        try {
+            const data = await notesFetchViaBackground(
+                `${API_URL}/calendar/create`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(eventData)
+                }
+            );
+            return data;
+        } catch (res: any) {
+            if (res.status === 401) {
+                showAuthModal(doc);
+            }
+            console.log(res);
+            return null;
+        }
+    }
+
+    static async updateEvent(eventId: number, eventData: EventUpdate, token: string, doc: Document): Promise<Event | null> {
+        try {
+            const data = await notesFetchViaBackground(
+                `${API_URL}/calendar/update/${eventId}`,
+                {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(eventData)
+                }
+            );
+            return data;
+        } catch (res: any) {
+            if (res.status === 401) {
+                showAuthModal(doc);
+            }
+            console.log(res);
+            return null;
+        }
+    }
+
+    static async deleteEvent(eventId: number, token: string, doc: Document): Promise<void> {
+        try {
+            await notesFetchViaBackground(
+                `${API_URL}/calendar/delete/${eventId}`,
                 {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${token}` }
