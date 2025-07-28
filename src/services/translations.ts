@@ -108,6 +108,11 @@ export const translations: Translations = {
         ru: "Отмена",
         es: "Cancelar"
     },
+    'calendar': {
+        en: "Calendar",
+        ru: "Календарь",
+        es: "Calendario"
+    },
 
     // Chat
     'chat_placeholder': {
@@ -428,6 +433,16 @@ export const translations: Translations = {
         en: "Hide icon on",
         ru: "Скрыть иконку на",
         es: "Ocultar icono en"
+    },
+    'selection_tooltip': {
+        en: 'Selection tooltip',
+        ru: 'Тултип выделения',
+        es: 'Tooltip de selección'
+    },
+    'hide_tooltip_on': {
+        en: 'Hide tooltip on',
+        ru: 'Скрывать тултип на',
+        es: 'Ocultar tooltip en'
     },
     'sidebar': {
         en: "Sidebar",

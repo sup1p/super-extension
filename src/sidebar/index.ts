@@ -1409,17 +1409,55 @@ export class Sidebar {
                             }
                             .setting-item {
                                 display: flex;
-                                justify-content: space-between;
+                                flex-direction: row;
                                 align-items: center;
+                                justify-content: flex-start;
+                                gap: 18px;
                                 padding: 10px 14px;
                                 border-bottom: 1px solid var(--color-border);
                                 font-size: 14px;
                             }
+                            .setting-item span {
+                                flex: 0 0 auto;
+                                min-width: 80px;
+                                max-width: 40%;
+                                margin-bottom: 0;
+                                margin-right: 12px;
+                                white-space: nowrap;
+                                overflow: hidden;
+                                text-overflow: ellipsis;
+                            }
+                            .setting-item .custom-dropdown {
+                                flex: 1 1 0;
+                                min-width: 120px;
+                                max-width: 100%;
+                                margin-left: 0;
+                            }
+                            .setting-item > *:last-child {
+                                margin-left: auto;
+                            }
+                            @media (max-width: 600px) {
+                                .setting-item {
+                                    flex-direction: column;
+                                    align-items: stretch;
+                                    gap: 8px;
+                                    padding: 8px 6px !important;
+                                    font-size: 13px !important;
+                                }
+                                .setting-item span {
+                                    margin-bottom: 2px;
+                                    margin-right: 0;
+                                    max-width: 100%;
+                                }
+                                .setting-item .custom-dropdown {
+                                    min-width: 0;
+                                }
+                                .setting-item > *:last-child {
+                                    margin-left: 0;
+                                }
+                            }
                             .setting-item:last-child {
                                 border-bottom: none;
-                            }
-                            .setting-item span {
-                                color: var(--color-text);
                             }
                             .setting-item select {
                                 background: transparent;
@@ -2116,6 +2154,137 @@ export class Sidebar {
                             body.theme-dark #sourceText::-webkit-scrollbar-track, body.theme-dark #translatedText::-webkit-scrollbar-track {
                               background: #232323;
                             }
+                            /* --- Responsive styles for appearance settings page --- */
+                            @media (max-width: 600px) {
+                                .sidebar > div[style*='padding: 0 40px'] {
+                                    padding: 0 8px !important;
+                                }
+                                .settings-section {
+                                    padding: 0 2px !important;
+                                }
+                                .settings-group {
+                                    border-radius: 8px !important;
+                                }
+                                .setting-item {
+                                    flex-direction: column;
+                                    align-items: stretch;
+                                    gap: 8px;
+                                    padding: 8px 6px !important;
+                                    font-size: 13px !important;
+                                }
+                                .setting-item span {
+                                    margin-bottom: 2px;
+                                }
+                                .custom-dropdown {
+                                    min-width: 0 !important;
+                                }
+                                .custom-dropdown-selected {
+                                    padding: 8px 34px 8px 10px !important;
+                                    font-size: 14px !important;
+                                }
+                                .custom-dropdown-list {
+                                    font-size: 14px !important;
+                                }
+                                .add-hide-icon-btn {
+                                    width: 24px !important;
+                                    height: 24px !important;
+                                    font-size: 18px !important;
+                                }
+                                .hide-icon-input {
+                                    width: 100% !important;
+                                    font-size: 13px !important;
+                                }
+                                .hide-icon-input-confirm {
+                                    font-size: 13px !important;
+                                    padding: 6px 10px !important;
+                                }
+                            }
+                            @media (max-width: 400px) {
+                                .sidebar > div[style*='padding: 0 40px'] {
+                                    padding: 0 2px !important;
+                                }
+                                .settings-section {
+                                    padding: 0 0px !important;
+                                }
+                                .setting-item {
+                                    font-size: 12px !important;
+                                    padding: 6px 2px !important;
+                                }
+                                .custom-dropdown-selected {
+                                    font-size: 12px !important;
+                                    padding: 6px 24px 6px 8px !important;
+                                }
+                                .add-hide-icon-btn {
+                                    width: 20px !important;
+                                    height: 20px !important;
+                                    font-size: 15px !important;
+                                }
+                            }
+                            /* --- Custom scrollbar for settings/appearance page --- */
+                            .settings-section,
+                            .settings-group,
+                            .settings-scroll-area {
+                                scrollbar-width: thin;
+                                scrollbar-color: #d1d5db #f5f5f5;
+                            }
+                            .settings-section::-webkit-scrollbar,
+                            .settings-group::-webkit-scrollbar,
+                            .settings-scroll-area::-webkit-scrollbar {
+                                width: 8px;
+                                background: #f5f5f5;
+                                border-radius: 8px;
+                            }
+                            .settings-section::-webkit-scrollbar-thumb,
+                            .settings-group::-webkit-scrollbar-thumb,
+                            .settings-scroll-area::-webkit-scrollbar-thumb {
+                                background: #d1d5db;
+                                border-radius: 8px;
+                            }
+                            .settings-section::-webkit-scrollbar-track,
+                            .settings-group::-webkit-scrollbar-track,
+                            .settings-scroll-area::-webkit-scrollbar-track {
+                                background: #f5f5f5;
+                                border-radius: 8px;
+                            }
+                            body.theme-dark .settings-section,
+                            body.theme-dark .settings-group,
+                            body.theme-dark .settings-scroll-area {
+                                scrollbar-color: #444 #232323;
+                            }
+                            body.theme-dark .settings-section::-webkit-scrollbar,
+                            body.theme-dark .settings-group::-webkit-scrollbar,
+                            body.theme-dark .settings-scroll-area::-webkit-scrollbar {
+                                background: #232323;
+                            }
+                            body.theme-dark .settings-section::-webkit-scrollbar-thumb,
+                            body.theme-dark .settings-group::-webkit-scrollbar-thumb,
+                            body.theme-dark .settings-scroll-area::-webkit-scrollbar-thumb {
+                                background: #444;
+                            }
+                            body.theme-dark .settings-section::-webkit-scrollbar-track,
+                            body.theme-dark .settings-group::-webkit-scrollbar-track,
+                            body.theme-dark .settings-scroll-area::-webkit-scrollbar-track {
+                                background: #232323;
+                            }
+                            .selection-tooltip-group {
+                                background: transparent !important;
+                                border: none !important;
+                                box-shadow: none !important;
+                            }
+                            .selection-tooltip-item {
+                                display: flex;
+                                flex-direction: row;
+                                align-items: center;
+                                justify-content: space-between;
+                                gap: 8px;
+                            }
+                            @media (max-width: 600px) {
+                                .selection-tooltip-item {
+                                    flex-direction: column;
+                                    align-items: stretch;
+                                    gap: 6px;
+                                }
+                            }
                         </style>
                     `;
 
@@ -2191,7 +2360,10 @@ export class Sidebar {
                             </div>
 
                             <div id="screen-notes" class="screen">
-                                <h1 class="title" data-translate="notes">Notes</h1>
+                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                                    <h1 class="title" data-translate="notes" style="text-align: left; margin-bottom: 0;${this.sidebarPosition === 'left' ? ' margin-left: 52px;' : ''}">Notes</h1>
+                                    <button id="calendar-btn" style="background: var(--color-active); color: #fff; border: none; border-radius: 8px; padding: 8px 12px; font-size: 14px; font-weight: 600; cursor: pointer;${this.sidebarPosition === 'left' ? ' margin-right: -9px;' : ' margin-right: 42px;'}" data-translate="calendar">Calendar</button>
+                                </div>
                                 <div class="notes-screen-things" style="max-width: 390px;${this.sidebarPosition === 'left' ? ' margin-left:50px;' : ''}">
                                     <div class="notes-input-row" style="position: relative; display: flex; align-items: stretch; margin-bottom: 12px;">
                                         <textarea id="note-input" data-translate="note_placeholder" placeholder="What do you want to save?" class="notes-textarea"></textarea>
@@ -2433,7 +2605,7 @@ export class Sidebar {
                             <div id="screen-appereance" class="screen">
                                 <div style="padding: 0 40px; height: 100%;">
                                     <h1 class="title" data-translate="settings">Settings</h1>
-                                    <div style="overflow-y: auto; height: calc(100% - 70px); padding-right: 8px; margin-right: -8px;">
+                                    <div class="settings-scroll-area" style="overflow-y: auto; height: calc(100% - 70px); padding-right: 8px; margin-right: -8px;">
                                         <div class="settings-section">
                                             <h2 class="section-title" data-translate="appearance">Appereance</h2>
                                             <div class="settings-group">
@@ -2529,8 +2701,29 @@ export class Sidebar {
                                                 </div>
                                             </div>
                                         </div>
+                                        <div class="settings-section">
+                                            <div class="section-title-container">
+                                                <h2 class="section-title" data-translate="selection_tooltip">Selection tooltip</h2>
+                                                <label class="switch">
+                                                <input type="checkbox" id="selection-tooltip-toggle" checked>
+                                                <span class="slider round"></span>
+                                                </label>
+                                            </div>
+                                            <div class="settings-group selection-tooltip-group">
+                                                <div class="setting-item selection-tooltip-item">
+                                                <span data-translate="hide_tooltip_on">Hide tooltip on</span>
+                                                <button id="add-hide-tooltip-url-btn" class="add-hide-icon-btn">+</button>
+                                                </div>
+                                                <div id="hide-tooltip-chips-list" style="margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px;"></div>
+                                                <div id="hide-tooltip-input-wrap" style="margin-top: 10px; display: none;">
+                                                <input id="hide-tooltip-input" type="text" placeholder="example.com" class="hide-icon-input" />
+                                                <button id="hide-tooltip-input-confirm" class="hide-icon-input-confirm">Add</button>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
+                                    
                             </div>
 
                             <nav class="settings_dock">
@@ -3933,6 +4126,86 @@ export class Sidebar {
                     autoResizeTranslated();
                 }
 
+                // ... существующий HTML ...
+                // Найди строку:
+                // </div> // конец .settings-scroll-area
+                // и перед ней вставь:
+
+
+                // ... JS-логика (после блока hide icon on logic) ...
+                // --- Selection tooltip toggle logic ---
+                const selectionTooltipSwitch = iframeDoc.getElementById('selection-tooltip-toggle') as HTMLInputElement | null;
+                if (selectionTooltipSwitch) {
+                    chrome.storage.local.get(['selectionTooltipEnabled'], (result) => {
+                        const enabled = result.selectionTooltipEnabled !== false; // по умолчанию true
+                        selectionTooltipSwitch.checked = enabled;
+                    });
+                    selectionTooltipSwitch.addEventListener('change', () => {
+                        const enabled = selectionTooltipSwitch.checked;
+                        chrome.storage.local.set({ selectionTooltipEnabled: enabled });
+                    });
+                }
+                // --- Hide tooltip on logic ---
+                const hideTooltipChipsList = iframeDoc.getElementById('hide-tooltip-chips-list');
+                const addTooltipBtn = iframeDoc.getElementById('add-hide-tooltip-url-btn');
+                const tooltipInputWrap = iframeDoc.getElementById('hide-tooltip-input-wrap');
+                const tooltipInput = iframeDoc.getElementById('hide-tooltip-input') as HTMLInputElement | null;
+                const tooltipConfirmBtn = iframeDoc.getElementById('hide-tooltip-input-confirm');
+                let hideTooltipOn: string[] = [];
+                const renderTooltipChips = () => {
+                    if (!hideTooltipChipsList) return;
+                    hideTooltipChipsList.innerHTML = '';
+                    hideTooltipOn.forEach((url, idx) => {
+                        const chip = iframeDoc.createElement('div');
+                        chip.className = 'chip';
+                        chip.innerHTML = `<span>${url}</span><button class="close-chip" data-idx="${idx}">&times;</button>`;
+                        hideTooltipChipsList.appendChild(chip);
+                    });
+                    // Add remove listeners
+                    hideTooltipChipsList.querySelectorAll('.close-chip').forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            const idx = +(btn as HTMLElement).getAttribute('data-idx')!;
+                            hideTooltipOn.splice(idx, 1);
+                            chrome.storage.local.set({ hideTooltipOn });
+                            renderTooltipChips();
+                        });
+                    });
+                };
+                chrome.storage.local.get(['hideTooltipOn'], (result) => {
+                    hideTooltipOn = Array.isArray(result.hideTooltipOn) ? result.hideTooltipOn : [];
+                    renderTooltipChips();
+                });
+                if (addTooltipBtn && tooltipInputWrap && tooltipInput && tooltipConfirmBtn) {
+                    addTooltipBtn.addEventListener('click', () => {
+                        tooltipInputWrap.style.display = 'flex';
+                        tooltipInput.value = '';
+                        tooltipInput.focus();
+                    });
+                    tooltipConfirmBtn.addEventListener('click', () => {
+                        let val = tooltipInput.value.trim();
+                        let domain = '';
+                        try {
+                            if (!/^https?:\/\//.test(val)) val = 'https://' + val;
+                            const urlObj = new URL(val);
+                            domain = urlObj.hostname.replace(/^www\./, '');
+                        } catch {
+                            domain = val.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
+                        }
+                        if (domain && !hideTooltipOn.includes(domain)) {
+                            hideTooltipOn.push(domain);
+                            chrome.storage.local.set({ hideTooltipOn });
+                            renderTooltipChips();
+                        }
+                        tooltipInputWrap.style.display = 'none';
+                    });
+                    tooltipInput.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') {
+                            tooltipConfirmBtn.click();
+                        } else if (e.key === 'Escape') {
+                            tooltipInputWrap.style.display = 'none';
+                        }
+                    });
+                }
             }
 
             // Устанавливаем src для загрузки iframe

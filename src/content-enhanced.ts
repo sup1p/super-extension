@@ -1777,6 +1777,7 @@ window.addEventListener('message', (event) => {
     let selectionPopup: HTMLElement | null = null;
     let lastSelection = '';
     let lastMouseUpEvent: MouseEvent | null = null;
+    let isChildPopupOpen = false; // <-- ДОБАВИТЬ ЭТУ СТРОКУ
 
     // Пути к иконкам
     const ICONS = {
@@ -1888,9 +1889,137 @@ window.addEventListener('message', (event) => {
         closeBtn.innerHTML = '×';
         closeBtn.setAttribute('aria-label', 'Close');
         closeBtn.style.cssText = `display:flex;position:absolute;top:60%;right:10px;transform:translateY(-50%);width:22px;height:22px;border:none;border-radius:50%;color:${isLight ? '#888' : '#aaa'};cursor:pointer;z-index:2;font-size:18px;align-items:center;justify-content:center;line-height:1;padding:0;transition:background 0.15s;background:${isLight ? '#FAFAFA' : '#232323'};`;
-        closeBtn.onclick = (e) => { e.stopPropagation(); removePopup(); };
-        closeBtn.onmouseenter = () => { closeBtn.style.background = isLight ? '#e0e0e0' : '#232323'; };
-        closeBtn.onmouseleave = () => { closeBtn.style.background = isLight ? '#FAFAFA' : '#232323'; };
+        closeBtn.onclick = (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+
+            // Если уже открыт popup — не дублируем
+            if (document.getElementById('selection-tooltip-close-popup')) return;
+
+            // УСТАНАВЛИВАЕМ ФЛАГ
+            isChildPopupOpen = true;
+
+            // Создаём popup
+            const popup = document.createElement('div');
+            popup.id = 'selection-tooltip-close-popup';
+            popup.addEventListener('click', (ev) => ev.stopPropagation());
+
+            // Ваш существующий код стилей
+            popup.style.cssText = `
+                position: fixed;
+                top: 90px;
+                right: 50px;
+                z-index: 2147483647;
+                background: #232323;
+                color: #fff;
+                border-radius: 16px;
+                box-shadow: 0 8px 32px #0008;
+                padding: 4px 0 2px 0;
+                min-width: 200px;
+                font-family: 'Poppins', 'Inter', Arial, sans-serif;
+                font-size: 14px;
+                display: flex;
+                flex-direction: column;
+                gap: 0;
+                border: 1.5px solid #715CFF;
+                animation: fadeIn .18s;
+            `;
+
+            // Light theme support
+            if (document.body.classList.contains('theme-light')) {
+                popup.style.background = '#fff';
+                popup.style.color = '#232323';
+                popup.style.border = '1.5px solid #AA97FF';
+            }
+
+            // Option buttons (two choices)
+            const btn2 = document.createElement('button');
+            btn2.textContent = 'Hide on this site';
+            btn2.style.cssText = 'background:none;border:none;padding:10px 18px;text-align:left;cursor:pointer;width:100%;font-size:14px;border-radius:16px 16px 0 0;transition:background .15s;line-height:1.2;color:inherit;';
+
+            const btn3 = document.createElement('button');
+            btn3.textContent = 'Hide everywhere';
+            btn3.style.cssText = 'background:none;border:none;padding:10px 18px;text-align:left;cursor:pointer;width:100%;font-size:14px;border-radius:0 0 16px 16px;transition:background .15s;line-height:1.2;color:inherit;';
+
+            // Hover effects
+            [btn2, btn3].forEach(btn => {
+                btn.addEventListener('mouseenter', () => btn.style.background = document.body.classList.contains('theme-light') ? '#F5F5F5' : '#333');
+                btn.addEventListener('mouseleave', () => btn.style.background = 'none');
+            });
+
+            // Hide on this site
+            btn2.addEventListener('click', (ev) => {
+                ev.stopPropagation();
+                isChildPopupOpen = false;
+                removePopup();
+                popup.remove();
+                const domain = window.location.hostname.replace(/^www\./, '');
+                chrome.storage.local.get(['hideTooltipOn'], (result) => {
+                    const arr = Array.isArray(result.hideTooltipOn) ? result.hideTooltipOn : [];
+                    if (!arr.includes(domain)) {
+                        arr.push(domain);
+                        chrome.storage.local.set({ hideTooltipOn: arr });
+                    }
+                });
+            });
+
+            // Hide everywhere
+            btn3.addEventListener('click', (ev) => {
+                ev.stopPropagation();
+                isChildPopupOpen = false;
+                removePopup();
+                popup.remove();
+                chrome.storage.local.set({ selectionTooltipEnabled: false });
+            });
+
+            // Append buttons to popup
+            popup.appendChild(btn2);
+            popup.appendChild(btn3);
+
+            // Append popup to body
+            document.body.appendChild(popup);
+
+            // Position popup below the selection popup
+            setTimeout(() => {
+                if (selectionPopup && popup) {
+                    const selectionRect = selectionPopup.getBoundingClientRect();
+                    const popupRect = popup.getBoundingClientRect();
+
+                    // Position below the selection popup
+                    let popupTop = selectionRect.bottom + 8;
+                    let popupLeft = selectionRect.left;
+
+                    // Adjust if popup goes below viewport
+                    if (popupTop + popupRect.height > window.innerHeight) {
+                        popupTop = selectionRect.top - popupRect.height - 8;
+                    }
+
+                    // Adjust if popup goes outside viewport horizontally
+                    if (popupLeft + popupRect.width > window.innerWidth) {
+                        popupLeft = window.innerWidth - popupRect.width - 10;
+                    }
+                    if (popupLeft < 0) {
+                        popupLeft = 10;
+                    }
+
+                    popup.style.top = popupTop + 'px';
+                    popup.style.left = popupLeft + 'px';
+                    popup.style.right = 'auto';
+                }
+            }, 0);
+
+            // Close popup when clicking outside
+            setTimeout(() => {
+                const closeChildPopup = (ev: MouseEvent) => {
+                    if (!popup.contains(ev.target as Node)) {
+                        isChildPopupOpen = false;
+                        popup.remove();
+                        document.removeEventListener('mousedown', closeChildPopup, true);
+                    }
+                };
+                document.addEventListener('mousedown', closeChildPopup, true);
+            }, 200);
+        };
         selectionPopup.appendChild(closeBtn);
         document.body.appendChild(selectionPopup);
         // Позиционирование (если выходит за экран — корректируем)
@@ -1909,6 +2038,11 @@ window.addEventListener('message', (event) => {
         // Клик вне — закрыть
         setTimeout(() => {
             const closeOnClick = (e: MouseEvent) => {
+                // НЕ ЗАКРЫВАЕМ, если открыт дочерний popup
+                if (isChildPopupOpen) {
+                    return;
+                }
+
                 if (selectionPopup && !selectionPopup.contains(e.target as Node)) {
                     removePopup();
                     document.removeEventListener('mousedown', closeOnClick, true);
@@ -1939,7 +2073,7 @@ window.addEventListener('message', (event) => {
 
     // Mouseup обработчик
     document.addEventListener('mouseup', (e) => {
-        setTimeout(() => {
+        setTimeout(async () => {
             const sel = window.getSelection();
             const text = sel && sel.toString().trim();
             if (!text || text.length === 0) {
@@ -1954,9 +2088,29 @@ window.addEventListener('message', (event) => {
                 lastSelection = '';
                 return;
             }
+            // --- ДОБАВЛЕНО: Проверка настроек ---
+            const currentHost = window.location.hostname.replace(/^www\./, '');
+            const { selectionTooltipEnabled, hideTooltipOn } = await new Promise<{ selectionTooltipEnabled?: boolean, hideTooltipOn?: string[] }>((resolve) => {
+                chrome.storage.local.get(['selectionTooltipEnabled', 'hideTooltipOn'], resolve);
+            });
+            if (selectionTooltipEnabled === false) {
+                removePopup();
+                lastSelection = '';
+                return;
+            }
+            if (Array.isArray(hideTooltipOn)) {
+                const found = hideTooltipOn.some(domain => {
+                    const d = domain.replace(/^www\./, '');
+                    return currentHost === d || currentHost.endsWith('.' + d);
+                });
+                if (found) {
+                    removePopup();
+                    lastSelection = '';
+                    return;
+                }
+            }
             // Показываем popup рядом с концом выделения
             let x = e.clientX, y = e.clientY;
-            // Если выделение не под курсором (например, двойной клик), позиционируем по range
             if (sel && sel.rangeCount > 0) {
                 const range = sel.getRangeAt(0);
                 const rects = range.getClientRects();
