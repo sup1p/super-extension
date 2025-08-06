@@ -248,7 +248,6 @@ export class NotesComponent {
         const dateDetails = doc.getElementById('calendar-date-details');
         const selectedDateSpan = doc.getElementById('calendar-selected-date');
         const createEventBtn = doc.getElementById('calendar-create-event-btn');
-        const createEventForm = doc.getElementById('calendar-create-event-form');
         const prevMonthBtn = doc.getElementById('calendar-prev-month');
         const nextMonthBtn = doc.getElementById('calendar-next-month');
         const currentMonthDiv = doc.getElementById('calendar-current-month');
@@ -661,6 +660,20 @@ export class NotesComponent {
                         if (typeof d === 'number') {
                             showEventsForDate(year, month, d);
                         }
+
+                        // Инициализируем обработчики модального окна после показа секции
+                        setTimeout(() => {
+                            // Проверяем, не инициализированы ли уже обработчики
+                            const existingHandlers = doc.querySelector('[data-event-handlers-initialized]');
+                            if (!existingHandlers) {
+                                initEventModalHandlers();
+                                // Помечаем, что обработчики инициализированы
+                                const marker = doc.createElement('div');
+                                marker.setAttribute('data-event-handlers-initialized', 'true');
+                                marker.style.display = 'none';
+                                doc.body.appendChild(marker);
+                            }
+                        }, 100);
                     });
                 }
                 calendarGrid.appendChild(el);
@@ -711,127 +724,188 @@ export class NotesComponent {
             });
         }
 
-        // Кнопка создания события (только показать форму)
-        if (createEventBtn && createEventForm) {
-            createEventBtn.addEventListener('click', () => {
-                createEventForm.style.display = createEventForm.style.display === 'none' ? '' : 'none';
-            });
-        }
-
         // Обработка формы создания события
-        const eventTitleInput = doc.getElementById('calendar-event-title') as HTMLInputElement;
-        const eventDetailsInput = doc.getElementById('calendar-event-details') as HTMLTextAreaElement;
-        const eventLocationInput = doc.getElementById('calendar-event-location') as HTMLInputElement;
-        const eventTimeInput = doc.getElementById('calendar-event-time') as HTMLInputElement;
-        const eventReminderSelect = doc.getElementById('calendar-event-reminder') as HTMLSelectElement;
-        const eventSaveBtn = doc.getElementById('calendar-event-save-btn') as HTMLButtonElement;
-        const eventCancelBtn = doc.getElementById('calendar-event-cancel-btn') as HTMLButtonElement;
-        const eventModal = doc.getElementById('calendar-create-event-modal') as HTMLDivElement;
-        const modalCloseBtn = doc.getElementById('calendar-modal-close') as HTMLButtonElement;
 
         // Показать модальное окно
-        if (createEventBtn && eventModal) {
-            createEventBtn.addEventListener('click', () => {
-                eventModal.style.display = 'block';
+        if (createEventBtn) {
+            // Удаляем старый обработчик, если есть
+            const newCreateEventBtn = createEventBtn.cloneNode(true);
+            createEventBtn.parentNode?.replaceChild(newCreateEventBtn, createEventBtn);
+
+            newCreateEventBtn.addEventListener('click', () => {
+                console.log('[calendar] Клик по кнопке создания события');
+                // Получаем элементы заново
+                const currentEventModal = doc.getElementById('calendar-create-event-modal') as HTMLDivElement;
+                const currentEventTitleInput = doc.getElementById('calendar-event-title') as HTMLInputElement;
+
+                if (!currentEventModal) {
+                    console.error('[calendar] Модальное окно не найдено!');
+                    return;
+                }
+
+                // Проверяем, не открыто ли уже модальное окно
+                if (currentEventModal.classList.contains('active')) {
+                    console.log('[calendar] Модальное окно уже открыто');
+                    return;
+                }
+
+                currentEventModal.classList.add('active');
+                console.log('[calendar] Открыто модальное окно создания события');
                 // Фокус на первое поле
-                if (eventTitleInput) {
-                    eventTitleInput.focus();
+                if (currentEventTitleInput) {
+                    currentEventTitleInput.focus();
+                } else {
+                    console.warn('[calendar] Поле ввода названия события не найдено!');
                 }
             });
-        }
+            console.log('[calendar] Обработчик клика добавлен к кнопке создания события');
+        } else {
+            console.error('[calendar] Кнопка создания события не найдена!');
+            // Попробуем найти кнопку позже
+            setTimeout(() => {
+                const retryCreateEventBtn = doc.getElementById('calendar-create-event-btn');
+                if (retryCreateEventBtn) {
+                    console.log('[calendar] Кнопка создания события найдена при повторной попытке');
+                    // Удаляем старый обработчик, если есть
+                    const newRetryBtn = retryCreateEventBtn.cloneNode(true);
+                    retryCreateEventBtn.parentNode?.replaceChild(newRetryBtn, retryCreateEventBtn);
 
-        // Закрыть модальное окно
-        function closeModal() {
-            if (eventModal) {
-                eventModal.style.display = 'none';
-            }
-            // Очищаем форму
-            if (eventTitleInput) eventTitleInput.value = '';
-            if (eventDetailsInput) eventDetailsInput.value = '';
-            if (eventLocationInput) eventLocationInput.value = '';
-            if (eventTimeInput) eventTimeInput.value = '12:00';
-            if (eventReminderSelect) eventReminderSelect.value = '15';
-        }
-
-        // Кнопка закрытия модального окна
-        if (modalCloseBtn) {
-            modalCloseBtn.addEventListener('click', closeModal);
-        }
-
-        // Закрытие по клику вне модального окна
-        if (eventModal) {
-            eventModal.addEventListener('click', (e) => {
-                if (e.target === eventModal) {
-                    closeModal();
-                }
-            });
-        }
-
-        if (eventSaveBtn && eventTitleInput && eventDetailsInput && eventLocationInput && eventTimeInput && eventReminderSelect) {
-            eventSaveBtn.addEventListener('click', async () => {
-                const title = eventTitleInput.value.trim();
-                const description = eventDetailsInput.value.trim();
-                const location = eventLocationInput.value.trim();
-                const time = eventTimeInput.value;
-                const reminder = parseInt(eventReminderSelect.value);
-
-                if (!title) {
-                    showNotification('Please enter event title', 'error');
-                    return;
-                }
-
-                // Получаем выбранную дату
-                const selectedDateText = selectedDateSpan?.textContent;
-                if (!selectedDateText) {
-                    showNotification('Please select a date first', 'error');
-                    return;
-                }
-
-                try {
-                    // Создаем дату в формате ISO для сервера
-                    const [year, month, day] = selectedDateText.split('-').map(Number);
-                    const [hours, minutes] = time.split(':').map(Number);
-                    const eventDate = new Date(year, month - 1, day, hours, minutes, 0);
-                    const isoDate = eventDate.toISOString();
-
-                    const newEvent = await EventService.createEvent(
-                        {
-                            title,
-                            description,
-                            start_date: isoDate,
-                            location,
-                            reminder
-                        },
-                        token!,
-                        doc
-                    );
-
-                    if (newEvent) {
-                        // Закрываем модальное окно
-                        closeModal();
-
-                        // Перезагружаем события
-                        await loadEvents();
-
-                        // Показываем секцию событий
-                        if (eventsSection && dateDetails) {
-                            dateDetails.style.display = 'none';
-                            eventsSection.style.display = '';
+                    newRetryBtn.addEventListener('click', () => {
+                        console.log('[calendar] Клик по кнопке создания события (повторная попытка)');
+                        const retryEventModal = doc.getElementById('calendar-create-event-modal') as HTMLDivElement;
+                        if (retryEventModal) {
+                            // Проверяем, не открыто ли уже модальное окно
+                            if (retryEventModal.classList.contains('active')) {
+                                console.log('[calendar] Модальное окно уже открыто (повторная попытка)');
+                                return;
+                            }
+                            retryEventModal.classList.add('active');
+                            console.log('[calendar] Открыто модальное окно создания события (повторная попытка)');
                         }
-
-                        showNotification('Event created successfully!', 'success');
-                    } else {
-                        showNotification('Failed to create event', 'error');
-                    }
-                } catch (e) {
-                    console.error('Error creating event:', e);
-                    showNotification('Error creating event', 'error');
+                    });
                 }
-            });
+            }, 1000);
         }
 
-        if (eventCancelBtn) {
-            eventCancelBtn.addEventListener('click', closeModal);
+        // Функция для инициализации обработчиков модального окна
+        function initEventModalHandlers() {
+            // Получаем элементы заново, так как они могли быть созданы позже
+            const currentEventTitleInput = doc.getElementById('calendar-event-title') as HTMLInputElement;
+            const currentEventDetailsInput = doc.getElementById('calendar-event-details') as HTMLTextAreaElement;
+            const currentEventLocationInput = doc.getElementById('calendar-event-location') as HTMLInputElement;
+            const currentEventTimeInput = doc.getElementById('calendar-event-time') as HTMLInputElement;
+            const currentEventReminderSelect = doc.getElementById('calendar-event-reminder') as HTMLSelectElement;
+            const currentEventSaveBtn = doc.getElementById('calendar-event-save-btn') as HTMLButtonElement;
+            const currentEventCancelBtn = doc.getElementById('calendar-event-cancel-btn') as HTMLButtonElement;
+            const currentEventModal = doc.getElementById('calendar-create-event-modal') as HTMLDivElement;
+            const currentModalCloseBtn = doc.getElementById('calendar-modal-close') as HTMLButtonElement;
+
+            // Закрыть модальное окно
+            function closeModal() {
+                if (currentEventModal) {
+                    currentEventModal.classList.remove('active');
+                    console.log('[calendar] Закрыто модальное окно создания события');
+                }
+                // Очищаем форму
+                if (currentEventTitleInput) currentEventTitleInput.value = '';
+                if (currentEventDetailsInput) currentEventDetailsInput.value = '';
+                if (currentEventLocationInput) currentEventLocationInput.value = '';
+                if (currentEventTimeInput) currentEventTimeInput.value = '12:00';
+                if (currentEventReminderSelect) currentEventReminderSelect.value = '15';
+            }
+
+            // Кнопка закрытия модального окна
+            if (currentModalCloseBtn) {
+                // Удаляем старый обработчик, если есть
+                const newCloseBtn = currentModalCloseBtn.cloneNode(true);
+                currentModalCloseBtn.parentNode?.replaceChild(newCloseBtn, currentModalCloseBtn);
+                newCloseBtn.addEventListener('click', closeModal);
+            }
+
+            // Закрытие по клику вне модального окна
+            if (currentEventModal) {
+                currentEventModal.addEventListener('click', (e) => {
+                    if (e.target === currentEventModal) {
+                        closeModal();
+                    }
+                });
+            }
+
+            if (currentEventSaveBtn && currentEventTitleInput && currentEventDetailsInput && currentEventLocationInput && currentEventTimeInput && currentEventReminderSelect) {
+                // Удаляем старый обработчик, если есть
+                const newSaveBtn = currentEventSaveBtn.cloneNode(true);
+                currentEventSaveBtn.parentNode?.replaceChild(newSaveBtn, currentEventSaveBtn);
+                newSaveBtn.addEventListener('click', async () => {
+                    const title = currentEventTitleInput.value.trim();
+                    const description = currentEventDetailsInput.value.trim();
+                    const location = currentEventLocationInput.value.trim();
+                    const time = currentEventTimeInput.value;
+                    const reminder = parseInt(currentEventReminderSelect.value);
+
+                    if (!title) {
+                        showNotification('Please enter event title', 'error');
+                        return;
+                    }
+
+                    // Получаем выбранную дату
+                    const selectedDateText = selectedDateSpan?.textContent;
+                    if (!selectedDateText) {
+                        showNotification('Please select a date first', 'error');
+                        return;
+                    }
+
+                    try {
+                        // Создаем дату в формате ISO для сервера
+                        const [year, month, day] = selectedDateText.split('-').map(Number);
+                        const [hours, minutes] = time.split(':').map(Number);
+                        const eventDate = new Date(year, month - 1, day, hours, minutes, 0);
+                        const isoDate = eventDate.toISOString();
+
+                        const newEvent = await EventService.createEvent(
+                            {
+                                title,
+                                description,
+                                start_date: isoDate,
+                                location,
+                                reminder
+                            },
+                            token!,
+                            doc
+                        );
+
+                        if (newEvent) {
+                            // Закрываем модальное окно
+                            closeModal();
+
+                            // Перезагружаем события
+                            await loadEvents();
+
+                            // Показываем секцию событий
+                            if (eventsSection && dateDetails) {
+                                dateDetails.style.display = 'none';
+                                eventsSection.style.display = '';
+                            }
+
+                            showNotification('Event created successfully!', 'success');
+                        } else {
+                            showNotification('Failed to create event', 'error');
+                        }
+                    } catch (e) {
+                        console.error('Error creating event:', e);
+                        showNotification('Error creating event', 'error');
+                    }
+                });
+            }
+
+            if (currentEventCancelBtn) {
+                // Удаляем старый обработчик, если есть
+                const newCancelBtn = currentEventCancelBtn.cloneNode(true);
+                currentEventCancelBtn.parentNode?.replaceChild(newCancelBtn, currentEventCancelBtn);
+                newCancelBtn.addEventListener('click', closeModal);
+            }
         }
+
+        // Инициализируем обработчики при загрузке
+        initEventModalHandlers();
     }
 } 
